@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TKD Log</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;700&display=swap');
+:root{
+  --red:#e8192c;--dark:#09090f;--panel:#13131d;--panel2:#1a1a26;
+  --border:#22223a;--text:#eeeef8;--muted:#555570;
+  --green:#22c55e;--blue:#3b82f6;--gold:#f59e0b;--purple:#a855f7;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overscroll-behavior:none;}
+body{background:var(--dark);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-weight:300;}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top));
+  background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:5px;color:var(--red);}
+.logo span{color:var(--text);}
+.hacts{display:flex;gap:6px;align-items:center;}
+.hbtn{min-height:34px;padding:0 11px;background:transparent;border:1px solid var(--border);
+  border-radius:6px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.hbtn.gold{border-color:var(--gold);color:var(--gold);}
+.hbtn.green{border-color:var(--green);color:var(--green);}
+
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:0;right:0;
+  padding-bottom:env(safe-area-inset-bottom);
+  background:var(--panel);border-top:1px solid var(--border);display:flex;z-index:100;}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:8px 0 6px;cursor:pointer;color:var(--muted);font-size:9px;letter-spacing:1px;
+  border:none;background:none;gap:3px;font-family:'Noto Sans JP',sans-serif;}
+.bnav-btn.active{color:var(--red);}
+.bnav-icon{font-size:20px;line-height:1;}
+
+/* SCROLL AREA */
+.tab-pane{display:none;height:calc(100dvh - 50px - calc(50px + env(safe-area-inset-bottom)));
+  overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.tab-pane.active{display:block;}
+main{max-width:480px;margin:0 auto;padding:12px 12px 28px;}
+
+/* CALENDAR */
+.cal-wrap{background:var(--panel2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.cal-nav-btn{width:34px;height:34px;border:none;background:var(--border);border-radius:8px;
+  color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.cal-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:6px;}
+.cal-dow{text-align:center;font-size:9px;color:var(--muted);padding:4px 0;letter-spacing:1px;}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:8px;cursor:pointer;font-size:13px;transition:all .1s;margin:1px;position:relative;}
+.cal-day:active{transform:scale(.88);}
+.cal-day.other-m{color:#2a2a44;}
+.cal-day.is-today{border:1px solid var(--red);color:var(--red);}
+.cal-day.is-sel{background:var(--red);color:#fff;font-weight:700;}
+/* dot indicators */
+.cal-day::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
+  width:0;height:0;border-radius:50%;}
+.cal-day.has-morning::after{width:4px;height:4px;background:var(--blue);}
+.cal-day.has-training::after{width:4px;height:4px;background:var(--green);}
+.cal-day.has-both::after{width:6px;height:3px;background:linear-gradient(to right,var(--blue) 50%,var(--green) 50%);border-radius:2px;}
+.cal-day.is-sel::after{opacity:.6;}
+.cal-sel-label{text-align:center;padding:6px;font-size:11px;color:var(--muted);letter-spacing:1px;}
+
+/* BLOCK SWITCH */
+.block-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.bsw-btn{min-height:50px;background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  color:var(--muted);cursor:pointer;font-family:'Noto Sans JP',sans-serif;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .15s;}
+.bsw-btn .bsw-main{font-size:13px;font-weight:700;}
+.bsw-btn .bsw-sub{font-size:9px;opacity:.65;letter-spacing:.5px;}
+.bsw-btn.active-blue{background:rgba(59,130,246,.12);border-color:var(--blue);color:var(--blue);}
+.bsw-btn.active-red{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red);}
+/* status badges on switch buttons */
+.bsw-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px;vertical-align:middle;}
+.bsw-badge.done{background:var(--green);color:#000;}
+.bsw-badge.empty{background:var(--border);color:var(--muted);}
+
+/* SECTION */
+.section{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;}
+.sec-head{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer;user-select:none;}
+.sec-head.open{border-bottom:1px solid var(--border);}
+.sec-num{width:26px;height:26px;border:1px solid var(--red);border-radius:6px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:12px;color:var(--red);}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--red);flex:1;}
+.chev{color:var(--muted);font-size:13px;transition:transform .2s;}
+.chev.open{transform:rotate(180deg);}
+.sec-body{padding:14px;display:none;}
+.sec-body.open{display:block;}
+
+/* FORM */
+.flabel{display:block;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;margin-top:14px;}
+.flabel:first-child{margin-top:0;}
+.bgrp{display:flex;flex-wrap:wrap;gap:7px;}
+.bgrp-v{flex-direction:column;align-items:flex-start;}
+.btn{min-height:44px;padding:0 14px;background:transparent;border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:14px;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;transition:all .12s;}
+.btn:active{transform:scale(.95);}
+.btn.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:700;}
+.btn.other{border-color:#252538;color:var(--muted);font-size:12px;}
+.btn.other.active{background:#252538;border-color:#3a3a55;color:var(--text);}
+.tinput{background:#09090f;border:1px solid var(--border);border-radius:8px;color:var(--text);
+  font-size:16px;padding:11px 13px;width:100%;margin-top:6px;outline:none;
+  font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;}
+.tinput:focus{border-color:var(--blue);}
+.tinput::placeholder{color:var(--muted);}
+textarea.tinput{resize:none;min-height:70px;}
+
+/* BOWEL */
+.bowel-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.bowel-row{display:grid;grid-template-columns:50px 1fr;border-bottom:1px solid var(--border);}
+.bowel-row:last-child{border-bottom:none;}
+.bowel-lbl{display:flex;align-items:center;justify-content:center;
+  font-size:11px;color:var(--muted);background:var(--panel2);letter-spacing:1px;border-right:1px solid var(--border);}
+.bowel-btns{display:flex;}
+.bowel-btn{flex:1;min-height:46px;border:none;border-right:1px solid var(--border);
+  background:transparent;color:var(--text);font-size:18px;cursor:pointer;transition:all .12s;font-family:'Noto Sans JP',sans-serif;}
+.bowel-btn:last-child{border-right:none;}
+.bowel-btn:active{opacity:.7;}
+.bowel-btn.sel-o{background:rgba(34,197,94,.15);color:var(--green);}
+.bowel-btn.sel-x{background:rgba(232,25,44,.15);color:var(--red);}
+.bowel-btn.sel-d{background:rgba(245,158,11,.15);color:var(--gold);}
+
+/* TRAINING */
+.tr-item{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;overflow:hidden;}
+.tr-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;}
+.tr-head.open{border-bottom:1px solid var(--border);}
+.tr-title{font-size:12px;font-weight:700;letter-spacing:2px;}
+.tog{min-height:32px;padding:0 13px;background:none;border:1px solid var(--border);
+  border-radius:6px;color:var(--muted);cursor:pointer;font-size:11px;letter-spacing:1px;transition:all .15s;}
+.tog.on{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red);}
+.tr-body{padding:12px;display:none;}
+.tr-body.show{display:block;}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
+.slabel{display:block;font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.divider{border:none;border-top:1px solid var(--border);margin:11px 0;}
+.sleep-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+
+/* FOOD */
+.mtabs{display:flex;gap:6px;margin-bottom:11px;}
+.mtab{flex:1;min-height:40px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;color:var(--muted);transition:all .15s;}
+.mtab.active{background:rgba(59,130,246,.12);border-color:var(--blue);color:var(--blue);}
+.fcats{display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none;}
+.fcats::-webkit-scrollbar{display:none;}
+.fcat{flex-shrink:0;padding:5px 11px;border:1px solid var(--border);border-radius:16px;
+  cursor:pointer;font-size:11px;color:var(--muted);white-space:nowrap;transition:all .15s;}
+.fcat.active{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.1);}
+.fsrch-wrap{position:relative;}
+.fsrch{background:#09090f;border:1px solid var(--border);border-radius:8px;color:var(--text);
+  font-size:16px;padding:11px 13px;width:100%;outline:none;font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;}
+.fsrch:focus{border-color:var(--blue);}
+.fsrch::placeholder{color:var(--muted);}
+.fdrop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--panel2);
+  border:1px solid var(--border);border-radius:10px;max-height:240px;overflow-y:auto;
+  z-index:60;display:none;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.fdrop.show{display:block;}
+.fopt{padding:11px 13px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border);}
+.fopt:last-child{border-bottom:none;}
+.fopt:active{background:rgba(59,130,246,.08);}
+.fopt-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.gram-btns{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0;}
+.gbtn{min-height:44px;padding:0 16px;background:transparent;border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:14px;cursor:pointer;transition:all .12s;}
+.gbtn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.food-row{display:flex;align-items:center;gap:8px;padding:10px 12px;
+  background:var(--panel2);border:1px solid var(--border);border-radius:8px;margin-bottom:5px;}
+.food-row-info{flex:1;min-width:0;}
+.food-row-name{font-size:13px;font-weight:700;}
+.food-row-detail{font-size:10px;color:var(--muted);margin-top:1px;}
+.fdel{min-width:34px;min-height:34px;background:none;border:1px solid var(--border);
+  border-radius:6px;color:var(--muted);cursor:pointer;font-size:13px;flex-shrink:0;}
+
+/* PFC */
+.pfc-card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:13px;margin-top:11px;}
+.pfc-head{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:3px;color:var(--blue);margin-bottom:9px;}
+.pfc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:9px;}
+.pfc-cell{text-align:center;}
+.pfc-lbl{font-size:8px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;}
+.pfc-val{font-size:15px;font-weight:700;margin-top:2px;}
+.pfc-val.p{color:#f472b6;}.pfc-val.f{color:#fb923c;}.pfc-val.c{color:#facc15;}.pfc-val.fi{color:#4ade80;}
+.pfc-kcal{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--blue);}
+.pfc-kcal-lbl{text-align:center;font-size:9px;color:var(--muted);letter-spacing:2px;}
+
+/* RECIPE */
+.recipe-row{display:flex;align-items:center;gap:8px;padding:11px 13px;
+  background:var(--panel2);border:1px solid var(--purple);border-radius:8px;margin-bottom:5px;}
+.recipe-name{font-size:13px;font-weight:700;color:var(--purple);}
+.recipe-detail{font-size:10px;color:var(--muted);margin-top:1px;}
+.recipe-add{min-height:32px;padding:0 11px;background:rgba(168,85,247,.15);
+  border:1px solid var(--purple);border-radius:6px;color:var(--purple);font-size:11px;cursor:pointer;white-space:nowrap;}
+
+/* SAVE BUTTONS */
+.save-btn{border:none;border-radius:10px;color:#fff;font-family:'Bebas Neue',sans-serif;
+  font-size:19px;letter-spacing:4px;padding:15px;cursor:pointer;width:100%;margin-top:14px;
+  min-height:52px;-webkit-appearance:none;}
+.save-btn:active{opacity:.8;}
+.save-btn.blue{background:var(--blue);}
+.save-btn.red{background:var(--red);}
+
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;
+  display:none;align-items:flex-end;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal{background:var(--panel2);border:1px solid var(--border);border-radius:16px 16px 0 0;
+  padding:18px 18px calc(18px + env(safe-area-inset-bottom));
+  width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
+.modal-handle{width:34px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;margin-bottom:12px;}
+.modal-title.gold{color:var(--gold);}.modal-title.purple{color:var(--purple);}
+.modal-desc{font-size:11px;color:var(--muted);line-height:1.8;margin-bottom:11px;}
+.macts{display:flex;gap:8px;margin-top:13px;}
+.mbtn{flex:1;min-height:46px;border-radius:10px;cursor:pointer;font-size:14px;
+  font-family:'Noto Sans JP',sans-serif;border:none;font-weight:700;}
+.mbtn.cancel{background:var(--panel);border:1px solid var(--border);color:var(--muted);}
+.mbtn.gold{background:var(--gold);color:#000;}
+.mbtn.purple{background:var(--purple);color:#fff;}
+.cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px;}
+.cf-field{display:flex;flex-direction:column;gap:3px;}
+.cf-full{grid-column:1/-1;}
+.cf-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;}
+.cf-inp{background:#09090f;border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-size:16px;padding:9px 11px;outline:none;
+  font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;width:100%;}
+.cf-inp:focus{border-color:var(--purple);}
+.cf-inp::placeholder{color:var(--muted);}
+.gas-st{font-size:11px;margin-top:7px;}
+.gas-st.ok{color:var(--green);}.gas-st.err{color:var(--red);}
+
+/* HISTORY */
+.hfbtns{display:flex;gap:6px;margin-bottom:11px;}
+.hfbtn{min-height:34px;padding:0 13px;border:1px solid var(--border);border-radius:16px;
+  cursor:pointer;font-size:12px;color:var(--muted);background:transparent;transition:all .15s;}
+.hfbtn.active{border-color:var(--red);color:var(--red);}
+.log-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  padding:13px;margin-bottom:7px;position:relative;}
+.log-card.subtype-morning{border-left:3px solid var(--blue);}
+.log-card.subtype-training{border-left:3px solid var(--red);}
+.log-card.subtype-food{border-left:3px solid var(--green);}
+.log-date{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;margin-bottom:5px;color:var(--text);}
+.log-subtype{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.log-text{font-size:11px;color:var(--muted);line-height:1.9;white-space:pre-wrap;word-break:break-all;}
+.log-del{position:absolute;top:9px;right:9px;min-width:34px;min-height:34px;background:none;
+  border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:12px;
+  display:flex;align-items:center;justify-content:center;}
+.sync-ok{position:absolute;top:11px;right:48px;font-size:10px;color:var(--green);}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(60px + env(safe-area-inset-bottom));left:50%;
+  transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border);
+  color:var(--text);font-size:12px;padding:9px 18px;border-radius:18px;
+  opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,.5);}
+.toast.show{opacity:1;}
+.toast.ok{border-color:var(--green);color:var(--green);}
+.toast.err{border-color:var(--red);color:var(--red);}
+.empty{color:var(--muted);font-size:12px;text-align:center;padding:22px;}
+</style>
+</head>
+<body>
+
+<!-- ══ GAS MODAL ══ -->
+<div class="modal-ov" id="gasModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title gold">⚙ Google Sheets 連携</div>
+    <div class="modal-desc">GASデプロイ後のウェブアプリURLを貼り付けてください。</div>
+    <input class="cf-inp" id="gasUrlInput" placeholder="https://script.google.com/macros/s/..." style="width:100%;">
+    <div class="gas-st" id="gasSt"></div>
+    <div class="macts">
+      <button class="mbtn cancel" onclick="closeModal('gasModal')">キャンセル</button>
+      <button class="mbtn gold" onclick="testAndSaveGas()">接続テスト → 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CUSTOM FOOD MODAL ══ -->
+<div class="modal-ov" id="cfModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title purple">＋ 食材を手動登録</div>
+    <div class="modal-desc">パッケージの「100gあたり」の値を入力してください。</div>
+    <div class="cf-grid">
+      <div class="cf-field cf-full"><span class="cf-lbl">食材名 *</span><input class="cf-inp" id="cf_name" placeholder="例: プロテインゼリー"></div>
+      <div class="cf-field cf-full"><span class="cf-lbl">カテゴリ</span><input class="cf-inp" id="cf_cat" placeholder="例: 補食、間食..."></div>
+      <div class="cf-field"><span class="cf-lbl">カロリー(kcal) *</span><input class="cf-inp" id="cf_kcal" type="number" inputmode="decimal" placeholder="120"></div>
+      <div class="cf-field"><span class="cf-lbl">タンパク質P(g)</span><input class="cf-inp" id="cf_p" type="number" inputmode="decimal" placeholder="15.0"></div>
+      <div class="cf-field"><span class="cf-lbl">脂質F(g)</span><input class="cf-inp" id="cf_f" type="number" inputmode="decimal" placeholder="2.5"></div>
+      <div class="cf-field"><span class="cf-lbl">炭水化物C(g)</span><input class="cf-inp" id="cf_c" type="number" inputmode="decimal" placeholder="10.0"></div>
+      <div class="cf-field"><span class="cf-lbl">食物繊維(g)</span><input class="cf-inp" id="cf_fi" type="number" inputmode="decimal" placeholder="1.2"></div>
+    </div>
+    <div class="macts">
+      <button class="mbtn cancel" onclick="closeModal('cfModal')">キャンセル</button>
+      <button class="mbtn purple" onclick="saveCustomFood()">登録する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RECIPE SAVE MODAL ══ -->
+<div class="modal-ov" id="recSaveModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title purple">💾 レシピとして保存</div>
+    <div class="modal-desc">現在の食材リストをレシピ登録します。次回から1タップで追加できます。</div>
+    <div class="cf-field"><span class="cf-lbl">レシピ名 *</span><input class="cf-inp" id="recName" placeholder="例: 鶏むね肉定食、補食セット..."></div>
+    <div id="recPreview" style="margin-top:9px;font-size:11px;color:var(--muted);line-height:1.8;"></div>
+    <div class="macts">
+      <button class="mbtn cancel" onclick="closeModal('recSaveModal')">キャンセル</button>
+      <button class="mbtn purple" onclick="confirmSaveRecipe()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RECIPE USE MODAL ══ -->
+<div class="modal-ov" id="recUseModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title purple">📋 レシピから追加</div>
+    <div id="recUseList" style="max-height:50vh;overflow-y:auto;"></div>
+    <div class="macts"><button class="mbtn cancel" onclick="closeModal('recUseModal')">閉じる</button></div>
+  </div>
+</div>
+
+<header>
+  <div class="logo">TKD<span>LOG</span></div>
+  <div class="hacts">
+    <span id="gasInd" style="font-size:10px;color:var(--muted);">Sheets:未設定</span>
+    <button class="hbtn gold" onclick="openModal('gasModal')">⚙</button>
+    <button class="hbtn green" onclick="exportCSV()">CSV</button>
+  </div>
+</header>
+
+<!-- ══ TAB: 体調・練習 ══ -->
+<div class="tab-pane active" id="tab-body">
+<main>
+
+<!-- カレンダー -->
+<div class="cal-wrap">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="changeMonth('body',-1)">‹</button>
+    <div class="cal-title" id="calTitleBody"></div>
+    <button class="cal-nav-btn" onclick="changeMonth('body',1)">›</button>
+  </div>
+  <div class="cal-grid" id="calGridBody"></div>
+  <div class="cal-sel-label" id="calLabelBody"></div>
+</div>
+
+<!-- ブロック切り替え -->
+<div class="block-switch">
+  <button class="bsw-btn active-blue" id="bswMorning" onclick="switchBlock('morning')">
+    <span class="bsw-main">🌅 朝の記録</span>
+    <span class="bsw-sub">体温・睡眠（当日朝）</span>
+  </button>
+  <button class="bsw-btn" id="bswTraining" onclick="switchBlock('training')">
+    <span class="bsw-main">💪 練習・体調</span>
+    <span class="bsw-sub">便通・調子・練習</span>
+  </button>
+</div>
+
+<!-- 朝ブロック -->
+<div id="blockMorning">
+  <div class="section">
+    <div class="sec-head open" onclick="toggleSec(this)">
+      <div class="sec-num">🌡</div><div class="sec-title">体温</div><span class="chev open">▾</span>
+    </div>
+    <div class="sec-body open">
+      <div class="bgrp" id="tempBtns">
+        <button class="btn" onclick="sel(this,'temp')">36.4</button>
+        <button class="btn" onclick="sel(this,'temp')">36.5</button>
+        <button class="btn" onclick="sel(this,'temp')">36.6</button>
+        <button class="btn" onclick="sel(this,'temp')">36.7</button>
+        <button class="btn other" onclick="sel(this,'temp')">その他</button>
+      </div>
+      <input type="number" step="0.1" inputmode="decimal" class="tinput" id="tempOther" placeholder="例: 36.9" style="display:none;">
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-head open" onclick="toggleSec(this)">
+      <div class="sec-num">🌙</div><div class="sec-title">睡眠</div><span class="chev open">▾</span>
+    </div>
+    <div class="sec-body open">
+      <div class="sleep-grid">
+        <div>
+          <span class="flabel">入眠</span>
+          <div class="bgrp bgrp-v" id="sleepInBtns">
+            <button class="btn" onclick="sel(this,'sleepIn')">0:00</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">0:30</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">1:00</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">1:30</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">2:00</button>
+            <button class="btn other" onclick="sel(this,'sleepIn')">その他</button>
+          </div>
+          <input type="time" class="tinput" id="sleepInOther" style="display:none;margin-top:7px;">
+        </div>
+        <div>
+          <span class="flabel">起床</span>
+          <div class="bgrp bgrp-v" id="sleepOutBtns">
+            <button class="btn" onclick="sel(this,'sleepOut')">6:00</button>
+            <button class="btn" onclick="sel(this,'sleepOut')">6:30</button>
+            <button class="btn" onclick="sel(this,'sleepOut')">7:00</button>
+            <button class="btn" onclick="sel(this,'sleepOut')">7:30</button>
+            <button class="btn" onclick="sel(this,'sleepOut')">8:00</button>
+            <button class="btn other" onclick="sel(this,'sleepOut')">その他</button>
+          </div>
+          <input type="time" class="tinput" id="sleepOutOther" style="display:none;margin-top:7px;">
+        </div>
+      </div>
+    </div>
+  </div>
+  <button class="save-btn blue" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
+</div>
+
+<!-- 練習・体調ブロック -->
+<div id="blockTraining" style="display:none;">
+  <div class="section">
+    <div class="sec-head open" onclick="toggleSec(this)">
+      <div class="sec-num">01</div><div class="sec-title">体調</div><span class="chev open">▾</span>
+    </div>
+    <div class="sec-body open">
+      <span class="flabel">便通</span>
+      <div class="bowel-wrap">
+        <div class="bowel-row">
+          <div class="bowel-lbl">朝</div>
+          <div class="bowel-btns">
+            <button class="bowel-btn" id="bAsa_o" onclick="selBowel('bAsa','o')">○</button>
+            <button class="bowel-btn" id="bAsa_x" onclick="selBowel('bAsa','x')">×</button>
+            <button class="bowel-btn" id="bAsa_d" onclick="selBowel('bAsa','d')">△</button>
+          </div>
+        </div>
+        <div class="bowel-row">
+          <div class="bowel-lbl">以降</div>
+          <div class="bowel-btns">
+            <button class="bowel-btn" id="bIgo_o" onclick="selBowel('bIgo','o')">○</button>
+            <button class="bowel-btn" id="bIgo_x" onclick="selBowel('bIgo','x')">×</button>
+            <button class="bowel-btn" id="bIgo_d" onclick="selBowel('bIgo','d')">△</button>
+          </div>
+        </div>
+      </div>
+      <span class="flabel">調子</span>
+      <div class="bgrp" id="choshiBtns">
+        <button class="btn" onclick="sel(this,'choshi')">◎</button>
+        <button class="btn" onclick="sel(this,'choshi')">○</button>
+        <button class="btn" onclick="sel(this,'choshi')">△</button>
+        <button class="btn" onclick="sel(this,'choshi')">×</button>
+      </div>
+      <span class="flabel">メモ（体調）</span>
+      <textarea class="tinput" id="condNote" placeholder="例: 夜眠かった、筋肉痛なし..."></textarea>
+    </div>
+  </div>
+  <div class="section">
+    <div class="sec-head open" onclick="toggleSec(this)">
+      <div class="sec-num">02</div><div class="sec-title">トレーニング</div><span class="chev open">▾</span>
+    </div>
+    <div class="sec-body open" id="trainingBody"></div>
+  </div>
+  <button class="save-btn red" onclick="saveTraining()">💪 練習・体調を保存 →</button>
+</div>
+
+</main>
+</div>
+
+<!-- ══ TAB: 食事 ══ -->
+<div class="tab-pane" id="tab-food">
+<main>
+<div class="cal-wrap">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="changeMonth('food',-1)">‹</button>
+    <div class="cal-title" id="calTitleFood"></div>
+    <button class="cal-nav-btn" onclick="changeMonth('food',1)">›</button>
+  </div>
+  <div class="cal-grid" id="calGridFood"></div>
+  <div class="cal-sel-label" id="calLabelFood"></div>
+</div>
+<div class="section">
+  <div class="sec-head open" onclick="toggleSec(this)">
+    <div class="sec-num">🍽</div><div class="sec-title">食事記録</div><span class="chev open">▾</span>
+  </div>
+  <div class="sec-body open">
+    <span class="flabel">食事タイミング</span>
+    <div class="mtabs">
+      <div class="mtab active" onclick="selMealTab(this,'朝食')">朝食</div>
+      <div class="mtab" onclick="selMealTab(this,'昼食')">昼食</div>
+      <div class="mtab" onclick="selMealTab(this,'夕食')">夕食</div>
+      <div class="mtab" onclick="selMealTab(this,'補食')">補食</div>
+    </div>
+    <div style="display:flex;gap:7px;margin-bottom:10px;">
+      <button class="btn" style="border-color:var(--purple);color:var(--purple);font-size:12px;flex:1;" onclick="openRecUse()">📋 レシピから追加</button>
+      <button class="btn" style="border-color:var(--purple);color:var(--purple);font-size:12px;flex:1;" onclick="openModal('cfModal')">＋ 手動登録</button>
+    </div>
+    <div class="fcats" id="foodCats"></div>
+    <div class="fsrch-wrap">
+      <input type="search" class="fsrch" id="foodSearch" placeholder="🔍 食材名を検索..." oninput="searchFood()" onblur="setTimeout(closeDrop,200)" autocomplete="off">
+      <div class="fdrop" id="foodDrop"></div>
+    </div>
+    <div id="gramArea" style="display:none;margin-top:11px;background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:13px;">
+      <span class="slabel">グラムを選択: <span id="selFoodName" style="color:var(--blue);font-size:12px;"></span></span>
+      <div class="gram-btns">
+        <button class="gbtn" onclick="addGram(50)">50g</button>
+        <button class="gbtn" onclick="addGram(100)">100g</button>
+        <button class="gbtn" onclick="addGram(150)">150g</button>
+        <button class="gbtn" onclick="addGram(200)">200g</button>
+      </div>
+      <div style="display:flex;gap:7px;align-items:center;">
+        <input type="number" inputmode="decimal" class="tinput" id="gramCustom" placeholder="手動入力 (g)" style="flex:1;margin-top:0;">
+        <button class="btn" style="border-color:var(--blue);color:var(--blue);white-space:nowrap;" onclick="addGramCustom()">追加</button>
+      </div>
+    </div>
+    <div id="foodList" style="margin-top:10px;"></div>
+    <div id="recSaveBar" style="display:none;text-align:right;margin-top:7px;">
+      <button class="btn" style="border-color:var(--purple);color:var(--purple);font-size:12px;" onclick="openRecSave()">💾 レシピ保存</button>
+    </div>
+    <div class="pfc-card">
+      <div class="pfc-head">TODAY'S NUTRITION</div>
+      <div class="pfc-grid">
+        <div class="pfc-cell"><div class="pfc-lbl">Protein</div><div class="pfc-val p" id="totP">0g</div></div>
+        <div class="pfc-cell"><div class="pfc-lbl">Fat</div><div class="pfc-val f" id="totF">0g</div></div>
+        <div class="pfc-cell"><div class="pfc-lbl">Carb</div><div class="pfc-val c" id="totC">0g</div></div>
+        <div class="pfc-cell"><div class="pfc-lbl">Fiber</div><div class="pfc-val fi" id="totFi">0g</div></div>
+      </div>
+      <div class="pfc-kcal" id="totKcal">0</div>
+      <div class="pfc-kcal-lbl">KCAL</div>
+    </div>
+    <span class="flabel">メモ（食事）</span>
+    <textarea class="tinput" id="foodNote" placeholder="例: 試合前なので炭水化物多め..."></textarea>
+    <button class="save-btn red" onclick="saveFood()">食事を保存 →</button>
+  </div>
+</div>
+</main>
+</div>
+
+<!-- ══ TAB: 記録 ══ -->
+<div class="tab-pane" id="tab-history">
+<main>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:11px;flex-wrap:wrap;">
+    <div class="hfbtns">
+      <button class="hfbtn active" onclick="filterHist(this,'all')">すべて</button>
+      <button class="hfbtn" onclick="filterHist(this,'morning')">🌅 朝</button>
+      <button class="hfbtn" onclick="filterHist(this,'training')">💪 練習</button>
+      <button class="hfbtn" onclick="filterHist(this,'food')">🍽 食事</button>
+    </div>
+    <button class="hbtn" onclick="syncAll()" style="font-size:11px;margin-left:auto;">☁ 一括送信</button>
+  </div>
+  <div id="histList"></div>
+</main>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="bnav-btn active" onclick="switchTab('body',this)">
+    <span class="bnav-icon">💪</span>体調・練習
+  </button>
+  <button class="bnav-btn" onclick="switchTab('food',this)">
+    <span class="bnav-icon">🍽</span>食事・栄養
+  </button>
+  <button class="bnav-btn" onclick="switchTab('history',this)">
+    <span class="bnav-icon">📅</span>記録
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  FOOD DB
+// ══════════════════════════════════════════
+const FOOD_DB=[
+  {cat:'肉類',name:'鶏むね肉(皮なし)',kcal:108,p:22.3,f:1.5,c:0.1,fi:0},
+  {cat:'肉類',name:'鶏もも肉(皮なし)',kcal:127,p:19.0,f:5.0,c:0,fi:0},
+  {cat:'肉類',name:'鶏ささみ',kcal:98,p:23.0,f:0.8,c:0,fi:0},
+  {cat:'肉類',name:'鶏手羽元',kcal:197,p:18.2,f:13.4,c:0,fi:0},
+  {cat:'肉類',name:'牛もも(赤身)',kcal:182,p:21.2,f:10.7,c:0.5,fi:0},
+  {cat:'肉類',name:'牛ヒレ',kcal:207,p:20.5,f:13.5,c:0.3,fi:0},
+  {cat:'肉類',name:'豚ロース(赤身)',kcal:150,p:22.7,f:5.6,c:0.2,fi:0},
+  {cat:'肉類',name:'豚もも肉',kcal:171,p:20.5,f:9.5,c:0.2,fi:0},
+  {cat:'肉類',name:'豚ヒレ',kcal:130,p:22.8,f:3.7,c:0.3,fi:0},
+  {cat:'肉類',name:'豚バラ肉',kcal:395,p:14.4,f:35.4,c:0.1,fi:0},
+  {cat:'肉類',name:'合いびき肉',kcal:272,p:17.5,f:21.1,c:0.3,fi:0},
+  {cat:'肉類',name:'鶏ひき肉',kcal:186,p:17.5,f:12.0,c:0,fi:0},
+  {cat:'魚介類',name:'まぐろ(赤身)',kcal:125,p:26.4,f:1.4,c:0.1,fi:0},
+  {cat:'魚介類',name:'まぐろ(中トロ)',kcal:264,p:20.1,f:27.5,c:0.1,fi:0},
+  {cat:'魚介類',name:'さけ(生)',kcal:133,p:22.3,f:4.1,c:0.1,fi:0},
+  {cat:'魚介類',name:'さば(生)',kcal:211,p:20.6,f:16.8,c:0.3,fi:0},
+  {cat:'魚介類',name:'いわし(生)',kcal:156,p:19.2,f:9.2,c:0.2,fi:0},
+  {cat:'魚介類',name:'ぶり(生)',kcal:257,p:21.4,f:17.6,c:0.3,fi:0},
+  {cat:'魚介類',name:'たら(生)',kcal:72,p:17.6,f:0.2,c:0.1,fi:0},
+  {cat:'魚介類',name:'えび(バナメイ)',kcal:82,p:19.6,f:0.2,c:0.1,fi:0},
+  {cat:'魚介類',name:'かつお(生)',kcal:114,p:25.8,f:0.5,c:0.1,fi:0},
+  {cat:'魚介類',name:'ツナ缶(水煮)',kcal:71,p:16.0,f:0.7,c:0.1,fi:0},
+  {cat:'魚介類',name:'さんま(生)',kcal:297,p:18.1,f:25.6,c:0.1,fi:0},
+  {cat:'魚介類',name:'いか(生)',kcal:83,p:17.9,f:1.2,c:0.1,fi:0},
+  {cat:'魚介類',name:'ほたて貝',kcal:72,p:13.5,f:0.9,c:1.5,fi:0},
+  {cat:'魚介類',name:'しらす干し',kcal:206,p:40.5,f:3.5,c:0.1,fi:0},
+  {cat:'卵・乳製品',name:'卵(全卵)',kcal:151,p:12.3,f:10.3,c:0.3,fi:0},
+  {cat:'卵・乳製品',name:'卵白',kcal:44,p:11.0,f:0,c:0.7,fi:0},
+  {cat:'卵・乳製品',name:'牛乳',kcal:67,p:3.3,f:3.8,c:4.8,fi:0},
+  {cat:'卵・乳製品',name:'ギリシャヨーグルト',kcal:59,p:10.0,f:0.4,c:3.6,fi:0},
+  {cat:'卵・乳製品',name:'ヨーグルト(無糖)',kcal:62,p:3.6,f:3.0,c:4.9,fi:0},
+  {cat:'卵・乳製品',name:'カッテージチーズ',kcal:105,p:13.3,f:4.5,c:1.9,fi:0},
+  {cat:'卵・乳製品',name:'豆乳(無調整)',kcal:46,p:3.6,f:2.0,c:3.1,fi:0.2},
+  {cat:'豆類',name:'豆腐(木綿)',kcal:72,p:6.6,f:4.2,c:1.6,fi:0.4},
+  {cat:'豆類',name:'豆腐(絹)',kcal:56,p:4.9,f:3.0,c:2.0,fi:0.3},
+  {cat:'豆類',name:'納豆',kcal:200,p:16.5,f:10.0,c:12.1,fi:6.7},
+  {cat:'豆類',name:'枝豆',kcal:135,p:11.5,f:6.1,c:8.8,fi:4.6},
+  {cat:'豆類',name:'ひよこ豆(ゆで)',kcal:171,p:9.5,f:2.5,c:27.4,fi:11.6},
+  {cat:'豆類',name:'レンズ豆(ゆで)',kcal:130,p:9.0,f:0.5,c:22.1,fi:9.0},
+  {cat:'プロテイン',name:'WPC プロテイン',kcal:380,p:74.0,f:7.0,c:8.0,fi:0},
+  {cat:'プロテイン',name:'WPI プロテイン',kcal:360,p:82.0,f:2.0,c:5.0,fi:0},
+  {cat:'プロテイン',name:'カゼインプロテイン',kcal:370,p:78.0,f:4.0,c:6.0,fi:0},
+  {cat:'プロテイン',name:'プロテインバー(平均)',kcal:200,p:20.0,f:7.0,c:20.0,fi:2.0},
+  {cat:'炭水化物',name:'白米(ご飯)',kcal:168,p:2.5,f:0.3,c:37.1,fi:0.3},
+  {cat:'炭水化物',name:'玄米(ご飯)',kcal:165,p:2.8,f:1.0,c:35.6,fi:1.4},
+  {cat:'炭水化物',name:'もち麦ご飯',kcal:148,p:3.2,f:0.5,c:32.1,fi:2.1},
+  {cat:'炭水化物',name:'オートミール(乾)',kcal:350,p:13.7,f:5.7,c:69.1,fi:9.4},
+  {cat:'炭水化物',name:'食パン(白)',kcal:264,p:9.3,f:4.4,c:49.2,fi:2.3},
+  {cat:'炭水化物',name:'全粒粉パン',kcal:253,p:8.5,f:3.2,c:48.5,fi:4.8},
+  {cat:'炭水化物',name:'パスタ(乾)',kcal:378,p:12.9,f:1.8,c:71.2,fi:2.7},
+  {cat:'炭水化物',name:'そば(乾)',kcal:344,p:14.0,f:2.3,c:66.7,fi:3.7},
+  {cat:'炭水化物',name:'うどん(生)',kcal:105,p:2.6,f:0.4,c:21.6,fi:0.8},
+  {cat:'いも・果物',name:'さつまいも',kcal:132,p:1.2,f:0.2,c:31.5,fi:2.3},
+  {cat:'いも・果物',name:'じゃがいも',kcal:76,p:1.6,f:0.1,c:17.6,fi:1.3},
+  {cat:'いも・果物',name:'バナナ',kcal:86,p:1.1,f:0.2,c:22.5,fi:1.1},
+  {cat:'いも・果物',name:'りんご',kcal:61,p:0.2,f:0.2,c:16.2,fi:1.4},
+  {cat:'いも・果物',name:'みかん',kcal:46,p:0.7,f:0.1,c:12.0,fi:1.0},
+  {cat:'いも・果物',name:'キウイ',kcal:53,p:1.0,f:0.2,c:13.5,fi:2.5},
+  {cat:'いも・果物',name:'いちご',kcal:34,p:0.9,f:0.1,c:8.5,fi:1.4},
+  {cat:'野菜',name:'ブロッコリー',kcal:33,p:4.3,f:0.5,c:5.2,fi:4.4},
+  {cat:'野菜',name:'ほうれん草',kcal:20,p:2.2,f:0.4,c:3.1,fi:2.8},
+  {cat:'野菜',name:'小松菜',kcal:14,p:1.5,f:0.2,c:2.4,fi:1.9},
+  {cat:'野菜',name:'トマト',kcal:19,p:0.7,f:0.1,c:4.7,fi:1.0},
+  {cat:'野菜',name:'キャベツ',kcal:23,p:1.3,f:0.2,c:5.2,fi:1.8},
+  {cat:'野菜',name:'アボカド',kcal:187,p:2.5,f:17.5,c:7.9,fi:5.3},
+  {cat:'野菜',name:'玉ねぎ',kcal:37,p:1.0,f:0.1,c:9.0,fi:1.5},
+  {cat:'野菜',name:'にんじん',kcal:41,p:0.7,f:0.1,c:9.3,fi:2.7},
+  {cat:'野菜',name:'ピーマン',kcal:22,p:0.9,f:0.2,c:5.1,fi:2.3},
+  {cat:'野菜',name:'もやし',kcal:14,p:1.7,f:0.1,c:2.6,fi:1.3},
+  {cat:'野菜',name:'きゅうり',kcal:14,p:1.0,f:0.1,c:3.0,fi:1.1},
+  {cat:'野菜',name:'しいたけ',kcal:25,p:3.0,f:0.4,c:6.4,fi:3.5},
+  {cat:'野菜',name:'えのきたけ',kcal:22,p:2.7,f:0.2,c:7.6,fi:3.9},
+  {cat:'野菜',name:'まいたけ',kcal:22,p:2.0,f:0.5,c:4.4,fi:3.5},
+  {cat:'油脂・ナッツ',name:'オリーブオイル',kcal:921,p:0,f:100,c:0,fi:0},
+  {cat:'油脂・ナッツ',name:'バター',kcal:745,p:0.6,f:81.0,c:0.2,fi:0},
+  {cat:'油脂・ナッツ',name:'アーモンド',kcal:587,p:19.6,f:51.8,c:20.9,fi:10.1},
+  {cat:'油脂・ナッツ',name:'くるみ',kcal:654,p:14.6,f:68.8,c:11.7,fi:7.5},
+  {cat:'油脂・ナッツ',name:'カシューナッツ',kcal:576,p:19.8,f:47.6,c:26.7,fi:6.7},
+  {cat:'油脂・ナッツ',name:'ピーナッツバター',kcal:640,p:25.0,f:50.0,c:20.0,fi:6.0},
+  {cat:'調味料',name:'みそ(白)',kcal:217,p:9.7,f:3.0,c:37.9,fi:4.9},
+  {cat:'調味料',name:'醤油',kcal:71,p:7.7,f:0,c:10.1,fi:0},
+  {cat:'飲料',name:'スポーツドリンク(500ml)',kcal:130,p:0,f:0,c:33.0,fi:0},
+  {cat:'飲料',name:'プロテインシェイク(自作)',kcal:200,p:30.0,f:3.0,c:15.0,fi:0},
+];
+function getAllFoods(){
+  const c=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  return [...FOOD_DB,...c];
+}
+
+// ══════════════════════════════════════════
+//  TRAINING CONFIG
+// ══════════════════════════════════════════
+const TRAININGS=[
+  {key:'SQ',label:'SQUAT',weights:['90','100','105','110']},
+  {key:'BP',label:'BENCH PRESS',weights:['60','65','70']},
+  {key:'HC',label:'HANG CLEAN',weights:['50','55','60']},
+  {key:'LSJ',label:'LANDMINE SPLIT JERK',weights:['25','27.5','30']},
+];
+const REPS=['1','2','3','4','5'],SETS=['1','2','3','4'];
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const SEL={};
+const TR_ACTIVE={};
+const BOWEL={bAsa:null,bIgo:null};
+let curFood=null,curMeal='朝食',addedFoods=[],curCat='すべて';
+let histFilter='all';
+
+// calendar state per tab
+const CAL={
+  body:{year:0,month:0,sel:''},
+  food:{year:0,month:0,sel:''}
+};
+
+// ══════════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════════
+const DOW=['日','月','火','水','木','金','土'];
+function fmt(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtJP(s){if(!s)return '';const[y,m,d]=s.split('-');return `${y}年${+m}月${+d}日（${DOW[new Date(s).getDay()]}）`;}
+
+function initCal(tab){
+  const t=new Date();
+  CAL[tab].year=t.getFullYear();CAL[tab].month=t.getMonth();CAL[tab].sel=fmt(t);
+  renderCal(tab);
+}
+function changeMonth(tab,d){
+  CAL[tab].month+=d;
+  if(CAL[tab].month>11){CAL[tab].month=0;CAL[tab].year++;}
+  if(CAL[tab].month<0){CAL[tab].month=11;CAL[tab].year--;}
+  renderCal(tab);
+}
+function renderCal(tab){
+  const {year,month,sel}=CAL[tab];
+  const todayStr=fmt(new Date());
+  const bodyDates=getBodyLogDates();
+  const foodDates=getFoodLogDates();
+  // for body tab: distinguish morning-only vs training vs both
+  const morningDates=new Set(
+    [...bodyDates].filter(d=>{const r=getBodyLog(d);return r&&r.hasMorning;})
+  );
+  const trainingDates=new Set(
+    [...bodyDates].filter(d=>{const r=getBodyLog(d);return r&&r.hasTraining;})
+  );
+
+  const titleEl=document.getElementById('calTitle'+cap(tab));
+  const gridEl=document.getElementById('calGrid'+cap(tab));
+  const labelEl=document.getElementById('calLabel'+cap(tab));
+  titleEl.textContent=`${year}年${month+1}月`;
+  labelEl.textContent=fmtJP(sel);
+
+  let h=DOW.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const first=new Date(year,month,1).getDay();
+  const last=new Date(year,month+1,0).getDate();
+  const prevLast=new Date(year,month,0).getDate();
+  for(let i=0;i<first;i++) h+=`<div class="cal-day other-m">${prevLast-first+1+i}</div>`;
+  for(let d=1;d<=last;d++){
+    const s=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday=s===todayStr,isSel=s===sel;
+    let dotCls='';
+    if(tab==='body'){
+      const m=morningDates.has(s),tr=trainingDates.has(s);
+      if(m&&tr)dotCls='has-both';else if(m)dotCls='has-morning';else if(tr)dotCls='has-training';
+    } else {
+      if(foodDates.has(s))dotCls='has-training';
+    }
+    const cls=['cal-day',isToday?'is-today':'',isSel?'is-sel':'',dotCls].filter(Boolean).join(' ');
+    h+=`<div class="${cls}" onclick="selDay('${tab}','${s}')">${d}</div>`;
+  }
+  const rem=(7-((first+last)%7))%7;
+  for(let i=1;i<=rem;i++) h+=`<div class="cal-day other-m">${i}</div>`;
+  gridEl.innerHTML=h;
+}
+function selDay(tab,s){CAL[tab].sel=s;renderCal(tab);updateBswBadges();}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+// ══════════════════════════════════════════
+//  BLOCK SWITCH (朝 / 練習)
+// ══════════════════════════════════════════
+function switchBlock(name){
+  document.getElementById('blockMorning').style.display=name==='morning'?'':'none';
+  document.getElementById('blockTraining').style.display=name==='training'?'':'none';
+  document.getElementById('bswMorning').className='bsw-btn'+(name==='morning'?' active-blue':'');
+  document.getElementById('bswTraining').className='bsw-btn'+(name==='training'?' active-red':'');
+  updateBswBadges();
+}
+function updateBswBadges(){
+  const date=CAL.body.sel;
+  if(!date)return;
+  const rec=getBodyLog(date)||{};
+  document.getElementById('bswMorning').querySelector('.bsw-sub').textContent=
+    rec.hasMorning?'✓ 保存済み':'体温・睡眠（当日朝）';
+  document.getElementById('bswTraining').querySelector('.bsw-sub').textContent=
+    rec.hasTraining?'✓ 保存済み':'便通・調子・練習';
+}
+
+// ══════════════════════════════════════════
+//  BOWEL
+// ══════════════════════════════════════════
+function selBowel(key,val){
+  BOWEL[key]=BOWEL[key]===val?null:val;
+  ['o','x','d'].forEach(v=>{
+    const el=document.getElementById(`${key}_${v}`);
+    if(el)el.className='bowel-btn'+(BOWEL[key]===v?` sel-${v}`:'');
+  });
+}
+function getBowelText(){
+  const m={o:'○',x:'×',d:'△'};
+  if(!BOWEL.bAsa&&!BOWEL.bIgo)return null;
+  return `朝:${BOWEL.bAsa?m[BOWEL.bAsa]:'-'} 以降:${BOWEL.bIgo?m[BOWEL.bIgo]:'-'}`;
+}
+
+// ══════════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════════
+function toggleSec(h){
+  const b=h.nextElementSibling,ch=h.querySelector('.chev');
+  const o=b.classList.toggle('open');
+  ch.classList.toggle('open',o);h.classList.toggle('open',o);
+}
+function sel(btn,key){
+  document.getElementById(key+'Btns').querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const isOther=btn.classList.contains('other');
+  const oe=document.getElementById(key+'Other');
+  if(oe)oe.style.display=isOther?'block':'none';
+  SEL[key]=isOther?'__other__':btn.textContent;
+}
+function getV(key){
+  const s=SEL[key];if(!s)return null;
+  if(s==='__other__'){const e=document.getElementById(key+'Other');return e&&e.value?e.value:null;}
+  return s;
+}
+function toggleTr(key){
+  TR_ACTIVE[key]=!TR_ACTIVE[key];
+  const t=document.getElementById('tog'+key);
+  const b=document.getElementById('trBody'+key);
+  const h=document.getElementById('trHead'+key);
+  t.textContent=TR_ACTIVE[key]?'ON':'OFF';
+  t.classList.toggle('on',TR_ACTIVE[key]);
+  b.classList.toggle('show',TR_ACTIVE[key]);
+  if(h)h.classList.toggle('open',TR_ACTIVE[key]);
+}
+function switchTab(name,btn){
+  ['body','food','history'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===name));
+  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(name==='history')renderHistory();
+  if(name==='food')renderCal('food');
+}
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.modal-ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('show');}));
+
+// ══════════════════════════════════════════
+//  BUILD TRAINING UI
+// ══════════════════════════════════════════
+function buildTrainingUI(){
+  let h='';
+  TRAININGS.forEach(t=>{
+    h+=`<div class="tr-item">
+      <div class="tr-head" id="trHead${t.key}">
+        <span class="tr-title">${t.label}</span>
+        <button class="tog" id="tog${t.key}" onclick="toggleTr('${t.key}')">OFF</button>
+      </div>
+      <div class="tr-body" id="trBody${t.key}">
+        <div class="r3">
+          <div><span class="slabel">重量(kg)</span>
+            <div class="bgrp bgrp-v" id="${t.key}_wBtns">
+              ${t.weights.map(w=>`<button class="btn" onclick="sel(this,'${t.key}_w')">${w}</button>`).join('')}
+              <button class="btn other" onclick="sel(this,'${t.key}_w')">その他</button>
+            </div>
+            <input type="number" inputmode="decimal" class="tinput" id="${t.key}_wOther" placeholder="kg" style="display:none;"></div>
+          <div><span class="slabel">回数</span>
+            <div class="bgrp bgrp-v" id="${t.key}_rBtns">
+              ${REPS.map(r=>`<button class="btn" onclick="sel(this,'${t.key}_r')">${r}</button>`).join('')}
+              <button class="btn other" onclick="sel(this,'${t.key}_r')">その他</button>
+            </div>
+            <input type="number" inputmode="numeric" class="tinput" id="${t.key}_rOther" placeholder="回" style="display:none;"></div>
+          <div><span class="slabel">セット数</span>
+            <div class="bgrp bgrp-v" id="${t.key}_sBtns">
+              ${SETS.map(s=>`<button class="btn" onclick="sel(this,'${t.key}_s')">${s}</button>`).join('')}
+              <button class="btn other" onclick="sel(this,'${t.key}_s')">その他</button>
+            </div>
+            <input type="number" inputmode="numeric" class="tinput" id="${t.key}_sOther" placeholder="set" style="display:none;"></div>
+        </div>
+      </div></div>`;
+  });
+  h+=`<div class="tr-item"><div class="tr-head" id="trHeadTAB">
+    <span class="tr-title">TABATA</span>
+    <button class="tog" id="togTAB" onclick="toggleTr('TAB')">OFF</button></div>
+    <div class="tr-body" id="trBodyTAB">
+      <span class="slabel">種目</span>
+      <div class="bgrp" id="TAB_typeBtns">
+        <button class="btn" onclick="sel(this,'TAB_type')">手足</button>
+        <button class="btn" onclick="sel(this,'TAB_type')">ラン</button>
+        <button class="btn other" onclick="sel(this,'TAB_type')">その他</button>
+      </div>
+      <input type="text" class="tinput" id="TAB_typeOther" placeholder="種目" style="display:none;">
+    </div></div>`;
+  h+=`<div class="tr-item"><div class="tr-head" id="trHeadTKD">
+    <span class="tr-title">TAEKWONDO</span>
+    <button class="tog" id="togTKD" onclick="toggleTr('TKD')">OFF</button></div>
+    <div class="tr-body" id="trBodyTKD">
+      <span class="slabel" style="margin-bottom:7px;display:block;">▸ ミット打ち</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+        <div><span class="slabel">分数</span>
+          <div class="bgrp bgrp-v" id="MIT_mBtns">
+            <button class="btn" onclick="sel(this,'MIT_m')">2分</button>
+            <button class="btn" onclick="sel(this,'MIT_m')">2.5分</button>
+            <button class="btn" onclick="sel(this,'MIT_m')">3分</button>
+            <button class="btn other" onclick="sel(this,'MIT_m')">その他</button>
+          </div>
+          <input type="text" class="tinput" id="MIT_mOther" placeholder="分" style="display:none;"></div>
+        <div><span class="slabel">ラウンド</span>
+          <div class="bgrp bgrp-v" id="MIT_rBtns">
+            ${[1,2,3,4,5].map(n=>`<button class="btn" onclick="sel(this,'MIT_r')">${n}</button>`).join('')}
+            <button class="btn other" onclick="sel(this,'MIT_r')">その他</button>
+          </div>
+          <input type="number" inputmode="numeric" class="tinput" id="MIT_rOther" placeholder="R" style="display:none;"></div>
+      </div>
+      <div class="divider"></div>
+      <span class="slabel" style="margin-bottom:7px;display:block;">▸ スパーリング</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+        <div><span class="slabel">分数</span>
+          <div class="bgrp bgrp-v" id="SPA_mBtns">
+            <button class="btn" onclick="sel(this,'SPA_m')">2分</button>
+            <button class="btn" onclick="sel(this,'SPA_m')">2.5分</button>
+            <button class="btn" onclick="sel(this,'SPA_m')">3分</button>
+            <button class="btn other" onclick="sel(this,'SPA_m')">その他</button>
+          </div>
+          <input type="text" class="tinput" id="SPA_mOther" placeholder="分" style="display:none;"></div>
+        <div><span class="slabel">ラウンド</span>
+          <div class="bgrp bgrp-v" id="SPA_rBtns">
+            ${[1,2,3,4,5].map(n=>`<button class="btn" onclick="sel(this,'SPA_r')">${n}</button>`).join('')}
+            <button class="btn other" onclick="sel(this,'SPA_r')">その他</button>
+          </div>
+          <input type="number" inputmode="numeric" class="tinput" id="SPA_rOther" placeholder="R" style="display:none;"></div>
+      </div>
+      <div class="divider"></div>
+      <span class="slabel">▸ その他</span>
+      <input type="text" class="tinput" id="TKD_other" placeholder="型練習、フットワーク...">
+    </div></div>`;
+  h+=`<div class="tr-item"><div class="tr-head" id="trHeadOTR">
+    <span class="tr-title">その他のトレーニング</span>
+    <button class="tog" id="togOTR" onclick="toggleTr('OTR')">OFF</button></div>
+    <div class="tr-body" id="trBodyOTR">
+      <textarea class="tinput" id="OTR_text" placeholder="例: 縄跳び30分..."></textarea>
+    </div></div>`;
+  document.getElementById('trainingBody').innerHTML=h;
+}
+
+// ══════════════════════════════════════════
+//  FOOD UI
+// ══════════════════════════════════════════
+function buildFoodCats(){
+  const cats=['すべて',...new Set(FOOD_DB.map(f=>f.cat))];
+  const custom=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  if(custom.length)cats.push('⭐カスタム');
+  document.getElementById('foodCats').innerHTML=
+    cats.map(c=>`<div class="fcat${c===curCat?' active':''}" onclick="selectCat(this,'${c}')">${c}</div>`).join('');
+}
+function selectCat(el,cat){
+  document.querySelectorAll('.fcat').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');curCat=cat;
+  if(document.getElementById('foodSearch').value)searchFood();
+}
+function selMealTab(el,m){
+  document.querySelectorAll('.mtab').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');curMeal=m;
+}
+function searchFood(){
+  const q=document.getElementById('foodSearch').value.trim().toLowerCase();
+  const dd=document.getElementById('foodDrop');
+  if(!q){dd.classList.remove('show');return;}
+  let db=getAllFoods();
+  if(curCat==='⭐カスタム')db=db.filter(f=>f.custom);
+  else if(curCat!=='すべて')db=db.filter(f=>f.cat===curCat);
+  const res=db.filter(f=>f.name.toLowerCase().includes(q)).slice(0,10);
+  if(!res.length){dd.innerHTML='<div class="fopt" style="color:var(--muted)">見つかりません — ＋ 手動登録で追加できます</div>';dd.classList.add('show');return;}
+  dd.innerHTML=res.map((f,i)=>`<div class="fopt" onclick="pickFood(${getAllFoods().indexOf(f)})">
+    <span style="color:var(--muted);font-size:10px;">[${f.cat}]</span> ${f.custom?'⭐ ':''}${f.name}
+    <div class="fopt-sub">P:${f.p}g F:${f.f}g C:${f.c}g 繊維:${f.fi||0}g / 100g（${f.kcal}kcal）</div>
+  </div>`).join('');
+  dd.classList.add('show');
+}
+function closeDrop(){document.getElementById('foodDrop').classList.remove('show');}
+function pickFood(i){
+  curFood=getAllFoods()[i];
+  document.getElementById('foodSearch').value=curFood.name;
+  document.getElementById('selFoodName').textContent=curFood.name;
+  document.getElementById('gramArea').style.display='block';
+  document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('active'));
+  closeDrop();
+}
+function addGram(g){
+  if(!curFood)return;
+  document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  pushFood(curFood,g);
+}
+function addGramCustom(){
+  const g=parseFloat(document.getElementById('gramCustom').value);
+  if(!g||g<=0){toast('グラムを入力してください','err');return;}
+  if(!curFood)return;
+  pushFood(curFood,g);
+  document.getElementById('gramCustom').value='';
+}
+function pushFood(food,grams){
+  addedFoods.push({food,grams,meal:curMeal,id:Date.now()+Math.random()});
+  document.getElementById('foodSearch').value='';
+  document.getElementById('gramArea').style.display='none';
+  curFood=null;renderFoodList();
+}
+function removeFood(id){addedFoods=addedFoods.filter(e=>e.id!==id);renderFoodList();}
+function renderFoodList(){
+  const c=document.getElementById('foodList');
+  c.innerHTML=addedFoods.map(e=>{
+    const r=e.grams/100;
+    return `<div class="food-row">
+      <div class="food-row-info">
+        <div class="food-row-name">${e.food.custom?'⭐ ':''}${e.food.name} <span style="color:var(--muted);font-size:10px;">[${e.meal}]</span></div>
+        <div class="food-row-detail">${e.grams}g → ${Math.round(e.food.kcal*r)}kcal / P:${(e.food.p*r).toFixed(1)} F:${(e.food.f*r).toFixed(1)} C:${(e.food.c*r).toFixed(1)} 繊維:${((e.food.fi||0)*r).toFixed(1)}g</div>
+      </div>
+      <button class="fdel" onclick="removeFood(${e.id})">✕</button>
+    </div>`;
+  }).join('');
+  document.getElementById('recSaveBar').style.display=addedFoods.length?'block':'none';
+  updatePFC();
+}
+function updatePFC(){
+  let tp=0,tf=0,tc=0,tk=0,tfi=0;
+  addedFoods.forEach(e=>{const r=e.grams/100;tp+=e.food.p*r;tf+=e.food.f*r;tc+=e.food.c*r;tk+=e.food.kcal*r;tfi+=(e.food.fi||0)*r;});
+  document.getElementById('totP').textContent=tp.toFixed(1)+'g';
+  document.getElementById('totF').textContent=tf.toFixed(1)+'g';
+  document.getElementById('totC').textContent=tc.toFixed(1)+'g';
+  document.getElementById('totFi').textContent=tfi.toFixed(1)+'g';
+  document.getElementById('totKcal').textContent=Math.round(tk);
+}
+
+// ══════════════════════════════════════════
+//  CUSTOM FOOD
+// ══════════════════════════════════════════
+function saveCustomFood(){
+  const name=document.getElementById('cf_name').value.trim();
+  const kcal=parseFloat(document.getElementById('cf_kcal').value);
+  if(!name||!kcal){toast('食材名とカロリーは必須です','err');return;}
+  const food={cat:document.getElementById('cf_cat').value.trim()||'カスタム',name,kcal,
+    p:parseFloat(document.getElementById('cf_p').value)||0,
+    f:parseFloat(document.getElementById('cf_f').value)||0,
+    c:parseFloat(document.getElementById('cf_c').value)||0,
+    fi:parseFloat(document.getElementById('cf_fi').value)||0,
+    custom:true,id:'cf_'+Date.now()};
+  const c=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  c.push(food);localStorage.setItem('tkd_custom_foods',JSON.stringify(c));
+  buildFoodCats();closeModal('cfModal');
+  toast(`「${name}」を登録しました`,'ok');
+}
+
+// ══════════════════════════════════════════
+//  RECIPE
+// ══════════════════════════════════════════
+function getRec(){try{return JSON.parse(localStorage.getItem('tkd_recipes')||'[]');}catch{return[];}}
+function saveRec(a){localStorage.setItem('tkd_recipes',JSON.stringify(a));}
+function openRecSave(){
+  if(!addedFoods.length){toast('食材を追加してください','err');return;}
+  document.getElementById('recName').value='';
+  document.getElementById('recPreview').textContent=addedFoods.map(e=>`・${e.food.name} ${e.grams}g [${e.meal}]`).join('\n');
+  openModal('recSaveModal');
+}
+function confirmSaveRecipe(){
+  const name=document.getElementById('recName').value.trim();
+  if(!name){toast('レシピ名を入力してください','err');return;}
+  let tp=0,tf=0,tc=0,tk=0,tfi=0;
+  addedFoods.forEach(e=>{const r=e.grams/100;tp+=e.food.p*r;tf+=e.food.f*r;tc+=e.food.c*r;tk+=e.food.kcal*r;tfi+=(e.food.fi||0)*r;});
+  const rec={id:'rec_'+Date.now(),name,items:addedFoods.map(e=>({food:e.food,grams:e.grams,meal:e.meal})),
+    totalKcal:Math.round(tk),totalP:tp.toFixed(1),totalF:tf.toFixed(1),totalC:tc.toFixed(1),totalFi:tfi.toFixed(1),
+    createdAt:new Date().toLocaleDateString('ja-JP')};
+  const r=getRec();r.push(rec);saveRec(r);
+  closeModal('recSaveModal');toast(`レシピ「${name}」を保存しました`,'ok');
+}
+function openRecUse(){
+  const recs=getRec();
+  const c=document.getElementById('recUseList');
+  if(!recs.length){c.innerHTML='<div class="empty">レシピがありません。<br>食材を追加後「💾 レシピ保存」で登録できます。</div>';}
+  else c.innerHTML=recs.map(r=>`
+    <div class="recipe-row">
+      <div style="flex:1;min-width:0;">
+        <div class="recipe-name">📋 ${r.name}</div>
+        <div class="recipe-detail">${r.totalKcal}kcal / P:${r.totalP}g 繊維:${r.totalFi}g | ${r.items.length}品</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+        <button class="recipe-add" onclick="applyRec('${r.id}')">追加</button>
+        <button class="fdel" onclick="delRec('${r.id}')">削除</button>
+      </div>
+    </div>`).join('');
+  openModal('recUseModal');
+}
+function applyRec(id){
+  const rec=getRec().find(r=>r.id===id);if(!rec)return;
+  rec.items.forEach(item=>addedFoods.push({food:item.food,grams:item.grams,meal:item.meal||curMeal,id:Date.now()+Math.random()}));
+  renderFoodList();closeModal('recUseModal');toast(`「${rec.name}」を追加しました`,'ok');
+}
+function delRec(id){saveRec(getRec().filter(r=>r.id!==id));openRecUse();}
+
+// ══════════════════════════════════════════
+//  SAVE LOGS  ─ 1日1レコード（upsert方式）
+// ══════════════════════════════════════════
+// body用: キー "body_YYYY-MM-DD"
+// food用: キー "food_YYYY-MM-DD"
+function getBodyLog(date){
+  try{return JSON.parse(localStorage.getItem('body_'+date)||'null');}catch{return null;}
+}
+function setBodyLog(date,rec){localStorage.setItem('body_'+date,JSON.stringify(rec));}
+function getFoodLog(date){
+  try{return JSON.parse(localStorage.getItem('food_'+date)||'null');}catch{return null;}
+}
+function setFoodLog(date,rec){localStorage.setItem('food_'+date,JSON.stringify(rec));}
+
+// 全ログを日付降順で返す（記録タブ・CSV用）
+function getLogs(){
+  const keys=Object.keys(localStorage).filter(k=>k.startsWith('body_')||k.startsWith('food_'));
+  const logs=[];
+  keys.forEach(k=>{try{const r=JSON.parse(localStorage.getItem(k));if(r)logs.push(r);}catch{}});
+  return logs.sort((a,b)=>b.date.localeCompare(a.date));
+}
+function getBodyLogDates(){
+  return new Set(Object.keys(localStorage).filter(k=>k.startsWith('body_')).map(k=>k.slice(5)));
+}
+function getFoodLogDates(){
+  return new Set(Object.keys(localStorage).filter(k=>k.startsWith('food_')).map(k=>k.slice(5)));
+}
+
+// bodyテキストを再構築（morning+trainingを1つのテキストにまとめる）
+function buildBodyText(rec){
+  const lines=['【体調・練習記録】'];
+  if(rec.temp)lines.push('体温: '+rec.temp+'°C');
+  if(rec.sleepIn||rec.sleepOut)lines.push('睡眠: '+(rec.sleepIn||'?')+' → '+(rec.sleepOut||'?'));
+  if(rec.bOtsu)lines.push('便通: '+rec.bOtsu);
+  if(rec.choshi)lines.push('調子: '+rec.choshi);
+  if(rec.condNote)lines.push('メモ: '+rec.condNote);
+  TRAININGS.forEach(t=>{
+    const w=rec[t.key+'_w'],r=rec[t.key+'_r'],s=rec[t.key+'_s'];
+    if(w||r||s)lines.push(`${t.label}: ${[w?w+'kg':'',r?r+'回':'',s?s+'set':''].filter(Boolean).join('×')}`);
+  });
+  if(rec.tabata)lines.push('タバタ: '+rec.tabata);
+  if(rec.mitt)lines.push('ミット: '+rec.mitt);
+  if(rec.spar)lines.push('スパー: '+rec.spar);
+  if(rec.tkdOther)lines.push('TKD他: '+rec.tkdOther);
+  if(rec.otherTrn)lines.push('その他: '+rec.otherTrn);
+  return lines.join('\n');
+}
+
+// 朝の記録（体温・睡眠）→ 選択日にupsert
+function saveMorning(){
+  const date=CAL.body.sel;
+  if(!date){toast('日付を選択してください','err');return;}
+  const temp=getV('temp'),sleepIn=getV('sleepIn'),sleepOut=getV('sleepOut');
+  if(!temp&&!sleepIn&&!sleepOut){toast('体温または睡眠を入力してください','err');return;}
+  // 既存レコードにマージ（なければ新規）
+  const rec=getBodyLog(date)||{date,type:'body',synced:false};
+  if(temp)rec.temp=temp;
+  if(sleepIn)rec.sleepIn=sleepIn;
+  if(sleepOut)rec.sleepOut=sleepOut;
+  rec.hasMorning=true;
+  rec.text=buildBodyText(rec);
+  rec.synced=false;
+  setBodyLog(date,rec);
+  renderCal('body');updateBswBadges();
+  sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
+  toast('🌅 朝の記録を保存しました','ok');
+}
+
+// 練習・体調 → 選択日にupsert
+function saveTraining(){
+  const date=CAL.body.sel;
+  if(!date){toast('日付を選択してください','err');return;}
+  const bOtsu=getBowelText(),choshi=getV('choshi'),condNote=document.getElementById('condNote').value;
+  const trData={
+    bOtsu,choshi,condNote,
+    SQ_w:getV('SQ_w'),SQ_r:getV('SQ_r'),SQ_s:getV('SQ_s'),
+    BP_w:getV('BP_w'),BP_r:getV('BP_r'),BP_s:getV('BP_s'),
+    HC_w:getV('HC_w'),HC_r:getV('HC_r'),HC_s:getV('HC_s'),
+    LSJ_w:getV('LSJ_w'),LSJ_r:getV('LSJ_r'),LSJ_s:getV('LSJ_s'),
+    tabata:TR_ACTIVE['TAB']?getV('TAB_type'):null,
+    mitt:TR_ACTIVE['TKD']?(getV('MIT_m')&&getV('MIT_r')?getV('MIT_m')+'×'+getV('MIT_r')+'R':null):null,
+    spar:TR_ACTIVE['TKD']?(getV('SPA_m')&&getV('SPA_r')?getV('SPA_m')+'×'+getV('SPA_r')+'R':null):null,
+    tkdOther:TR_ACTIVE['TKD']?document.getElementById('TKD_other').value:null,
+    otherTrn:TR_ACTIVE['OTR']?document.getElementById('OTR_text').value:null,
+  };
+  const hasAny=Object.values(trData).some(v=>v);
+  if(!hasAny){toast('何か入力してください','err');return;}
+  // 既存レコードにマージ
+  const rec=getBodyLog(date)||{date,type:'body',synced:false};
+  Object.assign(rec,trData);
+  rec.hasTraining=true;
+  rec.text=buildBodyText(rec);
+  rec.synced=false;
+  setBodyLog(date,rec);
+  renderCal('body');updateBswBadges();
+  sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
+  toast('💪 練習・体調を保存しました','ok');
+}
+
+// 食事
+function saveFood(){
+  const date=CAL.food.sel;
+  if(!date){toast('日付を選択してください','err');return;}
+  if(!addedFoods.length){toast('食材を追加してください','err');return;}
+  let tp=0,tf=0,tc=0,tk=0,tfi=0;
+  addedFoods.forEach(e=>{const r=e.grams/100;tp+=e.food.p*r;tf+=e.food.f*r;tc+=e.food.c*r;tk+=e.food.kcal*r;tfi+=(e.food.fi||0)*r;});
+  const note=document.getElementById('foodNote').value;
+  const lines=['【食事記録】'];
+  const meals={};
+  addedFoods.forEach(e=>{if(!meals[e.meal])meals[e.meal]=[];meals[e.meal].push(e);});
+  Object.entries(meals).forEach(([m,items])=>{
+    lines.push('['+m+']');
+    items.forEach(e=>{const r=e.grams/100;
+      lines.push(`  ${e.food.name} ${e.grams}g → ${Math.round(e.food.kcal*r)}kcal P:${(e.food.p*r).toFixed(1)}g C:${(e.food.c*r).toFixed(1)}g 繊維:${((e.food.fi||0)*r).toFixed(1)}g`);
+    });
+  });
+  lines.push(`合計: ${Math.round(tk)}kcal P:${tp.toFixed(1)}g F:${tf.toFixed(1)}g C:${tc.toFixed(1)}g 繊維:${tfi.toFixed(1)}g`);
+  if(note)lines.push('メモ: '+note);
+  const rec={date,type:'food',note,totalKcal:tk,totalP:tp,totalF:tf,totalC:tc,totalFi:tfi,
+    text:lines.join('\n'),synced:false,pfc:{p:tp,f:tf,c:tc,kcal:tk,fi:tfi},
+    items:addedFoods.map(e=>{const r=e.grams/100;return{meal:e.meal,name:e.food.name,grams:e.grams,kcal:e.food.kcal*r,p:e.food.p*r,f:e.food.f*r,c:e.food.c*r,fi:(e.food.fi||0)*r};})};
+  setFoodLog(date,rec);
+  renderCal('food');
+  sendGAS({type:'food',food:rec}).then(ok=>{if(ok){rec.synced=true;setFoodLog(date,rec);}});
+  addedFoods=[];renderFoodList();
+  document.getElementById('foodNote').value='';
+  toast('食事を保存しました','ok');
+}
+
+// ══════════════════════════════════════════
+//  GAS
+// ══════════════════════════════════════════
+function getGasUrl(){return localStorage.getItem('tkd_gas_url')||'';}
+function setGasUrl(u){localStorage.setItem('tkd_gas_url',u);}
+function updateGasInd(){
+  const u=getGasUrl(),el=document.getElementById('gasInd');
+  el.textContent=u?'Sheets:✓':'Sheets:未設定';
+  el.style.color=u?'var(--green)':'var(--muted)';
+}
+async function sendGAS(data){
+  const url=getGasUrl();if(!url)return false;
+  try{const r=await fetch(url,{method:'POST',body:JSON.stringify(data)});const j=await r.json();return j.status==='ok';}catch{return false;}
+}
+async function syncAll(){
+  const url=getGasUrl();
+  if(!url){toast('Sheets連携が未設定です','err');return;}
+  const bodyKeys=Object.keys(localStorage).filter(k=>k.startsWith('body_'));
+  const foodKeys=Object.keys(localStorage).filter(k=>k.startsWith('food_'));
+  let ok=0;
+  for(const k of bodyKeys){
+    const rec=JSON.parse(localStorage.getItem(k)||'null');
+    if(rec&&!rec.synced&&await sendGAS({type:'body',body:rec})){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));ok++;}
+  }
+  for(const k of foodKeys){
+    const rec=JSON.parse(localStorage.getItem(k)||'null');
+    if(rec&&!rec.synced&&await sendGAS({type:'food',food:rec})){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));ok++;}
+  }
+  renderHistory();toast(ok?`${ok}件を送信しました`:'未送信の記録はありません','ok');
+}
+async function testAndSaveGas(){
+  const url=document.getElementById('gasUrlInput').value.trim();
+  const st=document.getElementById('gasSt');
+  if(!url){st.textContent='URLを入力してください';return;}
+  st.textContent='テスト中...';st.className='gas-st';
+  try{
+    const r=await fetch(url);const j=await r.json();
+    if(j.status==='ok'){setGasUrl(url);updateGasInd();st.textContent='✓ 接続成功！';st.className='gas-st ok';setTimeout(()=>closeModal('gasModal'),1200);}
+    else{st.textContent='エラーが返りました';st.className='gas-st err';}
+  }catch{st.textContent='接続失敗 — デプロイ設定を確認してください';st.className='gas-st err';}
+}
+
+// ══════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════
+function filterHist(btn,f){
+  document.querySelectorAll('.hfbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');histFilter=f;renderHistory();
+}
+function renderHistory(){
+  const c=document.getElementById('histList');if(!c)return;
+  // 全ログ取得（body+food混合、日付降順）
+  const bodyKeys=Object.keys(localStorage).filter(k=>k.startsWith('body_')).sort().reverse();
+  const foodKeys=Object.keys(localStorage).filter(k=>k.startsWith('food_')).sort().reverse();
+  // 全日付をまとめてソート
+  const allDates=[...new Set([...bodyKeys.map(k=>k.slice(5)),...foodKeys.map(k=>k.slice(5))])].sort().reverse();
+  if(!allDates.length){c.innerHTML='<div class="empty">記録はまだありません</div>';return;}
+
+  let html='';
+  for(const date of allDates){
+    const body=getBodyLog(date);
+    const food=getFoodLog(date);
+    if(histFilter==='morning'&&(!body||!body.hasMorning))continue;
+    if(histFilter==='training'&&(!body||!body.hasTraining))continue;
+    if(histFilter==='food'&&!food)continue;
+    if(histFilter==='body'&&!body)continue;
+
+    html+=`<div class="log-card" style="border-left:3px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:44px;">
+        <div class="log-date">${date}</div>
+        <div style="display:flex;gap:4px;">
+          ${body?.hasMorning?'<span style="font-size:10px;background:rgba(59,130,246,.15);color:var(--blue);border-radius:4px;padding:1px 6px;">🌅 朝</span>':''}
+          ${body?.hasTraining?'<span style="font-size:10px;background:rgba(232,25,44,.12);color:var(--red);border-radius:4px;padding:1px 6px;">💪 練習</span>':''}
+          ${food?'<span style="font-size:10px;background:rgba(34,197,94,.12);color:var(--green);border-radius:4px;padding:1px 6px;">🍽 食事</span>':''}
+          ${(body?.synced&&(!food||food.synced))?'<span style="font-size:10px;color:var(--green);">☁✓</span>':''}
+        </div>
+      </div>
+      <button class="log-del" onclick="delLog('${date}')">✕</button>`;
+    if(body)html+=`<div class="log-text" style="margin-bottom:${food?'10px':'0'};">${escHtml(body.text)}</div>`;
+    if(food)html+=`<div class="log-text">${escHtml(food.text)}</div>`;
+    html+='</div>';
+  }
+  if(!html)html='<div class="empty">記録はまだありません</div>';
+  c.innerHTML=html;
+}
+function delLog(date){
+  localStorage.removeItem('body_'+date);
+  localStorage.removeItem('food_'+date);
+  renderHistory();renderCal('body');renderCal('food');updateBswBadges();
+}
+
+// ══════════════════════════════════════════
+//  CSV
+// ══════════════════════════════════════════
+function exportCSV(){
+  const allDates=[...new Set([
+    ...Object.keys(localStorage).filter(k=>k.startsWith('body_')).map(k=>k.slice(5)),
+    ...Object.keys(localStorage).filter(k=>k.startsWith('food_')).map(k=>k.slice(5))
+  ])].sort().reverse();
+  if(!allDates.length){toast('記録がありません','err');return;}
+  const rows=[['日付','体温','入眠','起床','便通','調子','SQUAT','BENCH','HANG CLEAN','SPLIT JERK','タバタ','ミット','スパー','TKD他','その他','食事kcal','P(g)','F(g)','C(g)','繊維(g)','送信済']];
+  allDates.forEach(date=>{
+    const b=getBodyLog(date)||{};
+    const f=getFoodLog(date)||{};
+    const pfc=f.pfc||{};
+    rows.push([
+      date,
+      b.temp||'',b.sleepIn||'',b.sleepOut||'',b.bOtsu||'',b.choshi||'',
+      b.SQ_w&&b.SQ_r&&b.SQ_s?`${b.SQ_w}kg×${b.SQ_r}×${b.SQ_s}set`:'',
+      b.BP_w&&b.BP_r&&b.BP_s?`${b.BP_w}kg×${b.BP_r}×${b.BP_s}set`:'',
+      b.HC_w&&b.HC_r&&b.HC_s?`${b.HC_w}kg×${b.HC_r}×${b.HC_s}set`:'',
+      b.LSJ_w&&b.LSJ_r&&b.LSJ_s?`${b.LSJ_w}kg×${b.LSJ_r}×${b.LSJ_s}set`:'',
+      b.tabata||'',b.mitt||'',b.spar||'',b.tkdOther||'',b.otherTrn||'',
+      pfc.kcal?Math.round(pfc.kcal):'',
+      pfc.p?pfc.p.toFixed(1):'',pfc.f?pfc.f.toFixed(1):'',
+      pfc.c?pfc.c.toFixed(1):'',pfc.fi?pfc.fi.toFixed(1):'',
+      (b.synced&&f.synced)||(b.synced&&!f.date)||(f.synced&&!b.date)?'済':'未送信'
+    ]);
+  });
+  const blob=new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='tkd-log-'+fmt(new Date())+'.csv';a.click();
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+let _tt;
+function toast(msg,type=''){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className='toast show'+(type?' '+type:'');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+buildTrainingUI();
+buildFoodCats();
+initCal('body');
+initCal('food');
+renderHistory();
+updateGasInd();
+updateBswBadges();
+</script>
+</body>
+</html>
