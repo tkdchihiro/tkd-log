@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>TKD Log</title>
+<script src="fooddb.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;700&display=swap');
 :root{
@@ -295,6 +296,7 @@ textarea.tinput{resize:none;min-height:70px;}
       <div class="cf-field"><span class="cf-lbl">脂質F(g)</span><input class="cf-inp" id="cf_f" type="number" inputmode="decimal" placeholder="2.5"></div>
       <div class="cf-field"><span class="cf-lbl">炭水化物C(g)</span><input class="cf-inp" id="cf_c" type="number" inputmode="decimal" placeholder="10.0"></div>
       <div class="cf-field"><span class="cf-lbl">食物繊維(g)</span><input class="cf-inp" id="cf_fi" type="number" inputmode="decimal" placeholder="1.2"></div>
+      <div class="cf-field"><span class="cf-lbl">塩分Na(mg)</span><input class="cf-inp" id="cf_na" type="number" inputmode="decimal" placeholder="200"></div>
     </div>
     <div class="macts">
       <button class="mbtn cancel" onclick="closeModal('cfModal')">キャンセル</button>
@@ -518,11 +520,12 @@ textarea.tinput{resize:none;min-height:70px;}
     </div>
     <div class="pfc-card">
       <div class="pfc-head">TODAY'S NUTRITION</div>
-      <div class="pfc-grid">
+      <div class="pfc-grid" style="grid-template-columns:repeat(5,1fr);">
         <div class="pfc-cell"><div class="pfc-lbl">Protein</div><div class="pfc-val p" id="totP">0g</div></div>
         <div class="pfc-cell"><div class="pfc-lbl">Fat</div><div class="pfc-val f" id="totF">0g</div></div>
         <div class="pfc-cell"><div class="pfc-lbl">Carb</div><div class="pfc-val c" id="totC">0g</div></div>
         <div class="pfc-cell"><div class="pfc-lbl">Fiber</div><div class="pfc-val fi" id="totFi">0g</div></div>
+        <div class="pfc-cell"><div class="pfc-lbl">Na</div><div class="pfc-val" style="color:#94a3b8;" id="totNa">0mg</div></div>
       </div>
       <div class="pfc-kcal" id="totKcal">0</div>
       <div class="pfc-kcal-lbl">KCAL</div>
@@ -551,6 +554,51 @@ textarea.tinput{resize:none;min-height:70px;}
 </main>
 </div>
 
+<!-- ══ TAB: 食材DB ══ -->
+<div class="tab-pane" id="tab-db">
+<main>
+  <!-- 検索・フィルター -->
+  <div style="display:flex;gap:8px;margin-bottom:10px;">
+    <input type="search" class="tinput" id="dbSearch" placeholder="🔍 食材名を検索..." oninput="renderDB()" style="flex:1;margin-top:0;">
+    <button class="btn" style="border-color:var(--purple);color:var(--purple);font-size:12px;padding:0 12px;white-space:nowrap;" onclick="openModal('cfModal')">＋ 追加</button>
+  </div>
+  <div class="fcats" id="dbCatFilter"></div>
+  <!-- 標準DB / カスタム 切り替え -->
+  <div style="display:flex;gap:8px;margin-bottom:10px;">
+    <button class="hfbtn active" id="dbTab_all" onclick="switchDBTab('all',this)">すべて</button>
+    <button class="hfbtn" id="dbTab_custom" onclick="switchDBTab('custom',this)">⭐ カスタムのみ</button>
+  </div>
+  <div id="dbList"></div>
+</main>
+</div>
+
+<!-- EDIT FOOD MODAL -->
+<div class="modal-ov" id="editFoodModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title purple">✏ 食材を編集</div>
+    <input type="hidden" id="ef_id">
+    <input type="hidden" id="ef_isCustom">
+    <div class="cf-grid">
+      <div class="cf-field cf-full"><span class="cf-lbl">食材名 *</span><input class="cf-inp" id="ef_name"></div>
+      <div class="cf-field cf-full"><span class="cf-lbl">カテゴリ</span><input class="cf-inp" id="ef_cat"></div>
+      <div class="cf-field"><span class="cf-lbl">カロリー(kcal) *</span><input class="cf-inp" id="ef_kcal" type="number" inputmode="decimal"></div>
+      <div class="cf-field"><span class="cf-lbl">タンパク質P(g)</span><input class="cf-inp" id="ef_p" type="number" inputmode="decimal"></div>
+      <div class="cf-field"><span class="cf-lbl">脂質F(g)</span><input class="cf-inp" id="ef_f" type="number" inputmode="decimal"></div>
+      <div class="cf-field"><span class="cf-lbl">炭水化物C(g)</span><input class="cf-inp" id="ef_c" type="number" inputmode="decimal"></div>
+      <div class="cf-field"><span class="cf-lbl">食物繊維(g)</span><input class="cf-inp" id="ef_fi" type="number" inputmode="decimal"></div>
+      <div class="cf-field"><span class="cf-lbl">塩分Na(mg)</span><input class="cf-inp" id="ef_na" type="number" inputmode="decimal"></div>
+    </div>
+    <div id="ef_stdNote" style="font-size:10px;color:var(--gold);margin-top:8px;display:none;">
+      ⚠ 標準DBの食材です。編集内容はカスタム上書きとして保存されます。
+    </div>
+    <div class="macts">
+      <button class="mbtn cancel" onclick="closeModal('editFoodModal')">キャンセル</button>
+      <button class="mbtn purple" onclick="saveEditFood()">保存する</button>
+    </div>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="bnav">
   <button class="bnav-btn active" onclick="switchTab('body',this)">
@@ -562,6 +610,9 @@ textarea.tinput{resize:none;min-height:70px;}
   <button class="bnav-btn" onclick="switchTab('history',this)">
     <span class="bnav-icon">📅</span>記録
   </button>
+  <button class="bnav-btn" onclick="switchTab('db',this)">
+    <span class="bnav-icon">🗃</span>食材DB
+  </button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -571,93 +622,111 @@ textarea.tinput{resize:none;min-height:70px;}
 //  FOOD DB
 // ══════════════════════════════════════════
 const FOOD_DB=[
-  {cat:'肉類',name:'鶏むね肉(皮なし)',kcal:108,p:22.3,f:1.5,c:0.1,fi:0},
-  {cat:'肉類',name:'鶏もも肉(皮なし)',kcal:127,p:19.0,f:5.0,c:0,fi:0},
-  {cat:'肉類',name:'鶏ささみ',kcal:98,p:23.0,f:0.8,c:0,fi:0},
-  {cat:'肉類',name:'鶏手羽元',kcal:197,p:18.2,f:13.4,c:0,fi:0},
-  {cat:'肉類',name:'牛もも(赤身)',kcal:182,p:21.2,f:10.7,c:0.5,fi:0},
-  {cat:'肉類',name:'牛ヒレ',kcal:207,p:20.5,f:13.5,c:0.3,fi:0},
-  {cat:'肉類',name:'豚ロース(赤身)',kcal:150,p:22.7,f:5.6,c:0.2,fi:0},
-  {cat:'肉類',name:'豚もも肉',kcal:171,p:20.5,f:9.5,c:0.2,fi:0},
-  {cat:'肉類',name:'豚ヒレ',kcal:130,p:22.8,f:3.7,c:0.3,fi:0},
-  {cat:'肉類',name:'豚バラ肉',kcal:395,p:14.4,f:35.4,c:0.1,fi:0},
-  {cat:'肉類',name:'合いびき肉',kcal:272,p:17.5,f:21.1,c:0.3,fi:0},
-  {cat:'肉類',name:'鶏ひき肉',kcal:186,p:17.5,f:12.0,c:0,fi:0},
-  {cat:'魚介類',name:'まぐろ(赤身)',kcal:125,p:26.4,f:1.4,c:0.1,fi:0},
-  {cat:'魚介類',name:'まぐろ(中トロ)',kcal:264,p:20.1,f:27.5,c:0.1,fi:0},
-  {cat:'魚介類',name:'さけ(生)',kcal:133,p:22.3,f:4.1,c:0.1,fi:0},
-  {cat:'魚介類',name:'さば(生)',kcal:211,p:20.6,f:16.8,c:0.3,fi:0},
-  {cat:'魚介類',name:'いわし(生)',kcal:156,p:19.2,f:9.2,c:0.2,fi:0},
-  {cat:'魚介類',name:'ぶり(生)',kcal:257,p:21.4,f:17.6,c:0.3,fi:0},
-  {cat:'魚介類',name:'たら(生)',kcal:72,p:17.6,f:0.2,c:0.1,fi:0},
-  {cat:'魚介類',name:'えび(バナメイ)',kcal:82,p:19.6,f:0.2,c:0.1,fi:0},
-  {cat:'魚介類',name:'かつお(生)',kcal:114,p:25.8,f:0.5,c:0.1,fi:0},
-  {cat:'魚介類',name:'ツナ缶(水煮)',kcal:71,p:16.0,f:0.7,c:0.1,fi:0},
-  {cat:'魚介類',name:'さんま(生)',kcal:297,p:18.1,f:25.6,c:0.1,fi:0},
-  {cat:'魚介類',name:'いか(生)',kcal:83,p:17.9,f:1.2,c:0.1,fi:0},
-  {cat:'魚介類',name:'ほたて貝',kcal:72,p:13.5,f:0.9,c:1.5,fi:0},
-  {cat:'魚介類',name:'しらす干し',kcal:206,p:40.5,f:3.5,c:0.1,fi:0},
-  {cat:'卵・乳製品',name:'卵(全卵)',kcal:151,p:12.3,f:10.3,c:0.3,fi:0},
-  {cat:'卵・乳製品',name:'卵白',kcal:44,p:11.0,f:0,c:0.7,fi:0},
-  {cat:'卵・乳製品',name:'牛乳',kcal:67,p:3.3,f:3.8,c:4.8,fi:0},
-  {cat:'卵・乳製品',name:'ギリシャヨーグルト',kcal:59,p:10.0,f:0.4,c:3.6,fi:0},
-  {cat:'卵・乳製品',name:'ヨーグルト(無糖)',kcal:62,p:3.6,f:3.0,c:4.9,fi:0},
-  {cat:'卵・乳製品',name:'カッテージチーズ',kcal:105,p:13.3,f:4.5,c:1.9,fi:0},
-  {cat:'卵・乳製品',name:'豆乳(無調整)',kcal:46,p:3.6,f:2.0,c:3.1,fi:0.2},
-  {cat:'豆類',name:'豆腐(木綿)',kcal:72,p:6.6,f:4.2,c:1.6,fi:0.4},
-  {cat:'豆類',name:'豆腐(絹)',kcal:56,p:4.9,f:3.0,c:2.0,fi:0.3},
-  {cat:'豆類',name:'納豆',kcal:200,p:16.5,f:10.0,c:12.1,fi:6.7},
-  {cat:'豆類',name:'枝豆',kcal:135,p:11.5,f:6.1,c:8.8,fi:4.6},
-  {cat:'豆類',name:'ひよこ豆(ゆで)',kcal:171,p:9.5,f:2.5,c:27.4,fi:11.6},
-  {cat:'豆類',name:'レンズ豆(ゆで)',kcal:130,p:9.0,f:0.5,c:22.1,fi:9.0},
-  {cat:'プロテイン',name:'WPC プロテイン',kcal:380,p:74.0,f:7.0,c:8.0,fi:0},
-  {cat:'プロテイン',name:'WPI プロテイン',kcal:360,p:82.0,f:2.0,c:5.0,fi:0},
-  {cat:'プロテイン',name:'カゼインプロテイン',kcal:370,p:78.0,f:4.0,c:6.0,fi:0},
-  {cat:'プロテイン',name:'プロテインバー(平均)',kcal:200,p:20.0,f:7.0,c:20.0,fi:2.0},
-  {cat:'炭水化物',name:'白米(ご飯)',kcal:168,p:2.5,f:0.3,c:37.1,fi:0.3},
-  {cat:'炭水化物',name:'玄米(ご飯)',kcal:165,p:2.8,f:1.0,c:35.6,fi:1.4},
-  {cat:'炭水化物',name:'もち麦ご飯',kcal:148,p:3.2,f:0.5,c:32.1,fi:2.1},
-  {cat:'炭水化物',name:'オートミール(乾)',kcal:350,p:13.7,f:5.7,c:69.1,fi:9.4},
-  {cat:'炭水化物',name:'食パン(白)',kcal:264,p:9.3,f:4.4,c:49.2,fi:2.3},
-  {cat:'炭水化物',name:'全粒粉パン',kcal:253,p:8.5,f:3.2,c:48.5,fi:4.8},
-  {cat:'炭水化物',name:'パスタ(乾)',kcal:378,p:12.9,f:1.8,c:71.2,fi:2.7},
-  {cat:'炭水化物',name:'そば(乾)',kcal:344,p:14.0,f:2.3,c:66.7,fi:3.7},
-  {cat:'炭水化物',name:'うどん(生)',kcal:105,p:2.6,f:0.4,c:21.6,fi:0.8},
-  {cat:'いも・果物',name:'さつまいも',kcal:132,p:1.2,f:0.2,c:31.5,fi:2.3},
-  {cat:'いも・果物',name:'じゃがいも',kcal:76,p:1.6,f:0.1,c:17.6,fi:1.3},
-  {cat:'いも・果物',name:'バナナ',kcal:86,p:1.1,f:0.2,c:22.5,fi:1.1},
-  {cat:'いも・果物',name:'りんご',kcal:61,p:0.2,f:0.2,c:16.2,fi:1.4},
-  {cat:'いも・果物',name:'みかん',kcal:46,p:0.7,f:0.1,c:12.0,fi:1.0},
-  {cat:'いも・果物',name:'キウイ',kcal:53,p:1.0,f:0.2,c:13.5,fi:2.5},
-  {cat:'いも・果物',name:'いちご',kcal:34,p:0.9,f:0.1,c:8.5,fi:1.4},
-  {cat:'野菜',name:'ブロッコリー',kcal:33,p:4.3,f:0.5,c:5.2,fi:4.4},
-  {cat:'野菜',name:'ほうれん草',kcal:20,p:2.2,f:0.4,c:3.1,fi:2.8},
-  {cat:'野菜',name:'小松菜',kcal:14,p:1.5,f:0.2,c:2.4,fi:1.9},
-  {cat:'野菜',name:'トマト',kcal:19,p:0.7,f:0.1,c:4.7,fi:1.0},
-  {cat:'野菜',name:'キャベツ',kcal:23,p:1.3,f:0.2,c:5.2,fi:1.8},
-  {cat:'野菜',name:'アボカド',kcal:187,p:2.5,f:17.5,c:7.9,fi:5.3},
-  {cat:'野菜',name:'玉ねぎ',kcal:37,p:1.0,f:0.1,c:9.0,fi:1.5},
-  {cat:'野菜',name:'にんじん',kcal:41,p:0.7,f:0.1,c:9.3,fi:2.7},
-  {cat:'野菜',name:'ピーマン',kcal:22,p:0.9,f:0.2,c:5.1,fi:2.3},
-  {cat:'野菜',name:'もやし',kcal:14,p:1.7,f:0.1,c:2.6,fi:1.3},
-  {cat:'野菜',name:'きゅうり',kcal:14,p:1.0,f:0.1,c:3.0,fi:1.1},
-  {cat:'野菜',name:'しいたけ',kcal:25,p:3.0,f:0.4,c:6.4,fi:3.5},
-  {cat:'野菜',name:'えのきたけ',kcal:22,p:2.7,f:0.2,c:7.6,fi:3.9},
-  {cat:'野菜',name:'まいたけ',kcal:22,p:2.0,f:0.5,c:4.4,fi:3.5},
-  {cat:'油脂・ナッツ',name:'オリーブオイル',kcal:921,p:0,f:100,c:0,fi:0},
-  {cat:'油脂・ナッツ',name:'バター',kcal:745,p:0.6,f:81.0,c:0.2,fi:0},
-  {cat:'油脂・ナッツ',name:'アーモンド',kcal:587,p:19.6,f:51.8,c:20.9,fi:10.1},
-  {cat:'油脂・ナッツ',name:'くるみ',kcal:654,p:14.6,f:68.8,c:11.7,fi:7.5},
-  {cat:'油脂・ナッツ',name:'カシューナッツ',kcal:576,p:19.8,f:47.6,c:26.7,fi:6.7},
-  {cat:'油脂・ナッツ',name:'ピーナッツバター',kcal:640,p:25.0,f:50.0,c:20.0,fi:6.0},
-  {cat:'調味料',name:'みそ(白)',kcal:217,p:9.7,f:3.0,c:37.9,fi:4.9},
-  {cat:'調味料',name:'醤油',kcal:71,p:7.7,f:0,c:10.1,fi:0},
-  {cat:'飲料',name:'スポーツドリンク(500ml)',kcal:130,p:0,f:0,c:33.0,fi:0},
-  {cat:'飲料',name:'プロテインシェイク(自作)',kcal:200,p:30.0,f:3.0,c:15.0,fi:0},
+  // ─ 肉類 ─
+  {cat:'肉類',name:'鶏むね肉(皮なし)',kcal:108,p:22.3,f:1.5,c:0.1,fi:0,na:42},
+  {cat:'肉類',name:'鶏もも肉(皮なし)',kcal:127,p:19.0,f:5.0,c:0,fi:0,na:65},
+  {cat:'肉類',name:'鶏ささみ',kcal:98,p:23.0,f:0.8,c:0,fi:0,na:40},
+  {cat:'肉類',name:'鶏手羽元',kcal:197,p:18.2,f:13.4,c:0,fi:0,na:72},
+  {cat:'肉類',name:'牛もも(赤身)',kcal:182,p:21.2,f:10.7,c:0.5,fi:0,na:55},
+  {cat:'肉類',name:'牛ヒレ',kcal:207,p:20.5,f:13.5,c:0.3,fi:0,na:54},
+  {cat:'肉類',name:'豚ロース(赤身)',kcal:150,p:22.7,f:5.6,c:0.2,fi:0,na:51},
+  {cat:'肉類',name:'豚もも肉',kcal:171,p:20.5,f:9.5,c:0.2,fi:0,na:53},
+  {cat:'肉類',name:'豚ヒレ',kcal:130,p:22.8,f:3.7,c:0.3,fi:0,na:49},
+  {cat:'肉類',name:'豚バラ肉',kcal:395,p:14.4,f:35.4,c:0.1,fi:0,na:50},
+  {cat:'肉類',name:'合いびき肉',kcal:272,p:17.5,f:21.1,c:0.3,fi:0,na:65},
+  {cat:'肉類',name:'鶏ひき肉',kcal:186,p:17.5,f:12.0,c:0,fi:0,na:70},
+  // ─ 魚介類 ─
+  {cat:'魚介類',name:'まぐろ(赤身)',kcal:125,p:26.4,f:1.4,c:0.1,fi:0,na:49},
+  {cat:'魚介類',name:'まぐろ(中トロ)',kcal:264,p:20.1,f:27.5,c:0.1,fi:0,na:49},
+  {cat:'魚介類',name:'さけ(生)',kcal:133,p:22.3,f:4.1,c:0.1,fi:0,na:66},
+  {cat:'魚介類',name:'さば(生)',kcal:211,p:20.6,f:16.8,c:0.3,fi:0,na:110},
+  {cat:'魚介類',name:'いわし(生)',kcal:156,p:19.2,f:9.2,c:0.2,fi:0,na:100},
+  {cat:'魚介類',name:'ぶり(生)',kcal:257,p:21.4,f:17.6,c:0.3,fi:0,na:32},
+  {cat:'魚介類',name:'たら(生)',kcal:72,p:17.6,f:0.2,c:0.1,fi:0,na:110},
+  {cat:'魚介類',name:'えび(バナメイ)',kcal:82,p:19.6,f:0.2,c:0.1,fi:0,na:150},
+  {cat:'魚介類',name:'かつお(生)',kcal:114,p:25.8,f:0.5,c:0.1,fi:0,na:43},
+  {cat:'魚介類',name:'ツナ缶(水煮)',kcal:71,p:16.0,f:0.7,c:0.1,fi:0,na:260},
+  {cat:'魚介類',name:'さんま(生)',kcal:297,p:18.1,f:25.6,c:0.1,fi:0,na:140},
+  {cat:'魚介類',name:'いか(生)',kcal:83,p:17.9,f:1.2,c:0.1,fi:0,na:200},
+  {cat:'魚介類',name:'ほたて貝',kcal:72,p:13.5,f:0.9,c:1.5,fi:0,na:320},
+  {cat:'魚介類',name:'しらす干し',kcal:206,p:40.5,f:3.5,c:0.1,fi:0,na:1600},
+  // ─ 卵・乳製品 ─
+  {cat:'卵・乳製品',name:'卵(全卵)',kcal:151,p:12.3,f:10.3,c:0.3,fi:0,na:140},
+  {cat:'卵・乳製品',name:'卵白',kcal:44,p:11.0,f:0,c:0.7,fi:0,na:170},
+  {cat:'卵・乳製品',name:'牛乳',kcal:67,p:3.3,f:3.8,c:4.8,fi:0,na:41},
+  {cat:'卵・乳製品',name:'ギリシャヨーグルト',kcal:59,p:10.0,f:0.4,c:3.6,fi:0,na:38},
+  {cat:'卵・乳製品',name:'ヨーグルト(無糖)',kcal:62,p:3.6,f:3.0,c:4.9,fi:0,na:46},
+  {cat:'卵・乳製品',name:'カッテージチーズ',kcal:105,p:13.3,f:4.5,c:1.9,fi:0,na:400},
+  {cat:'卵・乳製品',name:'豆乳(無調整)',kcal:46,p:3.6,f:2.0,c:3.1,fi:0.2,na:2},
+  // ─ 豆類 ─
+  {cat:'豆類',name:'豆腐(木綿)',kcal:72,p:6.6,f:4.2,c:1.6,fi:0.4,na:10},
+  {cat:'豆類',name:'豆腐(絹)',kcal:56,p:4.9,f:3.0,c:2.0,fi:0.3,na:8},
+  {cat:'豆類',name:'納豆',kcal:200,p:16.5,f:10.0,c:12.1,fi:6.7,na:2},
+  {cat:'豆類',name:'枝豆',kcal:135,p:11.5,f:6.1,c:8.8,fi:4.6,na:1},
+  {cat:'豆類',name:'ひよこ豆(ゆで)',kcal:171,p:9.5,f:2.5,c:27.4,fi:11.6,na:3},
+  {cat:'豆類',name:'レンズ豆(ゆで)',kcal:130,p:9.0,f:0.5,c:22.1,fi:9.0,na:2},
+  // ─ プロテイン ─
+  {cat:'プロテイン',name:'WPC プロテイン',kcal:380,p:74.0,f:7.0,c:8.0,fi:0,na:200},
+  {cat:'プロテイン',name:'WPI プロテイン',kcal:360,p:82.0,f:2.0,c:5.0,fi:0,na:150},
+  {cat:'プロテイン',name:'カゼインプロテイン',kcal:370,p:78.0,f:4.0,c:6.0,fi:0,na:180},
+  {cat:'プロテイン',name:'プロテインバー(平均)',kcal:200,p:20.0,f:7.0,c:20.0,fi:2.0,na:250},
+  // ─ 炭水化物 ─
+  {cat:'炭水化物',name:'白米(ご飯)',kcal:168,p:2.5,f:0.3,c:37.1,fi:0.3,na:1},
+  {cat:'炭水化物',name:'玄米(ご飯)',kcal:165,p:2.8,f:1.0,c:35.6,fi:1.4,na:1},
+  {cat:'炭水化物',name:'もち麦ご飯',kcal:148,p:3.2,f:0.5,c:32.1,fi:2.1,na:1},
+  {cat:'炭水化物',name:'オートミール(乾)',kcal:350,p:13.7,f:5.7,c:69.1,fi:9.4,na:3},
+  {cat:'炭水化物',name:'食パン(白)',kcal:264,p:9.3,f:4.4,c:49.2,fi:2.3,na:500},
+  {cat:'炭水化物',name:'全粒粉パン',kcal:253,p:8.5,f:3.2,c:48.5,fi:4.8,na:480},
+  {cat:'炭水化物',name:'パスタ(乾)',kcal:378,p:12.9,f:1.8,c:71.2,fi:2.7,na:2},
+  {cat:'炭水化物',name:'そば(乾)',kcal:344,p:14.0,f:2.3,c:66.7,fi:3.7,na:2},
+  {cat:'炭水化物',name:'うどん(生)',kcal:105,p:2.6,f:0.4,c:21.6,fi:0.8,na:170},
+  // ─ いも・果物 ─
+  {cat:'いも・果物',name:'さつまいも',kcal:132,p:1.2,f:0.2,c:31.5,fi:2.3,na:22},
+  {cat:'いも・果物',name:'じゃがいも',kcal:76,p:1.6,f:0.1,c:17.6,fi:1.3,na:1},
+  {cat:'いも・果物',name:'バナナ',kcal:86,p:1.1,f:0.2,c:22.5,fi:1.1,na:1},
+  {cat:'いも・果物',name:'りんご',kcal:61,p:0.2,f:0.2,c:16.2,fi:1.4,na:1},
+  {cat:'いも・果物',name:'みかん',kcal:46,p:0.7,f:0.1,c:12.0,fi:1.0,na:1},
+  {cat:'いも・果物',name:'キウイ',kcal:53,p:1.0,f:0.2,c:13.5,fi:2.5,na:2},
+  {cat:'いも・果物',name:'いちご',kcal:34,p:0.9,f:0.1,c:8.5,fi:1.4,na:1},
+  // ─ 野菜 ─
+  {cat:'野菜',name:'ブロッコリー',kcal:33,p:4.3,f:0.5,c:5.2,fi:4.4,na:20},
+  {cat:'野菜',name:'ほうれん草',kcal:20,p:2.2,f:0.4,c:3.1,fi:2.8,na:16},
+  {cat:'野菜',name:'小松菜',kcal:14,p:1.5,f:0.2,c:2.4,fi:1.9,na:15},
+  {cat:'野菜',name:'トマト',kcal:19,p:0.7,f:0.1,c:4.7,fi:1.0,na:3},
+  {cat:'野菜',name:'キャベツ',kcal:23,p:1.3,f:0.2,c:5.2,fi:1.8,na:5},
+  {cat:'野菜',name:'アボカド',kcal:187,p:2.5,f:17.5,c:7.9,fi:5.3,na:7},
+  {cat:'野菜',name:'玉ねぎ',kcal:37,p:1.0,f:0.1,c:9.0,fi:1.5,na:2},
+  {cat:'野菜',name:'にんじん',kcal:41,p:0.7,f:0.1,c:9.3,fi:2.7,na:28},
+  {cat:'野菜',name:'ピーマン',kcal:22,p:0.9,f:0.2,c:5.1,fi:2.3,na:1},
+  {cat:'野菜',name:'もやし',kcal:14,p:1.7,f:0.1,c:2.6,fi:1.3,na:3},
+  {cat:'野菜',name:'きゅうり',kcal:14,p:1.0,f:0.1,c:3.0,fi:1.1,na:1},
+  {cat:'野菜',name:'しいたけ',kcal:25,p:3.0,f:0.4,c:6.4,fi:3.5,na:2},
+  {cat:'野菜',name:'えのきたけ',kcal:22,p:2.7,f:0.2,c:7.6,fi:3.9,na:2},
+  {cat:'野菜',name:'まいたけ',kcal:22,p:2.0,f:0.5,c:4.4,fi:3.5,na:1},
+  // ─ 油脂・ナッツ ─
+  {cat:'油脂・ナッツ',name:'オリーブオイル',kcal:921,p:0,f:100,c:0,fi:0,na:1},
+  {cat:'油脂・ナッツ',name:'バター',kcal:745,p:0.6,f:81.0,c:0.2,fi:0,na:750},
+  {cat:'油脂・ナッツ',name:'アーモンド',kcal:587,p:19.6,f:51.8,c:20.9,fi:10.1,na:2},
+  {cat:'油脂・ナッツ',name:'くるみ',kcal:654,p:14.6,f:68.8,c:11.7,fi:7.5,na:2},
+  {cat:'油脂・ナッツ',name:'カシューナッツ',kcal:576,p:19.8,f:47.6,c:26.7,fi:6.7,na:4},
+  {cat:'油脂・ナッツ',name:'ピーナッツバター',kcal:640,p:25.0,f:50.0,c:20.0,fi:6.0,na:350},
+  // ─ 調味料 ─
+  {cat:'調味料',name:'みそ(白)',kcal:217,p:9.7,f:3.0,c:37.9,fi:4.9,na:4200},
+  {cat:'調味料',name:'醤油',kcal:71,p:7.7,f:0,c:10.1,fi:0,na:5700},
+  // ─ 飲料 ─
+  {cat:'飲料',name:'スポーツドリンク(500ml)',kcal:130,p:0,f:0,c:33.0,fi:0,na:220},
+  {cat:'飲料',name:'プロテインシェイク(自作)',kcal:200,p:30.0,f:3.0,c:15.0,fi:0,na:150},
 ];
 function getAllFoods(){
-  const c=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
-  return [...FOOD_DB,...c];
+  const ext=(typeof FOOD_DB_EXT!=='undefined')?FOOD_DB_EXT:[];
+  const custom=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  // 名前でユニーク化（カスタム > 八訂 > 内蔵の優先順）
+  const seen=new Set();
+  const result=[];
+  for(const f of [...custom,...ext,...FOOD_DB]){
+    if(!seen.has(f.name)){seen.add(f.name);result.push(f);}
+  }
+  return result;
 }
 
 // ══════════════════════════════════════════
@@ -816,11 +885,12 @@ function toggleTr(key){
   if(h)h.classList.toggle('open',TR_ACTIVE[key]);
 }
 function switchTab(name,btn){
-  ['body','food','history'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===name));
+  ['body','food','history','db'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===name));
   document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   if(name==='history')renderHistory();
   if(name==='food')renderCal('food');
+  if(name==='db')renderDB();
 }
 function openModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
@@ -928,9 +998,9 @@ function buildTrainingUI(){
 //  FOOD UI
 // ══════════════════════════════════════════
 function buildFoodCats(){
-  const cats=['すべて',...new Set(FOOD_DB.map(f=>f.cat))];
-  const custom=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
-  if(custom.length)cats.push('⭐カスタム');
+  const all=getAllFoods();
+  const cats=['すべて',...new Set(all.map(f=>f.cat))];
+  if(all.some(f=>f.custom))cats.push('⭐カスタム');
   document.getElementById('foodCats').innerHTML=
     cats.map(c=>`<div class="fcat${c===curCat?' active':''}" onclick="selectCat(this,'${c}')">${c}</div>`).join('');
 }
@@ -944,23 +1014,79 @@ function selMealTab(el,m){
   el.classList.add('active');curMeal=m;
 }
 function searchFood(){
-  const q=document.getElementById('foodSearch').value.trim().toLowerCase();
+  const q=document.getElementById('foodSearch').value.trim();
   const dd=document.getElementById('foodDrop');
   if(!q){dd.classList.remove('show');return;}
+  const localResults=searchLocal(q);
+  renderDrop(localResults,q,false);
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(()=>searchAPI(q,localResults),600);
+}
+let _searchTimer=null,_offSearchId=0;
+function searchLocal(q){
+  const ql=q.toLowerCase();
   let db=getAllFoods();
   if(curCat==='⭐カスタム')db=db.filter(f=>f.custom);
   else if(curCat!=='すべて')db=db.filter(f=>f.cat===curCat);
-  const res=db.filter(f=>f.name.toLowerCase().includes(q)).slice(0,10);
-  if(!res.length){dd.innerHTML='<div class="fopt" style="color:var(--muted)">見つかりません — ＋ 手動登録で追加できます</div>';dd.classList.add('show');return;}
-  dd.innerHTML=res.map((f,i)=>`<div class="fopt" onclick="pickFood(${getAllFoods().indexOf(f)})">
-    <span style="color:var(--muted);font-size:10px;">[${f.cat}]</span> ${f.custom?'⭐ ':''}${f.name}
-    <div class="fopt-sub">P:${f.p}g F:${f.f}g C:${f.c}g 繊維:${f.fi||0}g / 100g（${f.kcal}kcal）</div>
-  </div>`).join('');
-  dd.classList.add('show');
+  return db.filter(f=>f.name.toLowerCase().includes(ql)).slice(0,12);
+}
+async function searchAPI(q,localResults){
+  if(!navigator.onLine)return;
+  const searchId=++_offSearchId;
+  const localNames=new Set(localResults.map(f=>f.name));
+  try{
+    const url=`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=10&lc=ja&cc=jp&fields=product_name,product_name_ja,nutriments`;
+    const resp=await fetch(url,{signal:AbortSignal.timeout(5000)});
+    if(!resp.ok||searchId!==_offSearchId)return;
+    const data=await resp.json();
+    const apiResults=[];
+    for(const p of(data.products||[])){
+      const name=(p.product_name_ja||p.product_name||'').trim();
+      if(!name||localNames.has(name))continue;
+      const n=p.nutriments||{};
+      const kcal=Math.round(n['energy-kcal_100g']||0);
+      if(!kcal)continue;
+      apiResults.push({cat:'🌐 API',name,kcal,
+        p:parseFloat((n['proteins_100g']||0).toFixed(1)),
+        f:parseFloat((n['fat_100g']||0).toFixed(1)),
+        c:parseFloat((n['carbohydrates_100g']||0).toFixed(1)),
+        fi:parseFloat((n['fiber_100g']||0).toFixed(1)),
+        na:Math.round((n['sodium_100g']||0)*1000),
+        api:true});
+      if(apiResults.length>=6)break;
+    }
+    if(searchId!==_offSearchId)return;
+    renderDrop([...localResults,...apiResults],q,true);
+  }catch(e){}
+}
+function renderDrop(results,q,apiDone){
+  const dd=document.getElementById('foodDrop');
+  if(!results.length&&apiDone){
+    dd.innerHTML='<div class="fopt" style="color:var(--muted);">「'+q+'」は見つかりませんでした<br><span style="font-size:10px;">＋ 手動登録ボタンから追加できます</span></div>';
+    dd.classList.add('show');return;
+  }
+  if(!results.length){dd.innerHTML='<div class="fopt" style="color:var(--muted);">検索中...</div>';dd.classList.add('show');return;}
+  const items=results.map(f=>{
+    const enc=encodeURIComponent(JSON.stringify(f));
+    const badge=f.api
+      ?'<span style="font-size:9px;background:rgba(59,130,246,.2);color:var(--blue);border-radius:3px;padding:0 4px;margin-right:3px;">🌐</span>'
+      :f.custom?'<span style="font-size:9px;background:rgba(168,85,247,.2);color:var(--purple);border-radius:3px;padding:0 4px;margin-right:3px;">⭐</span>':'';
+    return '<div class="fopt" onclick="pickFoodObj(decodeURIComponent(''+enc+''))"><span style="color:var(--muted);font-size:10px;">['+f.cat+']</span> '+badge+f.name+'<div class="fopt-sub">P:'+f.p+'g F:'+f.f+'g C:'+f.c+'g 繊維:'+(f.fi||0)+'g Na:'+(f.na||0)+'mg / 100g（'+f.kcal+'kcal）</div></div>';
+  });
+  if(!apiDone)items.push('<div class="fopt" style="color:var(--muted);font-size:11px;text-align:center;cursor:default;">🌐 オンライン検索中...</div>');
+  dd.innerHTML=items.join('');dd.classList.add('show');
 }
 function closeDrop(){document.getElementById('foodDrop').classList.remove('show');}
 function pickFood(i){
   curFood=getAllFoods()[i];
+  document.getElementById('foodSearch').value=curFood.name;
+  document.getElementById('selFoodName').textContent=curFood.name;
+  document.getElementById('gramArea').style.display='block';
+  document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('active'));
+  closeDrop();
+}
+function pickFoodObj(json){
+  try{curFood=JSON.parse(json);}catch{return;}
   document.getElementById('foodSearch').value=curFood.name;
   document.getElementById('selFoodName').textContent=curFood.name;
   document.getElementById('gramArea').style.display='block';
@@ -994,7 +1120,7 @@ function renderFoodList(){
     return `<div class="food-row">
       <div class="food-row-info">
         <div class="food-row-name">${e.food.custom?'⭐ ':''}${e.food.name} <span style="color:var(--muted);font-size:10px;">[${e.meal}]</span></div>
-        <div class="food-row-detail">${e.grams}g → ${Math.round(e.food.kcal*r)}kcal / P:${(e.food.p*r).toFixed(1)} F:${(e.food.f*r).toFixed(1)} C:${(e.food.c*r).toFixed(1)} 繊維:${((e.food.fi||0)*r).toFixed(1)}g</div>
+        <div class="food-row-detail">${e.grams}g → ${Math.round(e.food.kcal*r)}kcal / P:${(e.food.p*r).toFixed(1)} F:${(e.food.f*r).toFixed(1)} C:${(e.food.c*r).toFixed(1)} 繊維:${((e.food.fi||0)*r).toFixed(1)}g Na:${Math.round((e.food.na||0)*r)}mg</div>
       </div>
       <button class="fdel" onclick="removeFood(${e.id})">✕</button>
     </div>`;
@@ -1003,12 +1129,13 @@ function renderFoodList(){
   updatePFC();
 }
 function updatePFC(){
-  let tp=0,tf=0,tc=0,tk=0,tfi=0;
-  addedFoods.forEach(e=>{const r=e.grams/100;tp+=e.food.p*r;tf+=e.food.f*r;tc+=e.food.c*r;tk+=e.food.kcal*r;tfi+=(e.food.fi||0)*r;});
+  let tp=0,tf=0,tc=0,tk=0,tfi=0,tna=0;
+  addedFoods.forEach(e=>{const r=e.grams/100;tp+=e.food.p*r;tf+=e.food.f*r;tc+=e.food.c*r;tk+=e.food.kcal*r;tfi+=(e.food.fi||0)*r;tna+=(e.food.na||0)*r;});
   document.getElementById('totP').textContent=tp.toFixed(1)+'g';
   document.getElementById('totF').textContent=tf.toFixed(1)+'g';
   document.getElementById('totC').textContent=tc.toFixed(1)+'g';
   document.getElementById('totFi').textContent=tfi.toFixed(1)+'g';
+  document.getElementById('totNa').textContent=Math.round(tna)+'mg';
   document.getElementById('totKcal').textContent=Math.round(tk);
 }
 
@@ -1024,10 +1151,13 @@ function saveCustomFood(){
     f:parseFloat(document.getElementById('cf_f').value)||0,
     c:parseFloat(document.getElementById('cf_c').value)||0,
     fi:parseFloat(document.getElementById('cf_fi').value)||0,
+    na:parseFloat(document.getElementById('cf_na').value)||0,
     custom:true,id:'cf_'+Date.now()};
   const c=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
   c.push(food);localStorage.setItem('tkd_custom_foods',JSON.stringify(c));
-  buildFoodCats();closeModal('cfModal');
+  // フォームリセット
+  ['cf_name','cf_cat','cf_kcal','cf_p','cf_f','cf_c','cf_fi','cf_na'].forEach(id=>{document.getElementById(id).value='';});
+  buildFoodCats();renderDB();closeModal('cfModal');
   toast(`「${name}」を登録しました`,'ok');
 }
 
@@ -1331,6 +1461,118 @@ function exportCSV(){
 }
 
 // ══════════════════════════════════════════
+//  DB MANAGER
+// ══════════════════════════════════════════
+let dbTabMode='all'; // 'all' | 'custom'
+let dbCatFilter='すべて';
+
+function switchDBTab(mode,btn){
+  dbTabMode=mode;
+  document.querySelectorAll('#tab-db .hfbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDB();
+}
+
+function renderDB(){
+  const q=(document.getElementById('dbSearch')?.value||'').trim().toLowerCase();
+  const customs=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  // カスタムはIDで上書き管理（同名の標準DBを隠す用のoverridesマップ）
+  const overrides=new Map(customs.map(f=>[f.id,f]));
+
+  // カテゴリフィルターUI更新
+  const allFoods=dbTabMode==='custom'?customs:getAllFoods();
+  const cats=['すべて',...new Set(allFoods.map(f=>f.cat))];
+  const catEl=document.getElementById('dbCatFilter');
+  if(catEl){
+    catEl.innerHTML=cats.map(c=>`<div class="fcat${c===dbCatFilter?' active':''}" onclick="setDBCat('${c}')">${c}</div>`).join('');
+  }
+
+  let list=dbTabMode==='custom'?customs:[...FOOD_DB,...customs];
+  if(dbCatFilter!=='すべて')list=list.filter(f=>f.cat===dbCatFilter);
+  if(q)list=list.filter(f=>f.name.toLowerCase().includes(q));
+
+  const el=document.getElementById('dbList');
+  if(!list.length){el.innerHTML='<div class="empty">該当する食材がありません</div>';return;}
+
+  el.innerHTML=list.map(f=>`
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:7px;${f.custom?'border-left:3px solid var(--purple);':''}">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;margin-bottom:3px;">${f.custom?'⭐ ':''}${f.name} <span style="font-size:10px;color:var(--muted);font-weight:400;">[${f.cat}]</span></div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.8;">
+            ${f.kcal}kcal / P:${f.p}g F:${f.f}g C:${f.c}g<br>
+            繊維:${f.fi||0}g　Na:${f.na||0}mg　<span style="font-size:9px;color:#3a3a55;">（100gあたり）</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+          <button style="min-height:32px;padding:0 11px;background:rgba(168,85,247,.12);border:1px solid var(--purple);border-radius:6px;color:var(--purple);font-size:11px;cursor:pointer;" onclick="openEditFood(${JSON.stringify(f).replace(/"/g,'&quot;')})">編集</button>
+          ${f.custom?`<button style="min-height:32px;padding:0 11px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;cursor:pointer;" onclick="deleteFood('${f.id}')">削除</button>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function setDBCat(cat){
+  dbCatFilter=cat;
+  renderDB();
+}
+
+function openEditFood(f){
+  document.getElementById('ef_id').value=f.id||'';
+  document.getElementById('ef_isCustom').value=f.custom?'1':'0';
+  document.getElementById('ef_name').value=f.name;
+  document.getElementById('ef_cat').value=f.cat;
+  document.getElementById('ef_kcal').value=f.kcal;
+  document.getElementById('ef_p').value=f.p;
+  document.getElementById('ef_f').value=f.f;
+  document.getElementById('ef_c').value=f.c;
+  document.getElementById('ef_fi').value=f.fi||0;
+  document.getElementById('ef_na').value=f.na||0;
+  document.getElementById('ef_stdNote').style.display=f.custom?'none':'block';
+  openModal('editFoodModal');
+}
+
+function saveEditFood(){
+  const name=document.getElementById('ef_name').value.trim();
+  const kcal=parseFloat(document.getElementById('ef_kcal').value);
+  if(!name||!kcal){toast('食材名とカロリーは必須です','err');return;}
+  const isCustom=document.getElementById('ef_isCustom').value==='1';
+  const existingId=document.getElementById('ef_id').value;
+  const updated={
+    cat:document.getElementById('ef_cat').value.trim()||'カスタム',
+    name,kcal,
+    p:parseFloat(document.getElementById('ef_p').value)||0,
+    f:parseFloat(document.getElementById('ef_f').value)||0,
+    c:parseFloat(document.getElementById('ef_c').value)||0,
+    fi:parseFloat(document.getElementById('ef_fi').value)||0,
+    na:parseFloat(document.getElementById('ef_na').value)||0,
+    custom:true,
+    id:isCustom&&existingId?existingId:'cf_'+Date.now()
+  };
+  const customs=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  if(isCustom&&existingId){
+    const idx=customs.findIndex(f=>f.id===existingId);
+    if(idx>=0)customs[idx]=updated;else customs.push(updated);
+  } else {
+    // 標準DBの編集 → カスタムとして追加
+    customs.push(updated);
+  }
+  localStorage.setItem('tkd_custom_foods',JSON.stringify(customs));
+  buildFoodCats();renderDB();closeModal('editFoodModal');
+  toast(`「${name}」を更新しました`,'ok');
+}
+
+function deleteFood(id){
+  const customs=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  const target=customs.find(f=>f.id===id);
+  if(!target)return;
+  if(!confirm(`「${target.name}」を削除しますか？`))return;
+  localStorage.setItem('tkd_custom_foods',JSON.stringify(customs.filter(f=>f.id!==id)));
+  buildFoodCats();renderDB();
+  toast(`「${target.name}」を削除しました`,'ok');
+}
+
+// ══════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -1349,6 +1591,7 @@ buildFoodCats();
 initCal('body');
 initCal('food');
 renderHistory();
+renderDB();
 updateGasInd();
 updateBswBadges();
 </script>
