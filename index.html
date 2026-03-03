@@ -1062,19 +1062,26 @@ async function searchAPI(q,localResults){
 function renderDrop(results,q,apiDone){
   const dd=document.getElementById('foodDrop');
   if(!results.length&&apiDone){
-    dd.innerHTML='<div class="fopt" style="color:var(--muted);">「'+q+'」は見つかりませんでした<br><span style="font-size:10px;">＋ 手動登録ボタンから追加できます</span></div>';
+    dd.innerHTML='<div class="fopt" style="color:var(--muted);">「'+q+'」は見つかりませんでした<br><small style="font-size:10px;">＋ 手動登録ボタンから追加できます</small></div>';
     dd.classList.add('show');return;
   }
-  if(!results.length){dd.innerHTML='<div class="fopt" style="color:var(--muted);">検索中...</div>';dd.classList.add('show');return;}
-  const items=results.map(f=>{
+  if(!results.length){
+    dd.innerHTML='<div class="fopt" style="color:var(--muted);">検索中...</div>';
+    dd.classList.add('show');return;
+  }
+  let html='';
+  results.forEach(function(f){
     const enc=encodeURIComponent(JSON.stringify(f));
-    const badge=f.api
-      ?'<span style="font-size:9px;background:rgba(59,130,246,.2);color:var(--blue);border-radius:3px;padding:0 4px;margin-right:3px;">🌐</span>'
-      :f.custom?'<span style="font-size:9px;background:rgba(168,85,247,.2);color:var(--purple);border-radius:3px;padding:0 4px;margin-right:3px;">⭐</span>':'';
-    return '<div class="fopt" onclick="pickFoodObj(decodeURIComponent(''+enc+''))"><span style="color:var(--muted);font-size:10px;">['+f.cat+']</span> '+badge+f.name+'<div class="fopt-sub">P:'+f.p+'g F:'+f.f+'g C:'+f.c+'g 繊維:'+(f.fi||0)+'g Na:'+(f.na||0)+'mg / 100g（'+f.kcal+'kcal）</div></div>';
+    let badge='';
+    if(f.api) badge='<span style="font-size:9px;background:rgba(59,130,246,.2);color:var(--blue);border-radius:3px;padding:0 4px;margin-right:3px;">🌐</span>';
+    else if(f.custom) badge='<span style="font-size:9px;background:rgba(168,85,247,.2);color:var(--purple);border-radius:3px;padding:0 4px;margin-right:3px;">⭐</span>';
+    html+='<div class="fopt" onclick="pickFoodObj(this.dataset.food)" data-food="'+enc+'">';
+    html+='<span style="color:var(--muted);font-size:10px;">['+f.cat+']</span> '+badge+f.name;
+    html+='<div class="fopt-sub">P:'+f.p+'g F:'+f.f+'g C:'+f.c+'g 繊維:'+(f.fi||0)+'g Na:'+(f.na||0)+'mg / 100g（'+f.kcal+'kcal）</div>';
+    html+='</div>';
   });
-  if(!apiDone)items.push('<div class="fopt" style="color:var(--muted);font-size:11px;text-align:center;cursor:default;">🌐 オンライン検索中...</div>');
-  dd.innerHTML=items.join('');dd.classList.add('show');
+  if(!apiDone) html+='<div class="fopt" style="color:var(--muted);font-size:11px;text-align:center;cursor:default;">🌐 オンライン検索中...</div>';
+  dd.innerHTML=html;dd.classList.add('show');
 }
 function closeDrop(){document.getElementById('foodDrop').classList.remove('show');}
 function pickFood(i){
@@ -1085,8 +1092,8 @@ function pickFood(i){
   document.querySelectorAll('.gbtn').forEach(b=>b.classList.remove('active'));
   closeDrop();
 }
-function pickFoodObj(json){
-  try{curFood=JSON.parse(json);}catch{return;}
+function pickFoodObj(enc){
+  try{curFood=JSON.parse(decodeURIComponent(enc));}catch{return;}
   document.getElementById('foodSearch').value=curFood.name;
   document.getElementById('selFoodName').textContent=curFood.name;
   document.getElementById('gramArea').style.display='block';
