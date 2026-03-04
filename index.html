@@ -275,6 +275,10 @@ textarea.tinput{resize:none;min-height:70px;}
     <div class="modal-desc">GASデプロイ後のウェブアプリURLを貼り付けてください。</div>
     <input class="cf-inp" id="gasUrlInput" placeholder="https://script.google.com/macros/s/..." style="width:100%;">
     <div class="gas-st" id="gasSt"></div>
+    <div style="margin-top:14px;">
+      <div class="modal-desc" style="margin-bottom:6px;">スプレッドシートURL（任意）<br><span style="font-size:10px;color:var(--muted);">保存するとヘッダーの「Sheets」ボタンから直接開けます</span></div>
+      <input class="cf-inp" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%;">
+    </div>
     <div class="macts">
       <button class="mbtn cancel" onclick="closeModal('gasModal')">キャンセル</button>
       <button class="mbtn gold" onclick="testAndSaveGas()">接続テスト → 保存</button>
@@ -333,7 +337,7 @@ textarea.tinput{resize:none;min-height:70px;}
 <header>
   <div class="logo">TKD<span>LOG</span></div>
   <div class="hacts">
-    <span id="gasInd" style="font-size:10px;color:var(--muted);">Sheets:未設定</span>
+    <span id="gasInd" style="font-size:10px;color:var(--muted);cursor:pointer;" onclick="openSheetUrl()">Sheets:未設定</span>
     <button class="hbtn gold" onclick="openModal('gasModal')">⚙</button>
     <button class="hbtn green" onclick="exportCSV()">CSV</button>
   </div>
@@ -355,22 +359,12 @@ textarea.tinput{resize:none;min-height:70px;}
 </div>
 
 <!-- ブロック切り替え -->
-<div class="block-switch">
-  <button class="bsw-btn active-blue" id="bswMorning" onclick="switchBlock('morning')">
-    <span class="bsw-main">🌅 朝の記録</span>
-    <span class="bsw-sub">体温・睡眠（当日朝）</span>
-  </button>
-  <button class="bsw-btn" id="bswTraining" onclick="switchBlock('training')">
-    <span class="bsw-main">💪 練習・体調</span>
-    <span class="bsw-sub">便通・調子・練習</span>
-  </button>
-</div>
-
-<!-- 朝ブロック -->
+<!-- 朝の記録ブロック（体温/睡眠 + 昨日の練習・体調・振り返り） -->
 <div id="blockMorning">
+  <!-- 体温 -->
   <div class="section">
     <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">🌡</div><div class="sec-title">体温</div><span class="chev open">▾</span>
+      <div class="sec-num">🌡</div><div class="sec-title">今日の体温</div><span class="chev open">▾</span>
     </div>
     <div class="sec-body open">
       <div class="bgrp" id="tempBtns">
@@ -383,9 +377,10 @@ textarea.tinput{resize:none;min-height:70px;}
       <input type="number" step="0.1" inputmode="decimal" class="tinput" id="tempOther" placeholder="例: 36.9" style="display:none;">
     </div>
   </div>
+  <!-- 睡眠 -->
   <div class="section">
     <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">🌙</div><div class="sec-title">睡眠</div><span class="chev open">▾</span>
+      <div class="sec-num">🌙</div><div class="sec-title">昨夜の睡眠</div><span class="chev open">▾</span>
     </div>
     <div class="sec-body open">
       <div class="sleep-grid">
@@ -416,14 +411,12 @@ textarea.tinput{resize:none;min-height:70px;}
       </div>
     </div>
   </div>
-  <button class="save-btn blue" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
-</div>
-
-<!-- 練習・体調ブロック -->
-<div id="blockTraining" style="display:none;">
+  <!-- 昨日の体調 -->
   <div class="section">
     <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">01</div><div class="sec-title">体調</div><span class="chev open">▾</span>
+      <div class="sec-num">01</div>
+      <div class="sec-title">昨日の体調 <span id="yesterdayDateLabel" style="font-size:11px;color:var(--muted);font-weight:400;"></span></div>
+      <span class="chev open">▾</span>
     </div>
     <div class="sec-body open">
       <span class="flabel">便通</span>
@@ -456,14 +449,51 @@ textarea.tinput{resize:none;min-height:70px;}
       <textarea class="tinput" id="condNote" placeholder="例: 夜眠かった、筋肉痛なし..."></textarea>
     </div>
   </div>
+  <!-- 昨日のトレーニング -->
   <div class="section">
     <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">02</div><div class="sec-title">トレーニング</div><span class="chev open">▾</span>
+      <div class="sec-num">02</div><div class="sec-title">昨日のトレーニング</div><span class="chev open">▾</span>
     </div>
     <div class="sec-body open" id="trainingBody"></div>
   </div>
-  <button class="save-btn red" onclick="saveTraining()">💪 練習・体調を保存 →</button>
+  <!-- 昨日の振り返り日記 -->
+  <div class="section">
+    <div class="sec-head open" onclick="toggleSec(this)">
+      <div class="sec-num">📖</div><div class="sec-title">昨日の振り返り</div><span class="chev open">▾</span>
+    </div>
+    <div class="sec-body open">
+      <div style="padding:4px 0 8px;color:var(--muted);font-size:11px;">今朝書く昨日の記録。前日付で保存されます。</div>
+      <span class="flabel">総括・気づき</span>
+      <textarea class="tinput" id="yesterdayDiary" rows="4" placeholder="例: 練習は良かった。疲労感が残っている。食事を食べすぎた。明日は軽めに…"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:130px;">
+          <span class="flabel">疲労度</span>
+          <div class="btn-row" id="ystFatigue">
+            <button class="btn" onclick="sel(this,'ystFatigue')">😴 かなり疲れた</button>
+            <button class="btn" onclick="sel(this,'ystFatigue')">😐 普通</button>
+            <button class="btn" onclick="sel(this,'ystFatigue')">😊 元気</button>
+          </div>
+        </div>
+        <div style="flex:1;min-width:130px;">
+          <span class="flabel">練習満足度</span>
+          <div class="btn-row" id="ystSatisfaction">
+            <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐⭐⭐ 最高</button>
+            <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐⭐ 良い</button>
+            <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐ もう少し</button>
+            <button class="btn" onclick="sel(this,'ystSatisfaction')">— 練習なし</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <span class="flabel">今日意識すること</span>
+        <textarea class="tinput" id="tomorrowNote" rows="2" placeholder="例: スパーリングに集中する。体重を意識して食事を調整。"></textarea>
+      </div>
+    </div>
+  </div>
+  <button class="save-btn blue" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
 </div>
+
+
 
 </main>
 </div>
@@ -814,27 +844,20 @@ function renderCal(tab){
   for(let i=1;i<=rem;i++) h+=`<div class="cal-day other-m">${i}</div>`;
   gridEl.innerHTML=h;
 }
-function selDay(tab,s){CAL[tab].sel=s;renderCal(tab);updateBswBadges();}
+function selDay(tab,s){CAL[tab].sel=s;renderCal(tab);updateBswBadges();if(tab==='body')loadYesterdayDiary();}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
-// ══════════════════════════════════════════
-//  BLOCK SWITCH (朝 / 練習)
-// ══════════════════════════════════════════
-function switchBlock(name){
-  document.getElementById('blockMorning').style.display=name==='morning'?'':'none';
-  document.getElementById('blockTraining').style.display=name==='training'?'':'none';
-  document.getElementById('bswMorning').className='bsw-btn'+(name==='morning'?' active-blue':'');
-  document.getElementById('bswTraining').className='bsw-btn'+(name==='training'?' active-red':'');
-  updateBswBadges();
-}
+
 function updateBswBadges(){
   const date=CAL.body.sel;
   if(!date)return;
   const rec=getBodyLog(date)||{};
-  document.getElementById('bswMorning').querySelector('.bsw-sub').textContent=
-    rec.hasMorning?'✓ 保存済み':'体温・睡眠（当日朝）';
-  document.getElementById('bswTraining').querySelector('.bsw-sub').textContent=
-    rec.hasTraining?'✓ 保存済み':'便通・調子・練習';
+  const ystDate=getYesterdayDate(date);
+  const ystRec=getBodyLog(ystDate)||{};
+  const hasSaved=rec.hasMorning||ystRec.hasDiary||ystRec.hasTraining;
+  const sub=hasSaved?'✓ 保存済み':'体温・睡眠・昨日の記録';
+  const btn=document.getElementById('bswMorning');
+  if(btn)btn.querySelector('.bsw-sub').textContent=sub;
 }
 
 // ══════════════════════════════════════════
@@ -862,7 +885,8 @@ function toggleSec(h){
   ch.classList.toggle('open',o);h.classList.toggle('open',o);
 }
 function sel(btn,key){
-  document.getElementById(key+'Btns').querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  const grp=document.getElementById(key+'Btns')||document.getElementById(key);
+  if(grp)grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   const isOther=btn.classList.contains('other');
   const oe=document.getElementById(key+'Other');
@@ -892,7 +916,16 @@ function switchTab(name,btn){
   if(name==='food')renderCal('food');
   if(name==='db')renderDB();
 }
-function openModal(id){document.getElementById(id).classList.add('show');}
+function openModal(id){
+  document.getElementById(id).classList.add('show');
+  if(id==='gasModal'){
+    const u=getGasUrl();
+    if(u)document.getElementById('gasUrlInput').value=u;
+    const su=localStorage.getItem('tkd_sheet_url')||'';
+    document.getElementById('sheetUrlInput').value=su;
+    document.getElementById('gasSt').textContent='';
+  }
+}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 document.querySelectorAll('.modal-ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('show');}));
 
@@ -1031,13 +1064,16 @@ function searchLocal(q){
   return db.filter(f=>f.name.toLowerCase().includes(ql)).slice(0,12);
 }
 async function searchAPI(q,localResults){
-  if(!navigator.onLine)return;
+  if(!navigator.onLine){renderDrop(localResults,q,true);return;}
   const searchId=++_offSearchId;
   const localNames=new Set(localResults.map(f=>f.name));
   try{
-    const url=`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=10&lc=ja&cc=jp&fields=product_name,product_name_ja,nutriments`;
-    const resp=await fetch(url,{signal:AbortSignal.timeout(5000)});
-    if(!resp.ok||searchId!==_offSearchId)return;
+    const ctrl=new AbortController();
+    const timer=setTimeout(function(){ctrl.abort();},3000);
+    const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(q)+'&search_simple=1&action=process&json=1&page_size=8&lc=ja&fields=product_name,product_name_ja,nutriments';
+    const resp=await fetch(url,{signal:ctrl.signal});
+    clearTimeout(timer);
+    if(searchId!==_offSearchId)return;
     const data=await resp.json();
     const apiResults=[];
     for(const p of(data.products||[])){
@@ -1053,11 +1089,13 @@ async function searchAPI(q,localResults){
         fi:parseFloat((n['fiber_100g']||0).toFixed(1)),
         na:Math.round((n['sodium_100g']||0)*1000),
         api:true});
-      if(apiResults.length>=6)break;
+      if(apiResults.length>=5)break;
     }
     if(searchId!==_offSearchId)return;
     renderDrop([...localResults,...apiResults],q,true);
-  }catch(e){}
+  }catch(e){
+    if(_offSearchId===searchId)renderDrop(localResults,q,true);
+  }
 }
 function renderDrop(results,q,apiDone){
   const dd=document.getElementById('foodDrop');
@@ -1250,6 +1288,10 @@ function buildBodyText(rec){
   if(rec.bOtsu)lines.push('便通: '+rec.bOtsu);
   if(rec.choshi)lines.push('調子: '+rec.choshi);
   if(rec.condNote)lines.push('メモ: '+rec.condNote);
+  if(rec.diary)lines.push('【振り返り日記】\n'+rec.diary);
+  if(rec.ystFatigue)lines.push('疲労度: '+rec.ystFatigue);
+  if(rec.ystSatisfaction)lines.push('練習満足度: '+rec.ystSatisfaction);
+  if(rec.tomorrowNote)lines.push('明日への一言: '+rec.tomorrowNote);
   TRAININGS.forEach(t=>{
     const w=rec[t.key+'_w'],r=rec[t.key+'_r'],s=rec[t.key+'_s'];
     if(w||r||s)lines.push(`${t.label}: ${[w?w+'kg':'',r?r+'回':'',s?s+'set':''].filter(Boolean).join('×')}`);
@@ -1263,30 +1305,86 @@ function buildBodyText(rec){
 }
 
 // 朝の記録（体温・睡眠）→ 選択日にupsert
+// 前日の日付文字列を返す（YYYY-MM-DD形式）
+function getYesterdayDate(todayStr){
+  const d=new Date(todayStr+'T00:00:00');
+  d.setDate(d.getDate()-1);
+  return d.toISOString().slice(0,10);
+}
+// 朝ブロック表示時に昨日の日付ラベルをセット & 既存データを読み込む
+function loadYesterdayDiary(){
+  const today=CAL.body.sel;
+  if(!today)return;
+  const yst=getYesterdayDate(today);
+  const [,m,d]=yst.split('-');
+  const lbl=document.getElementById('yesterdayDateLabel');
+  if(lbl)lbl.textContent='('+m+'/'+d+'の記録)';
+  const rec=getBodyLog(yst)||{};
+  // 体調：調子
+  document.querySelectorAll('#choshiBtns .btn').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim()===(rec.choshi||'__'));
+  });
+  const condEl=document.getElementById('condNote');
+  if(condEl)condEl.value=rec.condNote||'';
+  // 便通ボタンリセット
+  ['bAsa','bIgo'].forEach(id=>{
+    ['o','x','d'].forEach(v=>{
+      const el=document.getElementById(id+'_'+v);
+      if(el)el.classList.remove('active');
+    });
+  });
+  // トレーニングボタン復元（sel()の仕組みを使って既存のボタングループを探す）
+  TRAININGS.forEach(t=>{
+    ['_w','_r','_s'].forEach(suf=>{
+      const key=t.key+suf;
+      const val=rec[key]||'';
+      // ボタングループID（HTMLでは {KEY}Btns 形式）
+      const grp=document.getElementById(key+'Btns');
+      if(!grp)return;
+      grp.querySelectorAll('.btn').forEach(b=>{
+        b.classList.toggle('active',b.textContent.trim()===val&&val!=='');
+      });
+    });
+  });
+  // 振り返り日記
+  const diaryEl=document.getElementById('yesterdayDiary');
+  if(diaryEl)diaryEl.value=rec.diary||'';
+  const tmrEl=document.getElementById('tomorrowNote');
+  if(tmrEl)tmrEl.value=rec.tomorrowNote||'';
+  // 疲労度・満足度
+  ['ystFatigue','ystSatisfaction'].forEach(id=>{
+    const saved=rec[id]||'';
+    const grp=document.getElementById(id);
+    if(!grp)return;
+    grp.querySelectorAll('.btn').forEach(b=>{
+      b.classList.toggle('active',b.textContent.trim()===saved&&saved!=='');
+    });
+  });
+}
 function saveMorning(){
   const date=CAL.body.sel;
   if(!date){toast('日付を選択してください','err');return;}
   const temp=getV('temp'),sleepIn=getV('sleepIn'),sleepOut=getV('sleepOut');
-  if(!temp&&!sleepIn&&!sleepOut){toast('体温または睡眠を入力してください','err');return;}
-  // 既存レコードにマージ（なければ新規）
+  // 今日の記録（体温・睡眠）
   const rec=getBodyLog(date)||{date,type:'body',synced:false};
   if(temp)rec.temp=temp;
   if(sleepIn)rec.sleepIn=sleepIn;
   if(sleepOut)rec.sleepOut=sleepOut;
-  rec.hasMorning=true;
-  rec.text=buildBodyText(rec);
-  rec.synced=false;
-  setBodyLog(date,rec);
-  renderCal('body');updateBswBadges();
-  sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
-  toast('🌅 朝の記録を保存しました','ok');
-}
-
-// 練習・体調 → 選択日にupsert
-function saveTraining(){
-  const date=CAL.body.sel;
-  if(!date){toast('日付を選択してください','err');return;}
-  const bOtsu=getBowelText(),choshi=getV('choshi'),condNote=document.getElementById('condNote').value;
+  if(temp||sleepIn||sleepOut){
+    rec.hasMorning=true;
+    rec.text=buildBodyText(rec);
+    rec.synced=false;
+    setBodyLog(date,rec);
+    sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
+  }
+  // 昨日の記録（体調・練習・振り返り）→ 前日付で保存
+  const ystDate=getYesterdayDate(date);
+  const ystRec=getBodyLog(ystDate)||{date:ystDate,type:'body',synced:false};
+  const bOtsu=getBowelText(),choshi=getV('choshi'),condNote=document.getElementById('condNote').value.trim();
+  const diary=document.getElementById('yesterdayDiary').value.trim();
+  const tomorrowNote=document.getElementById('tomorrowNote').value.trim();
+  const ystFatigue=getV('ystFatigue');
+  const ystSatisfaction=getV('ystSatisfaction');
   const trData={
     bOtsu,choshi,condNote,
     SQ_w:getV('SQ_w'),SQ_r:getV('SQ_r'),SQ_s:getV('SQ_s'),
@@ -1299,19 +1397,26 @@ function saveTraining(){
     tkdOther:TR_ACTIVE['TKD']?document.getElementById('TKD_other').value:null,
     otherTrn:TR_ACTIVE['OTR']?document.getElementById('OTR_text').value:null,
   };
-  const hasAny=Object.values(trData).some(v=>v);
-  if(!hasAny){toast('何か入力してください','err');return;}
-  // 既存レコードにマージ
-  const rec=getBodyLog(date)||{date,type:'body',synced:false};
-  Object.assign(rec,trData);
-  rec.hasTraining=true;
-  rec.text=buildBodyText(rec);
-  rec.synced=false;
-  setBodyLog(date,rec);
+  Object.assign(ystRec,trData);
+  if(diary)ystRec.diary=diary;
+  if(tomorrowNote)ystRec.tomorrowNote=tomorrowNote;
+  if(ystFatigue)ystRec.ystFatigue=ystFatigue;
+  if(ystSatisfaction)ystRec.ystSatisfaction=ystSatisfaction;
+  const hasYst=bOtsu||choshi||condNote||diary||tomorrowNote||ystFatigue||ystSatisfaction||
+    Object.values(trData).some(v=>v);
+  if(hasYst){
+    ystRec.hasTraining=!!(trData.bOtsu||trData.choshi||Object.values(trData).some(v=>v));
+    ystRec.hasDiary=!!(diary||tomorrowNote||ystFatigue||ystSatisfaction);
+    ystRec.text=buildBodyText(ystRec);
+    ystRec.synced=false;
+    setBodyLog(ystDate,ystRec);
+    sendGAS({type:'body',body:ystRec}).then(ok=>{if(ok){ystRec.synced=true;setBodyLog(ystDate,ystRec);}});
+  }
+  if(!temp&&!sleepIn&&!sleepOut&&!hasYst){toast('何か入力してください','err');return;}
   renderCal('body');updateBswBadges();
-  sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
-  toast('💪 練習・体調を保存しました','ok');
+  toast('🌅 朝の記録を保存しました','ok');
 }
+
 
 // 食事
 function saveFood(){
@@ -1350,8 +1455,15 @@ function getGasUrl(){return localStorage.getItem('tkd_gas_url')||'';}
 function setGasUrl(u){localStorage.setItem('tkd_gas_url',u);}
 function updateGasInd(){
   const u=getGasUrl(),el=document.getElementById('gasInd');
+  const hasSheet=!!localStorage.getItem('tkd_sheet_url');
   el.textContent=u?'Sheets:✓':'Sheets:未設定';
   el.style.color=u?'var(--green)':'var(--muted)';
+  el.title=hasSheet?'クリックでスプレッドシートを開く':'';
+}
+function openSheetUrl(){
+  const url=localStorage.getItem('tkd_sheet_url');
+  if(url)window.open(url,'_blank');
+  else openModal('gasModal');
 }
 async function sendGAS(data){
   const url=getGasUrl();if(!url)return false;
@@ -1375,13 +1487,19 @@ async function syncAll(){
 }
 async function testAndSaveGas(){
   const url=document.getElementById('gasUrlInput').value.trim();
+  const sheetUrl=document.getElementById('sheetUrlInput').value.trim();
   const st=document.getElementById('gasSt');
   if(!url){st.textContent='URLを入力してください';return;}
   st.textContent='テスト中...';st.className='gas-st';
   try{
     const r=await fetch(url);const j=await r.json();
-    if(j.status==='ok'){setGasUrl(url);updateGasInd();st.textContent='✓ 接続成功！';st.className='gas-st ok';setTimeout(()=>closeModal('gasModal'),1200);}
-    else{st.textContent='エラーが返りました';st.className='gas-st err';}
+    if(j.status==='ok'){
+      setGasUrl(url);
+      if(sheetUrl)localStorage.setItem('tkd_sheet_url',sheetUrl);
+      updateGasInd();
+      st.textContent='✓ 接続成功！';st.className='gas-st ok';
+      setTimeout(()=>closeModal('gasModal'),1200);
+    }else{st.textContent='エラーが返りました';st.className='gas-st err';}
   }catch{st.textContent='接続失敗 — デプロイ設定を確認してください';st.className='gas-st err';}
 }
 
