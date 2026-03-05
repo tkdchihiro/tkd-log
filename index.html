@@ -852,12 +852,10 @@ function updateBswBadges(){
   const date=CAL.body.sel;
   if(!date)return;
   const rec=getBodyLog(date)||{};
-  const ystDate=getYesterdayDate(date);
-  const ystRec=getBodyLog(ystDate)||{};
-  const hasSaved=rec.hasMorning||ystRec.hasDiary||ystRec.hasTraining;
-  const sub=hasSaved?'✓ 保存済み':'体温・睡眠・昨日の記録';
+  const ystRec=getBodyLog(getYesterdayDate(date))||{};
+  const hasSaved=rec.hasMorning||ystRec.hasTraining||ystRec.hasDiary;
   const btn=document.getElementById('bswMorning');
-  if(btn)btn.querySelector('.bsw-sub').textContent=sub;
+  if(btn)btn.querySelector('.bsw-sub').textContent=hasSaved?'✓ 保存済み':'体温・睡眠・昨日の記録';
 }
 
 // ══════════════════════════════════════════
@@ -1306,20 +1304,24 @@ function buildBodyText(rec){
 
 // 朝の記録（体温・睡眠）→ 選択日にupsert
 // 前日の日付文字列を返す（YYYY-MM-DD形式）
-function getYesterdayDate(todayStr){
-  const d=new Date(todayStr+'T00:00:00');
-  d.setDate(d.getDate()-1);
-  return d.toISOString().slice(0,10);
+function getYesterdayDate(dateStr){
+  // toISOString()はUTC変換でJSTだと日付がズレるため文字列操作で計算
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const dt=new Date(y,m-1,d-1); // ローカル時間で前日
+  const yy=dt.getFullYear();
+  const mm=String(dt.getMonth()+1).padStart(2,'0');
+  const dd=String(dt.getDate()).padStart(2,'0');
+  return `${yy}-${mm}-${dd}`;
 }
 // 朝ブロック表示時に昨日の日付ラベルをセット & 既存データを読み込む
 function loadYesterdayDiary(){
-  const today=CAL.body.sel;
-  if(!today)return;
-  const yst=getYesterdayDate(today);
-  const [,m,d]=yst.split('-');
+  const date=CAL.body.sel;
+  if(!date)return;
+  const ystDate=getYesterdayDate(date);
+  const [,m,d]=ystDate.split('-');
   const lbl=document.getElementById('yesterdayDateLabel');
   if(lbl)lbl.textContent='('+m+'/'+d+'の記録)';
-  const rec=getBodyLog(yst)||{};
+  const rec=getBodyLog(ystDate)||{};
   // 体調：調子
   document.querySelectorAll('#choshiBtns .btn').forEach(b=>{
     b.classList.toggle('active',b.textContent.trim()===(rec.choshi||'__'));
@@ -1333,12 +1335,11 @@ function loadYesterdayDiary(){
       if(el)el.classList.remove('active');
     });
   });
-  // トレーニングボタン復元（sel()の仕組みを使って既存のボタングループを探す）
+  // トレーニングボタン復元
   TRAININGS.forEach(t=>{
     ['_w','_r','_s'].forEach(suf=>{
       const key=t.key+suf;
       const val=rec[key]||'';
-      // ボタングループID（HTMLでは {KEY}Btns 形式）
       const grp=document.getElementById(key+'Btns');
       if(!grp)return;
       grp.querySelectorAll('.btn').forEach(b=>{
@@ -1365,21 +1366,6 @@ function saveMorning(){
   const date=CAL.body.sel;
   if(!date){toast('日付を選択してください','err');return;}
   const temp=getV('temp'),sleepIn=getV('sleepIn'),sleepOut=getV('sleepOut');
-  // 今日の記録（体温・睡眠）
-  const rec=getBodyLog(date)||{date,type:'body',synced:false};
-  if(temp)rec.temp=temp;
-  if(sleepIn)rec.sleepIn=sleepIn;
-  if(sleepOut)rec.sleepOut=sleepOut;
-  if(temp||sleepIn||sleepOut){
-    rec.hasMorning=true;
-    rec.text=buildBodyText(rec);
-    rec.synced=false;
-    setBodyLog(date,rec);
-    sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
-  }
-  // 昨日の記録（体調・練習・振り返り）→ 前日付で保存
-  const ystDate=getYesterdayDate(date);
-  const ystRec=getBodyLog(ystDate)||{date:ystDate,type:'body',synced:false};
   const bOtsu=getBowelText(),choshi=getV('choshi'),condNote=document.getElementById('condNote').value.trim();
   const diary=document.getElementById('yesterdayDiary').value.trim();
   const tomorrowNote=document.getElementById('tomorrowNote').value.trim();
@@ -1397,24 +1383,52 @@ function saveMorning(){
     tkdOther:TR_ACTIVE['TKD']?document.getElementById('TKD_other').value:null,
     otherTrn:TR_ACTIVE['OTR']?document.getElementById('OTR_text').value:null,
   };
-  Object.assign(ystRec,trData);
-  if(diary)ystRec.diary=diary;
-  if(tomorrowNote)ystRec.tomorrowNote=tomorrowNote;
-  if(ystFatigue)ystRec.ystFatigue=ystFatigue;
-  if(ystSatisfaction)ystRec.ystSatisfaction=ystSatisfaction;
-  const hasYst=bOtsu||choshi||condNote||diary||tomorrowNote||ystFatigue||ystSatisfaction||
-    Object.values(trData).some(v=>v);
+  const hasAny=temp||sleepIn||sleepOut||bOtsu||choshi||condNote||diary||tomorrowNote||
+    ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
+  if(!hasAny){toast('何か入力してください','err');return;}
+
+  // ── 体温・睡眠 → 選択日（今日）に保存 ──
+  if(temp||sleepIn||sleepOut){
+    const rec=getBodyLog(date)||{date,type:'body',synced:false};
+    if(temp)rec.temp=temp;
+    if(sleepIn)rec.sleepIn=sleepIn;
+    if(sleepOut)rec.sleepOut=sleepOut;
+    rec.hasMorning=true;
+    rec.text=buildBodyText(rec);
+    rec.synced=false;
+    setBodyLog(date,rec);
+    sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
+  }
+
+  // ── 練習・体調・日記 → 前日（昨日）に保存 ──
+  const hasYst=bOtsu||choshi||condNote||diary||tomorrowNote||
+    ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
   if(hasYst){
-    ystRec.hasTraining=!!(trData.bOtsu||trData.choshi||Object.values(trData).some(v=>v));
-    ystRec.hasDiary=!!(diary||tomorrowNote||ystFatigue||ystSatisfaction);
+    const ystDate=getYesterdayDate(date);
+    const ystRec=getBodyLog(ystDate)||{date:ystDate,type:'body',synced:false};
+    Object.assign(ystRec,trData);
+    if(diary)ystRec.diary=diary;
+    if(tomorrowNote)ystRec.tomorrowNote=tomorrowNote;
+    if(ystFatigue)ystRec.ystFatigue=ystFatigue;
+    if(ystSatisfaction)ystRec.ystSatisfaction=ystSatisfaction;
+    if(bOtsu||choshi||condNote||Object.values(trData).some(v=>v))ystRec.hasTraining=true;
+    if(diary||tomorrowNote||ystFatigue||ystSatisfaction)ystRec.hasDiary=true;
     ystRec.text=buildBodyText(ystRec);
     ystRec.synced=false;
     setBodyLog(ystDate,ystRec);
     sendGAS({type:'body',body:ystRec}).then(ok=>{if(ok){ystRec.synced=true;setBodyLog(ystDate,ystRec);}});
   }
-  if(!temp&&!sleepIn&&!sleepOut&&!hasYst){toast('何か入力してください','err');return;}
+
   renderCal('body');updateBswBadges();
-  toast('🌅 朝の記録を保存しました','ok');
+  const ystDate2=getYesterdayDate(date);
+  const [,tm,td]=date.split('-');
+  const [,ym,yd]=ystDate2.split('-');
+  const msg=(temp||sleepIn||sleepOut)&&hasYst
+    ? `🌅 保存完了 — 体温・睡眠: ${tm}/${td} ／ 練習・日記: ${ym}/${yd}`
+    : (temp||sleepIn||sleepOut)
+      ? `🌅 保存完了 — 体温・睡眠: ${tm}/${td}`
+      : `🌅 保存完了 — 練習・日記: ${ym}/${yd}`;
+  toast(msg,'ok');
 }
 
 
@@ -1467,40 +1481,61 @@ function openSheetUrl(){
 }
 async function sendGAS(data){
   const url=getGasUrl();if(!url)return false;
-  try{const r=await fetch(url,{method:'POST',body:JSON.stringify(data)});const j=await r.json();return j.status==='ok';}catch{return false;}
+  return new Promise(resolve=>{
+    try{
+      // iframeを使ったformPOSTでCORSを回避
+      const form=document.createElement('form');
+      form.method='POST';
+      form.action=url;
+      form.target='gas_iframe';
+      form.style.display='none';
+      const input=document.createElement('input');
+      input.type='hidden';
+      input.name='payload'; // GAS側では使わないがformには必要
+      // GASはapplication/jsonを期待するのでfetchのno-corsを再試行
+      // → 代わりにBeacon APIを使用（ページ離脱時も送れる確実な方法）
+      const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+      const sent=navigator.sendBeacon(url,blob);
+      resolve(sent);
+    }catch{resolve(false);}
+  });
 }
 async function syncAll(){
   const url=getGasUrl();
   if(!url){toast('Sheets連携が未設定です','err');return;}
   const bodyKeys=Object.keys(localStorage).filter(k=>k.startsWith('body_'));
   const foodKeys=Object.keys(localStorage).filter(k=>k.startsWith('food_'));
-  let ok=0;
+  let ok=0,fail=0;
   for(const k of bodyKeys){
     const rec=JSON.parse(localStorage.getItem(k)||'null');
-    if(rec&&!rec.synced&&await sendGAS({type:'body',body:rec})){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));ok++;}
+    if(!rec)continue;
+    if(await sendGAS({type:'body',body:rec})){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));ok++;}
+    else fail++;
   }
   for(const k of foodKeys){
     const rec=JSON.parse(localStorage.getItem(k)||'null');
-    if(rec&&!rec.synced&&await sendGAS({type:'food',food:rec})){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));ok++;}
+    if(!rec)continue;
+    if(await sendGAS({type:'food',food:rec})){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));ok++;}
+    else fail++;
   }
-  renderHistory();toast(ok?`${ok}件を送信しました`:'未送信の記録はありません','ok');
+  renderHistory();
+  toast(fail?`⚠ ${fail}件失敗 / ${ok}件送信`:`✓ ${ok}件をスプシに送信しました`,'ok');
 }
 async function testAndSaveGas(){
   const url=document.getElementById('gasUrlInput').value.trim();
   const sheetUrl=document.getElementById('sheetUrlInput').value.trim();
   const st=document.getElementById('gasSt');
   if(!url){st.textContent='URLを入力してください';return;}
-  st.textContent='テスト中...';st.className='gas-st';
-  try{
-    const r=await fetch(url);const j=await r.json();
-    if(j.status==='ok'){
-      setGasUrl(url);
-      if(sheetUrl)localStorage.setItem('tkd_sheet_url',sheetUrl);
-      updateGasInd();
-      st.textContent='✓ 接続成功！';st.className='gas-st ok';
-      setTimeout(()=>closeModal('gasModal'),1200);
-    }else{st.textContent='エラーが返りました';st.className='gas-st err';}
-  }catch{st.textContent='接続失敗 — デプロイ設定を確認してください';st.className='gas-st err';}
+  if(!url.startsWith('https://script.google.com/macros/s/')){
+    st.textContent='GASのURLではありません';st.className='gas-st err';return;
+  }
+  // URLを先に保存
+  setGasUrl(url);
+  if(sheetUrl)localStorage.setItem('tkd_sheet_url',sheetUrl);
+  updateGasInd();
+  st.textContent='✓ URL保存完了。データ送信は実際の記録保存時に確認できます。';
+  st.className='gas-st ok';
+  setTimeout(()=>closeModal('gasModal'),2000);
 }
 
 // ══════════════════════════════════════════
