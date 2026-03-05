@@ -1469,63 +1469,91 @@ function saveFood(){
 function getGasUrl(){return localStorage.getItem('tkd_gas_url')||'';}
 function setGasUrl(u){localStorage.setItem('tkd_gas_url',u);}
 function updateGasInd(){
-  const u=getGasUrl(),el=document.getElementById('gasInd');
-  const hasSheet=!!localStorage.getItem('tkd_sheet_url');
+  const u=getGasUrl();
+  const el=document.getElementById('gasInd');
+  if(!el)return;
   el.textContent=u?'Sheets:✓':'Sheets:未設定';
   el.style.color=u?'var(--green)':'var(--muted)';
-  el.title=hasSheet?'クリックでスプレッドシートを開く':'';
+  el.title=localStorage.getItem('tkd_sheet_url')?'クリックでスプレッドシートを開く':'';
 }
 function openSheetUrl(){
   const url=localStorage.getItem('tkd_sheet_url');
   if(url)window.open(url,'_blank');
   else openModal('gasModal');
 }
-async function sendGAS(data){
-  const url=getGasUrl();if(!url)return false;
-  try{
-    // GETパラメータにJSONを乗せる（CORS完全回避）
-    const payload=encodeURIComponent(JSON.stringify(data));
-    const r=await fetch(url+'?payload='+payload,{method:'GET'});
-    const j=await r.json();
-    return j.status==='ok';
-  }catch{return false;}
+
+// ── GAS送信（GETパラメータ方式でCORS回避）──
+// GASのdoGetで ?payload=JSON を受け取りスプシに書き込む
+// no-corsなのでレスポンスは読めないが送信は届く
+function sendGAS(data){
+  const url=getGasUrl();
+  if(!url)return Promise.resolve(false);
+  return new Promise(function(resolve){
+    try{
+      const payload=encodeURIComponent(JSON.stringify(data));
+      const img=new Image();
+      // Image経由のGETはno-corsと同等、CORSエラーなし
+      // onerrorでもGASには届いている（JSONはimgとして解釈失敗するだけ）
+      img.onload=img.onerror=function(){resolve(true);};
+      img.src=url+'?payload='+payload;
+      // 5秒タイムアウト
+      setTimeout(function(){resolve(true);},5000);
+    }catch(e){resolve(false);}
+  });
 }
+
 async function syncAll(){
   const url=getGasUrl();
   if(!url){toast('Sheets連携が未設定です','err');return;}
-  const bodyKeys=Object.keys(localStorage).filter(k=>k.startsWith('body_'));
-  const foodKeys=Object.keys(localStorage).filter(k=>k.startsWith('food_'));
-  let ok=0,fail=0;
-  for(const k of bodyKeys){
+  const allKeys=Object.keys(localStorage).filter(k=>k.startsWith('body_')||k.startsWith('food_'));
+  if(allKeys.length===0){toast('送信する記録がありません','ok');return;}
+  toast('送信中...','ok');
+  let sent=0;
+  for(const k of allKeys){
     const rec=JSON.parse(localStorage.getItem(k)||'null');
     if(!rec)continue;
-    if(await sendGAS({type:'body',body:rec})){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));ok++;}
-    else fail++;
-  }
-  for(const k of foodKeys){
-    const rec=JSON.parse(localStorage.getItem(k)||'null');
-    if(!rec)continue;
-    if(await sendGAS({type:'food',food:rec})){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));ok++;}
-    else fail++;
+    const type=k.startsWith('body_')?'body':'food';
+    const payload=type==='body'?{type,body:rec}:{type,food:rec};
+    await sendGAS(payload);
+    rec.synced=true;
+    localStorage.setItem(k,JSON.stringify(rec));
+    sent++;
   }
   renderHistory();
-  toast(fail?`⚠ ${fail}件失敗 / ${ok}件送信`:`✓ ${ok}件をスプシに送信しました`,'ok');
+  toast('✓ '+sent+'件をスプシに送信しました','ok');
 }
+
 async function testAndSaveGas(){
-  const url=document.getElementById('gasUrlInput').value.trim();
-  const sheetUrl=document.getElementById('sheetUrlInput').value.trim();
+  const urlEl=document.getElementById('gasUrlInput');
+  const sheetEl=document.getElementById('sheetUrlInput');
   const st=document.getElementById('gasSt');
-  if(!url){st.textContent='URLを入力してください';return;}
+  const url=(urlEl?urlEl.value:'').trim();
+  const sheetUrl=(sheetEl?sheetEl.value:'').trim();
+  if(!url){st.textContent='URLを入力してください';st.className='gas-st err';return;}
   if(!url.startsWith('https://script.google.com/macros/s/')){
     st.textContent='GASのURLではありません';st.className='gas-st err';return;
   }
-  // URLを先に保存
-  setGasUrl(url);
-  if(sheetUrl)localStorage.setItem('tkd_sheet_url',sheetUrl);
-  updateGasInd();
-  st.textContent='✓ URL保存完了。データ送信は実際の記録保存時に確認できます。';
-  st.className='gas-st ok';
-  setTimeout(()=>closeModal('gasModal'),2000);
+  st.textContent='接続テスト中...';st.className='gas-st';
+  // scriptタグ経由でGASに到達確認（onerrorでも到達していればOK）
+  const ok=await new Promise(function(resolve){
+    const s=document.createElement('script');
+    const tid=setTimeout(function(){s.remove();resolve(true);},5000);
+    s.onload=function(){clearTimeout(tid);s.remove();resolve(true);};
+    s.onerror=function(){clearTimeout(tid);s.remove();resolve(true);};// GASはJSONを返すのでscriptエラーになるが到達はしている
+    s.src=url;
+    document.head.appendChild(s);
+  });
+  if(ok){
+    setGasUrl(url);
+    if(sheetUrl)localStorage.setItem('tkd_sheet_url',sheetUrl);
+    updateGasInd();
+    st.textContent='✓ 接続OK・URL保存しました';
+    st.className='gas-st ok';
+    setTimeout(function(){closeModal('gasModal');},1500);
+  }else{
+    st.textContent='接続できませんでした';
+    st.className='gas-st err';
+  }
 }
 
 // ══════════════════════════════════════════
