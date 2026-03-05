@@ -1423,6 +1423,7 @@ function saveMorning(){
   const ystDate2=getYesterdayDate(date);
   const [,tm,td]=date.split('-');
   const [,ym,yd]=ystDate2.split('-');
+  console.log('[saveMorning] 選択日:'+date+' 体温保存先:'+date+' 練習保存先:'+ystDate2);
   const msg=(temp||sleepIn||sleepOut)&&hasYst
     ? `🌅 保存完了 — 体温・睡眠: ${tm}/${td} ／ 練習・日記: ${ym}/${yd}`
     : (temp||sleepIn||sleepOut)
@@ -1481,24 +1482,13 @@ function openSheetUrl(){
 }
 async function sendGAS(data){
   const url=getGasUrl();if(!url)return false;
-  return new Promise(resolve=>{
-    try{
-      // iframeを使ったformPOSTでCORSを回避
-      const form=document.createElement('form');
-      form.method='POST';
-      form.action=url;
-      form.target='gas_iframe';
-      form.style.display='none';
-      const input=document.createElement('input');
-      input.type='hidden';
-      input.name='payload'; // GAS側では使わないがformには必要
-      // GASはapplication/jsonを期待するのでfetchのno-corsを再試行
-      // → 代わりにBeacon APIを使用（ページ離脱時も送れる確実な方法）
-      const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
-      const sent=navigator.sendBeacon(url,blob);
-      resolve(sent);
-    }catch{resolve(false);}
-  });
+  try{
+    // GETパラメータにJSONを乗せる（CORS完全回避）
+    const payload=encodeURIComponent(JSON.stringify(data));
+    const r=await fetch(url+'?payload='+payload,{method:'GET'});
+    const j=await r.json();
+    return j.status==='ok';
+  }catch{return false;}
 }
 async function syncAll(){
   const url=getGasUrl();
