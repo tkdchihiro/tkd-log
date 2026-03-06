@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>TKD Log</title>
 <script src="fooddb.js"></script>
+<script src="config.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;700&display=swap');
 :root{
@@ -278,6 +279,15 @@ textarea.tinput{resize:none;min-height:70px;}
     <div style="margin-top:14px;">
       <div class="modal-desc" style="margin-bottom:6px;">スプレッドシートURL（任意）<br><span style="font-size:10px;color:var(--muted);">保存するとヘッダーの「Sheets」ボタンから直接開けます</span></div>
       <input class="cf-inp" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%;">
+    </div>
+    <!-- デバイス引き継ぎ -->
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+      <div class="modal-desc" style="margin-bottom:8px;">📲 デバイス引き継ぎ<br><span style="font-size:10px;color:var(--muted);">QRコードを新しいデバイスで読み取るとURL設定が自動入力されます</span></div>
+      <div id="qrArea" style="display:none;text-align:center;margin:10px 0;">
+        <canvas id="qrCanvas" style="border-radius:8px;background:#fff;padding:8px;"></canvas>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px;">新しいデバイスのカメラで読み取る</div>
+      </div>
+      <button class="btn" style="width:100%;font-size:12px;" onclick="showTransferQR()">QRコードを表示</button>
     </div>
     <div class="macts">
       <button class="mbtn cancel" onclick="closeModal('gasModal')">キャンセル</button>
@@ -579,6 +589,7 @@ textarea.tinput{resize:none;min-height:70px;}
       <button class="hfbtn" onclick="filterHist(this,'food')">🍽 食事</button>
     </div>
     <button class="hbtn" onclick="syncAll()" style="font-size:11px;margin-left:auto;">☁ 一括送信</button>
+    <button class="hbtn" onclick="syncFromSheets()" style="font-size:11px;border-color:var(--gold);color:var(--gold);">↓ スプシ読込</button>
   </div>
   <div id="histList"></div>
 </main>
@@ -591,6 +602,12 @@ textarea.tinput{resize:none;min-height:70px;}
   <div style="display:flex;gap:8px;margin-bottom:10px;">
     <input type="search" class="tinput" id="dbSearch" placeholder="🔍 食材名を検索..." oninput="renderDB()" style="flex:1;margin-top:0;">
     <button class="btn" style="border-color:var(--purple);color:var(--purple);font-size:12px;padding:0 12px;white-space:nowrap;" onclick="openModal('cfModal')">＋ 追加</button>
+  </div>
+  <!-- カスタム食材 スプシ同期 -->
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="btn" style="flex:1;font-size:11px;border-color:var(--green);color:var(--green);" onclick="backupCustomFoods()">☁ スプシにバックアップ</button>
+    <button class="btn" style="flex:1;font-size:11px;border-color:var(--gold);color:var(--gold);" onclick="restoreCustomFoods()">↓ スプシから復元</button>
+  </div>>
   </div>
   <div class="fcats" id="dbCatFilter"></div>
   <!-- 標準DB / カスタム 切り替え -->
@@ -1202,10 +1219,53 @@ function saveCustomFood(){
   ['cf_name','cf_cat','cf_kcal','cf_p','cf_f','cf_c','cf_fi','cf_na'].forEach(id=>{document.getElementById(id).value='';});
   buildFoodCats();renderDB();closeModal('cfModal');
   toast(`「${name}」を登録しました`,'ok');
+  // 保存と同時にスプシにも自動バックアップ
+  syncCustomFoodsToGAS();
 }
 
 // ══════════════════════════════════════════
-//  RECIPE
+//  カスタム食材 スプシ同期
+// ══════════════════════════════════════════
+function syncCustomFoodsToGAS(){
+  const url=getGasUrl();if(!url)return;
+  const foods=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  const recipes=JSON.parse(localStorage.getItem('tkd_recipes')||'[]');
+  sendGAS({type:'customfoods',foods,recipes});
+}
+
+async function backupCustomFoods(){
+  const url=getGasUrl();
+  if(!url){toast('Sheets連携が未設定です','err');return;}
+  const foods=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  const recipes=JSON.parse(localStorage.getItem('tkd_recipes')||'[]');
+  if(foods.length===0&&recipes.length===0){toast('バックアップするカスタム食材がありません','ok');return;}
+  await sendGAS({type:'customfoods',foods,recipes});
+  toast(`✓ カスタム食材${foods.length}件・レシピ${recipes.length}件をバックアップしました`,'ok');
+}
+
+async function restoreCustomFoods(){
+  const url=getGasUrl();
+  if(!url){toast('Sheets連携が未設定です','err');return;}
+  toast('スプシから読み込み中...','ok');
+  // GASからカスタム食材を取得
+  try{
+    const payload=encodeURIComponent(JSON.stringify({type:'getcustomfoods'}));
+    const r=await fetch(url+'?payload='+payload);
+    const j=await r.json();
+    if(j.status==='ok'&&j.foods){
+      localStorage.setItem('tkd_custom_foods',JSON.stringify(j.foods));
+      if(j.recipes)localStorage.setItem('tkd_recipes',JSON.stringify(j.recipes));
+      buildFoodCats();renderDB();
+      toast(`✓ カスタム食材${j.foods.length}件を復元しました`,'ok');
+    }else{
+      toast('データが見つかりませんでした','err');
+    }
+  }catch{
+    toast('復元に失敗しました','err');
+  }
+}
+
+
 // ══════════════════════════════════════════
 function getRec(){try{return JSON.parse(localStorage.getItem('tkd_recipes')||'[]');}catch{return[];}}
 function saveRec(a){localStorage.setItem('tkd_recipes',JSON.stringify(a));}
@@ -1751,6 +1811,117 @@ function deleteFood(id){
 }
 
 // ══════════════════════════════════════════
+//  デバイス引き継ぎ（QR / URLパラメータ）
+// ══════════════════════════════════════════
+
+// 起動時にURLパラメータからGAS/スプシURLを自動読込
+(function loadFromUrlParams(){
+  try{
+    const p=new URLSearchParams(window.location.search);
+    const gasUrl=p.get('gas');
+    const sheetUrl=p.get('sheet');
+    if(gasUrl&&gasUrl.startsWith('https://script.google.com/macros/s/')){
+      setGasUrl(decodeURIComponent(gasUrl));
+      if(sheetUrl)localStorage.setItem('tkd_sheet_url',decodeURIComponent(sheetUrl));
+      updateGasInd();
+      // パラメータをURLから除去（履歴に残さない）
+      window.history.replaceState({},'',window.location.pathname);
+      setTimeout(()=>toast('✓ 設定を引き継ぎました','ok'),500);
+    }
+  }catch(e){}
+})();
+
+// QRコード表示（qrcode.js使用）
+function showTransferQR(){
+  const gasUrl=getGasUrl();
+  const sheetUrl=localStorage.getItem('tkd_sheet_url')||'';
+  if(!gasUrl){
+    toast('先にGAS URLを保存してください','err');return;
+  }
+  const base=window.location.origin+window.location.pathname;
+  const params='?gas='+encodeURIComponent(gasUrl)+(sheetUrl?'&sheet='+encodeURIComponent(sheetUrl):'');
+  const transferUrl=base+params;
+  const area=document.getElementById('qrArea');
+  area.style.display='block';
+  // QRコードをcanvasに描画（qrcode-generatorライブラリを動的ロード）
+  if(typeof qrcode==='undefined'){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    s.onload=()=>drawQR(transferUrl);
+    document.head.appendChild(s);
+  }else{
+    drawQR(transferUrl);
+  }
+}
+
+function drawQR(text){
+  const canvas=document.getElementById('qrCanvas');
+  canvas.innerHTML='';
+  // QRCodeライブラリでdivに生成してcanvasに転写
+  const tmp=document.createElement('div');
+  tmp.style.display='none';
+  document.body.appendChild(tmp);
+  try{
+    new QRCode(tmp,{text,width:160,height:160,colorDark:'#000',colorLight:'#fff'});
+    setTimeout(()=>{
+      const img=tmp.querySelector('img')||tmp.querySelector('canvas');
+      if(img){
+        const ctx=canvas.getContext('2d');
+        canvas.width=160;canvas.height=160;
+        if(img.tagName==='IMG'){
+          const i2=new Image();
+          i2.onload=()=>ctx.drawImage(i2,0,0);
+          i2.src=img.src;
+        }else{
+          ctx.drawImage(img,0,0);
+        }
+      }
+      tmp.remove();
+    },300);
+  }catch(e){tmp.remove();}
+}
+
+// ══════════════════════════════════════════
+//  スプシ双方向同期
+// ══════════════════════════════════════════
+
+async function syncFromSheets(){
+  const url=getGasUrl();
+  if(!url){toast('Sheets連携が未設定です','err');return;}
+  toast('スプシからデータ読み込み中...','ok');
+  try{
+    const payload=encodeURIComponent(JSON.stringify({type:'getlogs'}));
+    const r=await fetch(url+'?payload='+payload);
+    const j=await r.json();
+    if(j.status!=='ok'){toast('読み込み失敗','err');return;}
+    let imported=0;
+    // 体調・練習データ
+    (j.bodyLogs||[]).forEach(rec=>{
+      if(!rec.date)return;
+      const existing=getBodyLog(rec.date)||{};
+      // ローカルにない or スプシの方が新しければ上書き
+      if(!existing.date){
+        setBodyLog(rec.date,{...rec,synced:true});
+        imported++;
+      }
+    });
+    // 食事データ
+    (j.foodLogs||[]).forEach(rec=>{
+      if(!rec.date)return;
+      const existing=getFoodLog(rec.date)||{};
+      if(!existing.date){
+        setFoodLog(rec.date,{...rec,synced:true});
+        imported++;
+      }
+    });
+    renderHistory();renderCal('body');renderCal('food');
+    toast(imported?`✓ ${imported}件のデータを読み込みました`:'新しいデータはありませんでした','ok');
+  }catch(e){
+    toast('読み込みに失敗しました','err');
+  }
+}
+
+// ══════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
@@ -1764,6 +1935,17 @@ function toast(msg,type=''){
 // ══════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════
+
+// config.jsの設定を自動適用（localStorageより優先）
+(function applyConfig(){
+  if(typeof TKD_CONFIG === 'undefined') return;
+  if(TKD_CONFIG.gasUrl && TKD_CONFIG.gasUrl.startsWith('https://script.google.com/macros/s/')){
+    setGasUrl(TKD_CONFIG.gasUrl);
+  }
+  if(TKD_CONFIG.sheetUrl && TKD_CONFIG.sheetUrl.startsWith('https://')){
+    localStorage.setItem('tkd_sheet_url', TKD_CONFIG.sheetUrl);
+  }
+})();
 buildTrainingUI();
 buildFoodCats();
 initCal('body');
@@ -1772,6 +1954,36 @@ renderHistory();
 renderDB();
 updateGasInd();
 updateBswBadges();
+
+// 起動時にスプシからカスタム食材を自動復元
+(async function autoRestoreCustomFoods(){
+  const url=getGasUrl();
+  if(!url)return; // GAS未設定なら何もしない
+  const lastRestore=localStorage.getItem('tkd_custom_last_restore');
+  const now=Date.now();
+  // 最後の復元から1時間以上経過している場合のみ実行（毎回fetchしない）
+  if(lastRestore && now-parseInt(lastRestore) < 3600000)return;
+  try{
+    const payload=encodeURIComponent(JSON.stringify({type:'getcustomfoods'}));
+    const r=await fetch(url+'?payload='+payload);
+    const j=await r.json();
+    if(j.status==='ok'&&j.foods&&j.foods.length>0){
+      const local=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+      // スプシの方が件数が多い場合のみ上書き（ローカルの新規追加を保護）
+      if(j.foods.length>local.length){
+        localStorage.setItem('tkd_custom_foods',JSON.stringify(j.foods));
+        if(j.recipes&&j.recipes.length>0){
+          localStorage.setItem('tkd_recipes',JSON.stringify(j.recipes));
+        }
+        buildFoodCats();renderDB();
+        console.log('[autoRestore] カスタム食材を復元しました: '+j.foods.length+'件');
+      }
+      localStorage.setItem('tkd_custom_last_restore',String(now));
+    }
+  }catch(e){
+    // サイレントに失敗（起動時エラーは無視）
+  }
+})();
 </script>
 </body>
 </html>
