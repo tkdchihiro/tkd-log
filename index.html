@@ -191,6 +191,14 @@ textarea.tinput{resize:none;min-height:70px;}
 .pfc-kcal{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--blue);}
 .pfc-kcal-lbl{text-align:center;font-size:9px;color:var(--muted);letter-spacing:2px;}
 
+/* FREQUENT FOODS SUGGEST */
+.freq-section{margin-bottom:10px;}
+.freq-label{font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.freq-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.freq-chip{padding:5px 11px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4);border-radius:16px;cursor:pointer;font-size:12px;color:var(--gold);white-space:nowrap;transition:all .15s;}
+.freq-chip:active{background:rgba(245,158,11,.25);transform:scale(.95);}
+.freq-chip .freq-cnt{font-size:9px;opacity:.7;margin-left:3px;}
+
 /* RECIPE */
 .recipe-row{display:flex;align-items:center;gap:8px;padding:11px 13px;
   background:var(--panel2);border:1px solid var(--purple);border-radius:8px;margin-bottom:5px;}
@@ -535,6 +543,11 @@ textarea.tinput{resize:none;min-height:70px;}
     <div style="display:flex;gap:7px;margin-bottom:10px;">
       <button class="btn" style="border-color:var(--purple);color:var(--purple);font-size:12px;flex:1;" onclick="openRecUse()">📋 レシピから追加</button>
       <button class="btn" style="border-color:var(--purple);color:var(--purple);font-size:12px;flex:1;" onclick="openModal('cfModal')">＋ 手動登録</button>
+    </div>
+    <!-- よく使う食材サジェスト -->
+    <div class="freq-section" id="freqSection" style="display:none;">
+      <div class="freq-label">⭐ よく使う食材</div>
+      <div class="freq-chips" id="freqChips"></div>
     </div>
     <div class="fcats" id="foodCats"></div>
     <div class="fsrch-wrap">
@@ -1171,6 +1184,8 @@ function pushFood(food,grams){
   document.getElementById('foodSearch').value='';
   document.getElementById('gramArea').style.display='none';
   curFood=null;renderFoodList();
+  // 利用回数をカウントアップ
+  recordFoodUsage(food.name);
 }
 function removeFood(id){addedFoods=addedFoods.filter(e=>e.id!==id);renderFoodList();}
 function renderFoodList(){
@@ -1230,7 +1245,8 @@ function syncCustomFoodsToGAS(){
   const url=getGasUrl();if(!url)return;
   const foods=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
   const recipes=JSON.parse(localStorage.getItem('tkd_recipes')||'[]');
-  sendGAS({type:'customfoods',foods,recipes});
+  const frequentFoods=JSON.parse(localStorage.getItem('tkd_frequent_foods')||'{}');
+  sendGAS({type:'customfoods',foods,recipes,frequentFoods});
 }
 
 async function backupCustomFoods(){
@@ -1238,16 +1254,17 @@ async function backupCustomFoods(){
   if(!url){toast('Sheets連携が未設定です','err');return;}
   const foods=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
   const recipes=JSON.parse(localStorage.getItem('tkd_recipes')||'[]');
-  if(foods.length===0&&recipes.length===0){toast('バックアップするカスタム食材がありません','ok');return;}
-  await sendGAS({type:'customfoods',foods,recipes});
-  toast(`✓ カスタム食材${foods.length}件・レシピ${recipes.length}件をバックアップしました`,'ok');
+  const frequentFoods=JSON.parse(localStorage.getItem('tkd_frequent_foods')||'{}');
+  const freqCount=Object.keys(frequentFoods).length;
+  if(foods.length===0&&recipes.length===0&&freqCount===0){toast('バックアップするデータがありません','ok');return;}
+  await sendGAS({type:'customfoods',foods,recipes,frequentFoods});
+  toast(`✓ カスタム食材${foods.length}件・レシピ${recipes.length}件・よく使う食材${freqCount}件をバックアップしました`,'ok');
 }
 
 async function restoreCustomFoods(){
   const url=getGasUrl();
   if(!url){toast('Sheets連携が未設定です','err');return;}
   toast('スプシから読み込み中...','ok');
-  // GASからカスタム食材を取得
   try{
     const payload=encodeURIComponent(JSON.stringify({type:'getcustomfoods'}));
     const r=await fetch(url+'?payload='+payload);
@@ -1255,8 +1272,13 @@ async function restoreCustomFoods(){
     if(j.status==='ok'&&j.foods){
       localStorage.setItem('tkd_custom_foods',JSON.stringify(j.foods));
       if(j.recipes)localStorage.setItem('tkd_recipes',JSON.stringify(j.recipes));
-      buildFoodCats();renderDB();
-      toast(`✓ カスタム食材${j.foods.length}件を復元しました`,'ok');
+      // v6.0: 利用回数データも復元
+      if(j.frequentFoods&&Object.keys(j.frequentFoods).length>0){
+        localStorage.setItem('tkd_frequent_foods',JSON.stringify(j.frequentFoods));
+      }
+      buildFoodCats();renderDB();renderFrequentFoods();
+      const freqCount=Object.keys(j.frequentFoods||{}).length;
+      toast(`✓ カスタム食材${j.foods.length}件・レシピ${(j.recipes||[]).length}件・よく使う食材${freqCount}件を復元しました`,'ok');
     }else{
       toast('データが見つかりませんでした','err');
     }
@@ -1955,33 +1977,93 @@ renderDB();
 updateGasInd();
 updateBswBadges();
 
-// 起動時にスプシからカスタム食材を自動復元
+// ══════════════════════════════════════════
+//  よく使う食材 (利用回数管理)
+// ══════════════════════════════════════════
+function getFrequentFoods(){
+  try{return JSON.parse(localStorage.getItem('tkd_frequent_foods')||'{}');}catch{return {};}
+}
+function saveFrequentFoods(obj){
+  localStorage.setItem('tkd_frequent_foods',JSON.stringify(obj));
+}
+function recordFoodUsage(name){
+  const freq=getFrequentFoods();
+  freq[name]=(freq[name]||0)+1;
+  saveFrequentFoods(freq);
+  renderFrequentFoods();
+  // 利用回数が更新されたのでスプシにも非同期バックアップ
+  syncCustomFoodsToGAS();
+}
+function renderFrequentFoods(){
+  const freq=getFrequentFoods();
+  const entries=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  const sec=document.getElementById('freqSection');
+  const chips=document.getElementById('freqChips');
+  if(!sec||!chips)return;
+  if(!entries.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  chips.innerHTML=entries.map(([name,cnt])=>{
+    const food=getAllFoods().find(f=>f.name===name);
+    if(!food)return '';
+    const enc=encodeURIComponent(JSON.stringify(food));
+    return `<div class="freq-chip" onclick="pickFoodObj('${enc}')">${name}<span class="freq-cnt">${cnt}</span></div>`;
+  }).filter(Boolean).join('');
+}
+
+// ══════════════════════════════════════════
+// 起動時にスプシからカスタム食材・レシピ・利用回数を自動復元 (v6.0)
+// ══════════════════════════════════════════
 (async function autoRestoreCustomFoods(){
   const url=getGasUrl();
   if(!url)return; // GAS未設定なら何もしない
   const lastRestore=localStorage.getItem('tkd_custom_last_restore');
   const now=Date.now();
   // 最後の復元から1時間以上経過している場合のみ実行（毎回fetchしない）
-  if(lastRestore && now-parseInt(lastRestore) < 3600000)return;
+  if(lastRestore && now-parseInt(lastRestore) < 3600000){
+    // 時間内でもUIは更新する
+    renderFrequentFoods();
+    return;
+  }
   try{
     const payload=encodeURIComponent(JSON.stringify({type:'getcustomfoods'}));
     const r=await fetch(url+'?payload='+payload);
     const j=await r.json();
-    if(j.status==='ok'&&j.foods&&j.foods.length>0){
-      const local=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
-      // スプシの方が件数が多い場合のみ上書き（ローカルの新規追加を保護）
-      if(j.foods.length>local.length){
-        localStorage.setItem('tkd_custom_foods',JSON.stringify(j.foods));
-        if(j.recipes&&j.recipes.length>0){
-          localStorage.setItem('tkd_recipes',JSON.stringify(j.recipes));
+    if(j.status==='ok'){
+      // ── カスタム食材 ──
+      if(j.foods&&j.foods.length>0){
+        const local=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+        // スプシの方が件数が多い場合のみ上書き（ローカルの新規追加を保護）
+        if(j.foods.length>local.length){
+          localStorage.setItem('tkd_custom_foods',JSON.stringify(j.foods));
+          buildFoodCats();renderDB();
+          console.log('[autoRestore] カスタム食材を復元: '+j.foods.length+'件');
         }
-        buildFoodCats();renderDB();
-        console.log('[autoRestore] カスタム食材を復元しました: '+j.foods.length+'件');
       }
+      // ── レシピ ──
+      if(j.recipes&&j.recipes.length>0){
+        const localRec=JSON.parse(localStorage.getItem('tkd_recipes')||'[]');
+        if(j.recipes.length>localRec.length){
+          localStorage.setItem('tkd_recipes',JSON.stringify(j.recipes));
+          console.log('[autoRestore] レシピを復元: '+j.recipes.length+'件');
+        }
+      }
+      // ── よく使う食材（利用回数）──
+      if(j.frequentFoods&&Object.keys(j.frequentFoods).length>0){
+        const localFreq=getFrequentFoods();
+        const localTotal=Object.values(localFreq).reduce((s,v)=>s+v,0);
+        const remoteTotal=Object.values(j.frequentFoods).reduce((s,v)=>s+v,0);
+        // リモートの合計利用回数がローカルより多い場合のみ上書き
+        if(remoteTotal>localTotal){
+          saveFrequentFoods(j.frequentFoods);
+          console.log('[autoRestore] よく使う食材を復元: '+Object.keys(j.frequentFoods).length+'種');
+        }
+      }
+      renderFrequentFoods();
       localStorage.setItem('tkd_custom_last_restore',String(now));
     }
   }catch(e){
     // サイレントに失敗（起動時エラーは無視）
+    renderFrequentFoods();
   }
 })();
 </script>
