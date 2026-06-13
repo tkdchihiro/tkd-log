@@ -144,6 +144,10 @@ textarea.tinput{resize:none;min-height:70px;}
 .slabel{display:block;font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
 .divider{border:none;border-top:1px solid var(--border);margin:11px 0;}
 .sleep-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.sleep-dur{margin-top:12px;padding:10px 12px;background:rgba(59,130,246,.1);border:1px solid var(--blue);
+  border-radius:8px;text-align:center;font-size:13px;color:var(--blue);letter-spacing:1px;}
+.sleep-dur b{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin:0 3px;}
+.sleep-dur.short{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red);}
 
 /* FOOD */
 .mtabs{display:flex;gap:6px;margin-bottom:11px;}
@@ -405,14 +409,20 @@ textarea.tinput{resize:none;min-height:70px;}
         <div>
           <span class="flabel">入眠</span>
           <div class="bgrp bgrp-v" id="sleepInBtns">
+            <button class="btn" onclick="sel(this,'sleepIn')">22:00</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">22:30</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">23:00</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">23:30</button>
             <button class="btn" onclick="sel(this,'sleepIn')">0:00</button>
             <button class="btn" onclick="sel(this,'sleepIn')">0:30</button>
             <button class="btn" onclick="sel(this,'sleepIn')">1:00</button>
             <button class="btn" onclick="sel(this,'sleepIn')">1:30</button>
             <button class="btn" onclick="sel(this,'sleepIn')">2:00</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">2:30</button>
+            <button class="btn" onclick="sel(this,'sleepIn')">3:00</button>
             <button class="btn other" onclick="sel(this,'sleepIn')">その他</button>
           </div>
-          <input type="time" class="tinput" id="sleepInOther" style="display:none;margin-top:7px;">
+          <input type="time" class="tinput" id="sleepInOther" style="display:none;margin-top:7px;" oninput="updateSleepDuration()">
         </div>
         <div>
           <span class="flabel">起床</span>
@@ -424,9 +434,10 @@ textarea.tinput{resize:none;min-height:70px;}
             <button class="btn" onclick="sel(this,'sleepOut')">8:00</button>
             <button class="btn other" onclick="sel(this,'sleepOut')">その他</button>
           </div>
-          <input type="time" class="tinput" id="sleepOutOther" style="display:none;margin-top:7px;">
+          <input type="time" class="tinput" id="sleepOutOther" style="display:none;margin-top:7px;" oninput="updateSleepDuration()">
         </div>
       </div>
+      <div id="sleepDuration" class="sleep-dur" style="display:none;"></div>
     </div>
   </div>
   <!-- 昨日の体調 -->
@@ -920,6 +931,27 @@ function sel(btn,key){
   const oe=document.getElementById(key+'Other');
   if(oe)oe.style.display=isOther?'block':'none';
   SEL[key]=isOther?'__other__':btn.textContent;
+  if(key==='sleepIn'||key==='sleepOut')updateSleepDuration();
+}
+// 睡眠時間の自動計算（入眠→起床、日跨ぎ対応）
+function parseHM(s){
+  if(!s)return null;
+  const m=String(s).match(/^(\d{1,2}):(\d{2})$/);
+  if(!m)return null;
+  return parseInt(m[1],10)*60+parseInt(m[2],10);
+}
+function updateSleepDuration(){
+  const el=document.getElementById('sleepDuration');
+  if(!el)return;
+  const inV=parseHM(getV('sleepIn')),outV=parseHM(getV('sleepOut'));
+  if(inV===null||outV===null){el.style.display='none';return;}
+  let diff=outV-inV;
+  if(diff<=0)diff+=24*60; // 日跨ぎ（例 23:30入眠→6:30起床）
+  const h=Math.floor(diff/60),mn=diff%60;
+  const short=diff<6*60; // 6時間未満は警告色
+  el.className='sleep-dur'+(short?' short':'');
+  el.innerHTML='睡眠時間 <b>'+h+'</b>時間'+(mn?' <b>'+mn+'</b>分':'')+(short?' ⚠ 不足':'');
+  el.style.display='block';
 }
 function getV(key){
   const s=SEL[key];if(!s)return null;
