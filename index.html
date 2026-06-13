@@ -1081,6 +1081,50 @@ function buildCardioSummary(){
   if(c.kcal!==null||c.exSteps)items.push(formCardioSummary(c)); // 追加し忘れ救済
   return items.join(' ＋ ');
 }
+// ── 筋トレ：セットごとに重量×回数を積み上げ ──
+const SET_LISTS={}; // key -> [{w,r}, ...]
+function addSet(key){
+  const w=getV(key+'_w'),r=getV(key+'_r');
+  if(!w||!r){toast('重量と回数を選んでください','err');return;}
+  if(!SET_LISTS[key])SET_LISTS[key]=[];
+  SET_LISTS[key].push({w,r});
+  delete SEL[key+'_r']; // 回数だけリセット（重量は据え置きで連続入力しやすく）
+  const grp=document.getElementById(key+'_rBtns');
+  if(grp)grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  const ro=document.getElementById(key+'_rOther');if(ro){ro.value='';ro.style.display='none';}
+  renderSetList(key);
+}
+function removeSet(key,i){SET_LISTS[key].splice(i,1);renderSetList(key);}
+// "100kg×5回, 105kg×3回" → [{w,r},...]
+function parseSetDetail(detail){
+  if(!detail)return [];
+  return detail.split(',').map(s=>{
+    const m=s.match(/([\d.]+)kg×([\d.]+)回/);
+    return m?{w:m[1],r:m[2]}:null;
+  }).filter(Boolean);
+}
+function renderSetList(key){
+  const el=document.getElementById(key+'_setList');if(!el)return;
+  const list=SET_LISTS[key]||[];
+  el.innerHTML=list.map((s,i)=>
+    `<div class="car-row"><span><b>${s.w}</b>kg × <b>${s.r}</b>回 <span style="color:var(--muted);font-size:10px;">(${i+1}set)</span></span><span class="crx" onclick="removeSet('${key}',${i})">×</span></div>`).join('');
+}
+// 種目のセット情報を保存用にまとめる（レガシー列も維持）
+function buildStrength(key){
+  const list=(SET_LISTS[key]||[]).slice();
+  // 未追加の現フォーム入力があれば救済
+  const w=getV(key+'_w'),r=getV(key+'_r');
+  if(w&&r)list.push({w,r});
+  if(!list.length)return null;
+  const maxW=list.reduce((a,s)=>Math.max(a,parseFloat(s.w)||0),0);
+  const top=list.find(s=>(parseFloat(s.w)||0)===maxW)||list[0];
+  return {
+    w:String(maxW),            // 最大重量（PR・レガシー列）
+    r:top.r,                   // 最大重量時の回数
+    s:String(list.length),     // セット数
+    detail:list.map(s=>s.w+'kg×'+s.r+'回').join(', ')
+  };
+}
 // 睡眠時間の自動計算（入眠→起床、日跨ぎ対応）
 function parseHM(s){
   if(!s)return null;
@@ -1149,7 +1193,7 @@ function buildTrainingUI(){
         <button class="tog" id="tog${t.key}" onclick="toggleTr('${t.key}')">OFF</button>
       </div>
       <div class="tr-body" id="trBody${t.key}">
-        <div class="r3">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
           <div><span class="slabel">重量(kg)</span>
             <div class="bgrp bgrp-v" id="${t.key}_wBtns">
               ${t.weights.map(w=>`<button class="btn" onclick="sel(this,'${t.key}_w')">${w}</button>`).join('')}
@@ -1162,13 +1206,9 @@ function buildTrainingUI(){
               <button class="btn other" onclick="sel(this,'${t.key}_r')">その他</button>
             </div>
             <input type="number" inputmode="numeric" class="tinput" id="${t.key}_rOther" placeholder="回" style="display:none;"></div>
-          <div><span class="slabel">セット数</span>
-            <div class="bgrp bgrp-v" id="${t.key}_sBtns">
-              ${SETS.map(s=>`<button class="btn" onclick="sel(this,'${t.key}_s')">${s}</button>`).join('')}
-              <button class="btn other" onclick="sel(this,'${t.key}_s')">その他</button>
-            </div>
-            <input type="number" inputmode="numeric" class="tinput" id="${t.key}_sOther" placeholder="set" style="display:none;"></div>
         </div>
+        <button class="btn" style="width:100%;margin-top:9px;border-color:var(--green);color:var(--green);" onclick="addSet('${t.key}')">＋ セット追加</button>
+        <div id="${t.key}_setList" style="margin-top:8px;"></div>
       </div></div>`;
   });
   h+=`<div class="tr-item"><div class="tr-head" id="trHeadTAB">
@@ -1607,6 +1647,7 @@ function buildBodyText(rec){
   if(rec.ystSatisfaction)lines.push('練習満足度: '+rec.ystSatisfaction);
   if(rec.tomorrowNote)lines.push('明日への一言: '+rec.tomorrowNote);
   TRAININGS.forEach(t=>{
+    if(rec[t.key+'_detail']){lines.push(`${t.label}: ${rec[t.key+'_detail']}`);return;}
     const w=rec[t.key+'_w'],r=rec[t.key+'_r'],s=rec[t.key+'_s'];
     if(w||r||s)lines.push(`${t.label}: ${[w?w+'kg':'',r?r+'回':'',s?s+'set':''].filter(Boolean).join('×')}`);
   });
@@ -1652,17 +1693,15 @@ function loadYesterdayDiary(){
       if(el)el.classList.remove('active');
     });
   });
-  // トレーニングボタン復元
+  // トレーニング：セット情報を復元（_detailから）。入力中のボタンはクリア
   TRAININGS.forEach(t=>{
-    ['_w','_r','_s'].forEach(suf=>{
-      const key=t.key+suf;
-      const val=rec[key]||'';
-      const grp=document.getElementById(key+'Btns');
-      if(!grp)return;
-      grp.querySelectorAll('.btn').forEach(b=>{
-        b.classList.toggle('active',b.textContent.trim()===val&&val!=='');
-      });
+    ['_w','_r'].forEach(suf=>{
+      delete SEL[t.key+suf];
+      const grp=document.getElementById(t.key+suf+'Btns');
+      if(grp)grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
     });
+    SET_LISTS[t.key]=parseSetDetail(rec[t.key+'_detail']);
+    renderSetList(t.key);
   });
   // 振り返り日記
   const diaryEl=document.getElementById('yesterdayDiary');
@@ -1691,10 +1730,6 @@ function saveMorning(){
   const ystSatisfaction=getV('ystSatisfaction');
   const trData={
     bOtsu,choshi,condNote,
-    SQ_w:getV('SQ_w'),SQ_r:getV('SQ_r'),SQ_s:getV('SQ_s'),
-    BP_w:getV('BP_w'),BP_r:getV('BP_r'),BP_s:getV('BP_s'),
-    HC_w:getV('HC_w'),HC_r:getV('HC_r'),HC_s:getV('HC_s'),
-    LSJ_w:getV('LSJ_w'),LSJ_r:getV('LSJ_r'),LSJ_s:getV('LSJ_s'),
     tabata:TR_ACTIVE['TAB']?getV('TAB_type'):null,
     mitt:TR_ACTIVE['TKD']?(getV('MIT_m')&&getV('MIT_r')?getV('MIT_m')+'×'+getV('MIT_r')+'R':null):null,
     spar:TR_ACTIVE['TKD']?(getV('SPA_m')&&getV('SPA_r')?getV('SPA_m')+'×'+getV('SPA_r')+'R':null):null,
@@ -1702,6 +1737,12 @@ function saveMorning(){
     otherTrn:TR_ACTIVE['OTR']?document.getElementById('OTR_text').value:null,
     cardio:TR_ACTIVE['CAR']?buildCardioSummary():null,
   };
+  // 筋トレ：種目ごとのセット情報をマージ（ONの種目のみ）
+  TRAININGS.forEach(t=>{
+    if(!TR_ACTIVE[t.key])return;
+    const st=buildStrength(t.key);
+    if(st){trData[t.key+'_w']=st.w;trData[t.key+'_r']=st.r;trData[t.key+'_s']=st.s;trData[t.key+'_detail']=st.detail;}
+  });
   const hasAny=temp||weight||sleepIn||sleepOut||bOtsu||choshi||condNote||diary||tomorrowNote||
     ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
   if(!hasAny){toast('何か入力してください','err');return;}
@@ -1752,6 +1793,7 @@ function saveMorning(){
       : `🌅 保存完了 — 練習・日記: ${ym}/${yd}`;
   toast(msg,'ok');
   CARDIO_LIST=[];renderCardioList();resetCardioForm();
+  TRAININGS.forEach(t=>{SET_LISTS[t.key]=[];renderSetList(t.key);});
 }
 
 
