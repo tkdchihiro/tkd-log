@@ -158,6 +158,9 @@ textarea.tinput{resize:none;min-height:70px;}
 .car-result .cr-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;}
 .car-result .cr-steps{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);letter-spacing:1px;}
 .car-hint{font-size:10px;color:var(--muted);margin:8px 0 2px;letter-spacing:.5px;}
+.car-row{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 10px;background:#09090f;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:12px;}
+.car-row .crx{color:var(--red);font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;}
 
 /* FOOD */
 .mtabs{display:flex;gap:6px;margin-bottom:11px;}
@@ -1031,8 +1034,9 @@ function updateCardio(){
   document.getElementById('CAR_stepsOut').textContent=c.exSteps?'-'+c.exSteps.toLocaleString():'—';
   el.style.display='flex';
 }
-function buildCardioSummary(){
-  const c=computeCardio();
+// 複数有酸素のリスト
+let CARDIO_LIST=[];
+function formCardioSummary(c){
   const type=c.type==='__other__'?(document.getElementById('CAR_typeOther').value||'有酸素'):(c.type||'有酸素');
   const parts=[type];
   if(!isNaN(c.incline))parts.push('傾斜'+c.incline+'%');
@@ -1043,6 +1047,39 @@ function buildCardioSummary(){
   if(c.kcal!==null)tail.push(c.kcal+'kcal');
   if(c.exSteps)tail.push('除外'+c.exSteps+'歩');
   return parts.join(' ')+(tail.length?' / '+tail.join(' / '):'');
+}
+function addCardio(){
+  const c=computeCardio();
+  if(c.kcal===null&&!c.exSteps){toast('種目と時間などを入力してください','err');return;}
+  CARDIO_LIST.push({summary:formCardioSummary(c),kcal:c.kcal||0,exSteps:c.exSteps||0});
+  resetCardioForm();
+  renderCardioList();
+}
+function removeCardio(i){CARDIO_LIST.splice(i,1);renderCardioList();}
+function resetCardioForm(){
+  ['CAR_type','CAR_incline','CAR_speed','CAR_min','CAR_intensity'].forEach(k=>delete SEL[k]);
+  document.querySelectorAll('#trBodyCAR .btn.active').forEach(b=>b.classList.remove('active'));
+  ['CAR_typeOther','CAR_inclineOther','CAR_speedOther','CAR_minOther','CAR_kcal'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';e.style.display='none';}});
+  document.getElementById('CAR_result').style.display='none';
+}
+function renderCardioList(){
+  const list=document.getElementById('CAR_list'),tot=document.getElementById('CAR_totals');
+  if(!list)return;
+  list.innerHTML=CARDIO_LIST.map((c,i)=>
+    `<div class="car-row"><span>${c.summary}</span><span class="crx" onclick="removeCardio(${i})">×</span></div>`).join('');
+  if(CARDIO_LIST.length){
+    const tk=CARDIO_LIST.reduce((a,c)=>a+c.kcal,0),ts=CARDIO_LIST.reduce((a,c)=>a+c.exSteps,0);
+    document.getElementById('CAR_totKcal').textContent=tk;
+    document.getElementById('CAR_totSteps').textContent=ts?'-'+ts.toLocaleString():'—';
+    tot.style.display='flex';
+  }else{tot.style.display='none';}
+}
+// 保存用: リスト＋（未追加の現フォーム入力があれば）をまとめる
+function buildCardioSummary(){
+  const items=CARDIO_LIST.map(c=>c.summary);
+  const c=computeCardio();
+  if(c.kcal!==null||c.exSteps)items.push(formCardioSummary(c)); // 追加し忘れ救済
+  return items.join(' ＋ ');
 }
 // 睡眠時間の自動計算（入眠→起床、日跨ぎ対応）
 function parseHM(s){
@@ -1239,6 +1276,12 @@ function buildTrainingUI(){
       <div class="car-result" id="CAR_result" style="display:none;">
         <div><div class="cr-kcal" id="CAR_kcalOut">—</div><div class="cr-lbl">推定消費kcal</div></div>
         <div style="text-align:right;"><div class="cr-steps" id="CAR_stepsOut">—</div><div class="cr-lbl">歩数除外（参考）</div></div>
+      </div>
+      <button class="btn" id="CAR_addBtn" style="width:100%;margin-top:10px;border-color:var(--green);color:var(--green);" onclick="addCardio()">＋ この有酸素を追加</button>
+      <div id="CAR_list" style="margin-top:10px;"></div>
+      <div class="car-result" id="CAR_totals" style="display:none;margin-top:8px;">
+        <div><div class="cr-kcal" id="CAR_totKcal">—</div><div class="cr-lbl">合計消費kcal</div></div>
+        <div style="text-align:right;"><div class="cr-steps" id="CAR_totSteps">—</div><div class="cr-lbl">合計除外歩数</div></div>
       </div>
     </div></div>`;
   document.getElementById('trainingBody').innerHTML=h;
@@ -1708,6 +1751,7 @@ function saveMorning(){
       ? `🌅 保存完了 — 体温・体重・睡眠: ${tm}/${td}`
       : `🌅 保存完了 — 練習・日記: ${ym}/${yd}`;
   toast(msg,'ok');
+  CARDIO_LIST=[];renderCardioList();resetCardioForm();
 }
 
 
