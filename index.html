@@ -148,6 +148,16 @@ textarea.tinput{resize:none;min-height:70px;}
   border-radius:8px;text-align:center;font-size:13px;color:var(--blue);letter-spacing:1px;}
 .sleep-dur b{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin:0 3px;}
 .sleep-dur.short{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red);}
+/* CARDIO */
+.car-prof{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;
+  padding:9px;background:#09090f;border:1px solid var(--border);border-radius:8px;}
+.car-prof .slabel{display:block;margin-bottom:4px;}
+.car-result{margin-top:11px;padding:11px 12px;background:rgba(34,197,94,.08);
+  border:1px solid var(--green);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.car-result .cr-kcal{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--green);letter-spacing:1px;}
+.car-result .cr-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;}
+.car-result .cr-steps{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);letter-spacing:1px;}
+.car-hint{font-size:10px;color:var(--muted);margin:8px 0 2px;letter-spacing:.5px;}
 
 /* FOOD */
 .mtabs{display:flex;gap:6px;margin-bottom:11px;}
@@ -933,6 +943,87 @@ function sel(btn,key){
   SEL[key]=isOther?'__other__':btn.textContent;
   if(key==='sleepIn'||key==='sleepOut')updateSleepDuration();
 }
+// ── 有酸素運動：MET計算・歩数除外 ──
+const MET_TREADMILL={
+  0:{3:2.8,3.5:3.1,4:3.5,4.5:4.0,5:4.3,6:6.0,8:8.3},
+  5:{3:3.8,3.5:4.3,4:5.0,4.5:5.5,5:6.0,6:7.5,8:9.5},
+  8:{3:4.5,3.5:5.2,4:6.0,4.5:6.5,5:7.2,6:8.5,8:10.5},
+  10:{3:5.0,3.5:5.8,4:6.5,4.5:7.2,5:8.0,6:9.5,8:11.5},
+  12:{3:5.5,3.5:6.3,4:7.2,4.5:8.0,5:8.8,6:10.5,8:12.5},
+  15:{3:6.2,3.5:7.2,4:8.5,4.5:9.5,5:10.5,6:12.5,8:14.0}
+};
+const INTENSITY_MET={'楽':5,'中':7,'きつい':9};
+function nearestKey(obj,v){const ks=Object.keys(obj).map(Number);return ks.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);}
+function selCardio(btn,key){sel(btn,key);updateCardio();}
+function loadCardioProfile(){
+  try{const p=JSON.parse(localStorage.getItem('tkd_profile')||'{}');
+    if(p.wt)document.getElementById('CAR_wt').value=p.wt;
+    if(p.ht)document.getElementById('CAR_ht').value=p.ht;
+  }catch{}
+}
+function onCardioProfile(){
+  const wt=parseFloat(document.getElementById('CAR_wt').value)||null;
+  const ht=parseFloat(document.getElementById('CAR_ht').value)||null;
+  localStorage.setItem('tkd_profile',JSON.stringify({wt,ht}));
+  updateCardio();
+}
+function computeCardio(){
+  const type=getV('CAR_type');
+  const incline=parseFloat(getV('CAR_incline'));
+  const speed=parseFloat(getV('CAR_speed'));
+  const min=parseFloat(getV('CAR_min'));
+  const intensity=getV('CAR_intensity');
+  const dispKcal=parseFloat(document.getElementById('CAR_kcal').value);
+  const wt=parseFloat(document.getElementById('CAR_wt').value)||60;
+  const ht=parseFloat(document.getElementById('CAR_ht').value)||170;
+  let kcal=null,met=null;
+  if(!isNaN(dispKcal)&&dispKcal>0){
+    kcal=Math.round(dispKcal); // 機械表示を優先
+  }else if(min>0){
+    if(!isNaN(incline)&&!isNaN(speed)){
+      const ik=nearestKey(MET_TREADMILL,incline),sk=nearestKey(MET_TREADMILL[ik],speed);
+      met=MET_TREADMILL[ik][sk];
+    }else if(intensity&&INTENSITY_MET[intensity]){
+      met=INTENSITY_MET[intensity];
+    }else if(!isNaN(speed)){
+      met=Math.max(2.5,speed*1.05); // 速度のみ→簡易ランニングMET
+    }
+    if(met)kcal=Math.round(met*wt*(min/60));
+  }
+  // 歩数除外
+  let exSteps=0;
+  const stride=ht*0.45/100; // m
+  if(min>0){
+    if(!isNaN(speed)&&speed>0){
+      exSteps=Math.round(speed*(min/60)*1000/stride); // トレッドミル/ランニング
+    }else if(type==='エアロバイク'){
+      exSteps=Math.round(min*50); // 腕振り誤検知の固定係数
+    }
+  }
+  return {type,incline,speed,min,intensity,kcal,exSteps};
+}
+function updateCardio(){
+  const el=document.getElementById('CAR_result');
+  if(!el)return;
+  const c=computeCardio();
+  if(c.kcal===null&&!c.exSteps){el.style.display='none';return;}
+  document.getElementById('CAR_kcalOut').textContent=c.kcal!==null?c.kcal:'—';
+  document.getElementById('CAR_stepsOut').textContent=c.exSteps?'-'+c.exSteps.toLocaleString():'—';
+  el.style.display='flex';
+}
+function buildCardioSummary(){
+  const c=computeCardio();
+  const type=c.type==='__other__'?(document.getElementById('CAR_typeOther').value||'有酸素'):(c.type||'有酸素');
+  const parts=[type];
+  if(!isNaN(c.incline))parts.push('傾斜'+c.incline+'%');
+  if(!isNaN(c.speed))parts.push(c.speed+'km/h');
+  if(c.intensity)parts.push('強度:'+c.intensity);
+  if(!isNaN(c.min))parts.push(c.min+'分');
+  const tail=[];
+  if(c.kcal!==null)tail.push(c.kcal+'kcal');
+  if(c.exSteps)tail.push('除外'+c.exSteps+'歩');
+  return parts.join(' ')+(tail.length?' / '+tail.join(' / '):'');
+}
 // 睡眠時間の自動計算（入眠→起床、日跨ぎ対応）
 function parseHM(s){
   if(!s)return null;
@@ -1084,7 +1175,59 @@ function buildTrainingUI(){
     <div class="tr-body" id="trBodyOTR">
       <textarea class="tinput" id="OTR_text" placeholder="例: 縄跳び30分..."></textarea>
     </div></div>`;
+  h+=`<div class="tr-item"><div class="tr-head" id="trHeadCAR">
+    <span class="tr-title">有酸素運動</span>
+    <button class="tog" id="togCAR" onclick="toggleTr('CAR')">OFF</button></div>
+    <div class="tr-body" id="trBodyCAR">
+      <div class="car-prof">
+        <div><span class="slabel">体重(kg)</span>
+          <input type="number" inputmode="decimal" class="tinput" id="CAR_wt" placeholder="kg" style="margin-top:0;" oninput="onCardioProfile()"></div>
+        <div><span class="slabel">身長(cm)</span>
+          <input type="number" inputmode="decimal" class="tinput" id="CAR_ht" placeholder="cm" style="margin-top:0;" oninput="onCardioProfile()"></div>
+      </div>
+      <span class="slabel">種目</span>
+      <div class="bgrp" id="CAR_typeBtns">
+        <button class="btn" onclick="selCardio(this,'CAR_type')">トレッドミル</button>
+        <button class="btn" onclick="selCardio(this,'CAR_type')">エアロバイク</button>
+        <button class="btn" onclick="selCardio(this,'CAR_type')">ランニング</button>
+        <button class="btn other" onclick="selCardio(this,'CAR_type')">その他</button>
+      </div>
+      <input type="text" class="tinput" id="CAR_typeOther" placeholder="種目" style="display:none;" oninput="updateCardio()">
+      <div class="r3" style="margin-top:11px;">
+        <div><span class="slabel">傾斜(%)</span>
+          <div class="bgrp bgrp-v" id="CAR_inclineBtns">
+            ${[0,5,8,10,12,15].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_incline')">${v}</button>`).join('')}
+            <button class="btn other" onclick="selCardio(this,'CAR_incline')">その他</button>
+          </div>
+          <input type="number" inputmode="decimal" class="tinput" id="CAR_inclineOther" placeholder="%" style="display:none;" oninput="updateCardio()"></div>
+        <div><span class="slabel">速度(km/h)</span>
+          <div class="bgrp bgrp-v" id="CAR_speedBtns">
+            ${[3,3.5,4,4.5,5,6,8].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_speed')">${v}</button>`).join('')}
+            <button class="btn other" onclick="selCardio(this,'CAR_speed')">その他</button>
+          </div>
+          <input type="number" inputmode="decimal" class="tinput" id="CAR_speedOther" placeholder="km/h" style="display:none;" oninput="updateCardio()"></div>
+        <div><span class="slabel">時間(分)</span>
+          <div class="bgrp bgrp-v" id="CAR_minBtns">
+            ${[10,20,30,40,60].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_min')">${v}</button>`).join('')}
+            <button class="btn other" onclick="selCardio(this,'CAR_min')">その他</button>
+          </div>
+          <input type="number" inputmode="numeric" class="tinput" id="CAR_minOther" placeholder="分" style="display:none;" oninput="updateCardio()"></div>
+      </div>
+      <div class="car-hint">エアロバイク等で傾斜・速度が無い場合は強度を選択：</div>
+      <div class="bgrp" id="CAR_intensityBtns">
+        <button class="btn" onclick="selCardio(this,'CAR_intensity')">楽</button>
+        <button class="btn" onclick="selCardio(this,'CAR_intensity')">中</button>
+        <button class="btn" onclick="selCardio(this,'CAR_intensity')">きつい</button>
+      </div>
+      <div class="car-hint">機械にカロリー表示があればこちらを優先：</div>
+      <input type="number" inputmode="numeric" class="tinput" id="CAR_kcal" placeholder="機械表示kcal（任意）" oninput="updateCardio()">
+      <div class="car-result" id="CAR_result" style="display:none;">
+        <div><div class="cr-kcal" id="CAR_kcalOut">—</div><div class="cr-lbl">推定消費kcal</div></div>
+        <div style="text-align:right;"><div class="cr-steps" id="CAR_stepsOut">—</div><div class="cr-lbl">歩数除外（参考）</div></div>
+      </div>
+    </div></div>`;
   document.getElementById('trainingBody').innerHTML=h;
+  loadCardioProfile();
 }
 
 // ══════════════════════════════════════════
@@ -1413,6 +1556,7 @@ function buildBodyText(rec){
   if(rec.spar)lines.push('スパー: '+rec.spar);
   if(rec.tkdOther)lines.push('TKD他: '+rec.tkdOther);
   if(rec.otherTrn)lines.push('その他: '+rec.otherTrn);
+  if(rec.cardio)lines.push('有酸素: '+rec.cardio);
   return lines.join('\n');
 }
 
@@ -1496,6 +1640,7 @@ function saveMorning(){
     spar:TR_ACTIVE['TKD']?(getV('SPA_m')&&getV('SPA_r')?getV('SPA_m')+'×'+getV('SPA_r')+'R':null):null,
     tkdOther:TR_ACTIVE['TKD']?document.getElementById('TKD_other').value:null,
     otherTrn:TR_ACTIVE['OTR']?document.getElementById('OTR_text').value:null,
+    cardio:TR_ACTIVE['CAR']?buildCardioSummary():null,
   };
   const hasAny=temp||sleepIn||sleepOut||bOtsu||choshi||condNote||diary||tomorrowNote||
     ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
