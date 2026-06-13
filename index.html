@@ -407,6 +407,12 @@ textarea.tinput{resize:none;min-height:70px;}
         <button class="btn other" onclick="sel(this,'temp')">その他</button>
       </div>
       <input type="number" step="0.1" inputmode="decimal" class="tinput" id="tempOther" placeholder="例: 36.9" style="display:none;">
+      <div class="car-prof" style="margin-top:12px;margin-bottom:0;">
+        <div><span class="slabel">体重(kg) <span style="color:var(--muted);">※当日朝</span></span>
+          <input type="number" inputmode="decimal" step="0.1" class="tinput" id="mWeight" placeholder="kg" style="margin-top:0;" oninput="onProfileInput()"></div>
+        <div><span class="slabel">身長(cm) <span style="color:var(--muted);">※一度だけ</span></span>
+          <input type="number" inputmode="decimal" class="tinput" id="mHeight" placeholder="cm" style="margin-top:0;" oninput="onProfileInput()"></div>
+      </div>
     </div>
   </div>
   <!-- 睡眠 -->
@@ -955,15 +961,29 @@ const MET_TREADMILL={
 const INTENSITY_MET={'楽':5,'中':7,'きつい':9};
 function nearestKey(obj,v){const ks=Object.keys(obj).map(Number);return ks.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);}
 function selCardio(btn,key){sel(btn,key);updateCardio();}
+// 体重(当日)・身長(固定)を朝の記録欄から取得。裏でlocalStorageにも保持
+function getProfileWeight(){
+  const v=parseFloat((document.getElementById('mWeight')||{}).value);
+  if(!isNaN(v)&&v>0)return v;
+  try{const p=JSON.parse(localStorage.getItem('tkd_profile')||'{}');if(p.wt)return p.wt;}catch{}
+  return 60;
+}
+function getProfileHeight(){
+  const v=parseFloat((document.getElementById('mHeight')||{}).value);
+  if(!isNaN(v)&&v>0)return v;
+  try{const p=JSON.parse(localStorage.getItem('tkd_profile')||'{}');if(p.ht)return p.ht;}catch{}
+  return 170;
+}
+// 朝の記録ロード時に身長(固定)と直近体重を補完表示
 function loadCardioProfile(){
   try{const p=JSON.parse(localStorage.getItem('tkd_profile')||'{}');
-    if(p.wt)document.getElementById('CAR_wt').value=p.wt;
-    if(p.ht)document.getElementById('CAR_ht').value=p.ht;
+    const hEl=document.getElementById('mHeight'),wEl=document.getElementById('mWeight');
+    if(hEl&&p.ht&&!hEl.value)hEl.value=p.ht; // 身長は前回値を自動補完
+    if(wEl&&p.wt&&!wEl.value)wEl.placeholder=p.wt+'（前回）';
   }catch{}
 }
-function onCardioProfile(){
-  const wt=parseFloat(document.getElementById('CAR_wt').value)||null;
-  const ht=parseFloat(document.getElementById('CAR_ht').value)||null;
+function onProfileInput(){
+  const wt=getProfileWeight(),ht=getProfileHeight();
   localStorage.setItem('tkd_profile',JSON.stringify({wt,ht}));
   updateCardio();
 }
@@ -974,8 +994,8 @@ function computeCardio(){
   const min=parseFloat(getV('CAR_min'));
   const intensity=getV('CAR_intensity');
   const dispKcal=parseFloat(document.getElementById('CAR_kcal').value);
-  const wt=parseFloat(document.getElementById('CAR_wt').value)||60;
-  const ht=parseFloat(document.getElementById('CAR_ht').value)||170;
+  const wt=getProfileWeight();
+  const ht=getProfileHeight();
   let kcal=null,met=null;
   if(!isNaN(dispKcal)&&dispKcal>0){
     kcal=Math.round(dispKcal); // 機械表示を優先
@@ -1179,12 +1199,7 @@ function buildTrainingUI(){
     <span class="tr-title">有酸素運動</span>
     <button class="tog" id="togCAR" onclick="toggleTr('CAR')">OFF</button></div>
     <div class="tr-body" id="trBodyCAR">
-      <div class="car-prof">
-        <div><span class="slabel">体重(kg)</span>
-          <input type="number" inputmode="decimal" class="tinput" id="CAR_wt" placeholder="kg" style="margin-top:0;" oninput="onCardioProfile()"></div>
-        <div><span class="slabel">身長(cm)</span>
-          <input type="number" inputmode="decimal" class="tinput" id="CAR_ht" placeholder="cm" style="margin-top:0;" oninput="onCardioProfile()"></div>
-      </div>
+      <div class="car-hint" id="CAR_profHint">消費kcalは「今日の体温」欄の体重・身長から計算します</div>
       <span class="slabel">種目</span>
       <div class="bgrp" id="CAR_typeBtns">
         <button class="btn" onclick="selCardio(this,'CAR_type')">トレッドミル</button>
@@ -1539,6 +1554,7 @@ function getFoodLogDates(){
 function buildBodyText(rec){
   const lines=['【体調・練習記録】'];
   if(rec.temp)lines.push('体温: '+rec.temp+'°C');
+  if(rec.weight)lines.push('体重: '+rec.weight+'kg');
   if(rec.sleepIn||rec.sleepOut)lines.push('睡眠: '+(rec.sleepIn||'?')+' → '+(rec.sleepOut||'?'));
   if(rec.bOtsu)lines.push('便通: '+rec.bOtsu);
   if(rec.choshi)lines.push('調子: '+rec.choshi);
@@ -1624,6 +1640,7 @@ function saveMorning(){
   const date=CAL.body.sel;
   if(!date){toast('日付を選択してください','err');return;}
   const temp=getV('temp'),sleepIn=getV('sleepIn'),sleepOut=getV('sleepOut');
+  const weight=(document.getElementById('mWeight').value||'').trim();
   const bOtsu=getBowelText(),choshi=getV('choshi'),condNote=document.getElementById('condNote').value.trim();
   const diary=document.getElementById('yesterdayDiary').value.trim();
   const tomorrowNote=document.getElementById('tomorrowNote').value.trim();
@@ -1642,14 +1659,15 @@ function saveMorning(){
     otherTrn:TR_ACTIVE['OTR']?document.getElementById('OTR_text').value:null,
     cardio:TR_ACTIVE['CAR']?buildCardioSummary():null,
   };
-  const hasAny=temp||sleepIn||sleepOut||bOtsu||choshi||condNote||diary||tomorrowNote||
+  const hasAny=temp||weight||sleepIn||sleepOut||bOtsu||choshi||condNote||diary||tomorrowNote||
     ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
   if(!hasAny){toast('何か入力してください','err');return;}
 
-  // ── 体温・睡眠 → 選択日（今日）に保存 ──
-  if(temp||sleepIn||sleepOut){
+  // ── 体温・体重・睡眠 → 選択日（今日）に保存 ──
+  if(temp||weight||sleepIn||sleepOut){
     const rec=getBodyLog(date)||{date,type:'body',synced:false};
     if(temp)rec.temp=temp;
+    if(weight)rec.weight=weight;
     if(sleepIn)rec.sleepIn=sleepIn;
     if(sleepOut)rec.sleepOut=sleepOut;
     rec.hasMorning=true;
@@ -1683,10 +1701,11 @@ function saveMorning(){
   const [,tm,td]=date.split('-');
   const [,ym,yd]=ystDate2.split('-');
   console.log('[saveMorning] 選択日:'+date+' 体温保存先:'+date+' 練習保存先:'+ystDate2);
-  const msg=(temp||sleepIn||sleepOut)&&hasYst
-    ? `🌅 保存完了 — 体温・睡眠: ${tm}/${td} ／ 練習・日記: ${ym}/${yd}`
-    : (temp||sleepIn||sleepOut)
-      ? `🌅 保存完了 — 体温・睡眠: ${tm}/${td}`
+  const hasMorn=temp||weight||sleepIn||sleepOut;
+  const msg=hasMorn&&hasYst
+    ? `🌅 保存完了 — 体温・体重・睡眠: ${tm}/${td} ／ 練習・日記: ${ym}/${yd}`
+    : hasMorn
+      ? `🌅 保存完了 — 体温・体重・睡眠: ${tm}/${td}`
       : `🌅 保存完了 — 練習・日記: ${ym}/${yd}`;
   toast(msg,'ok');
 }
