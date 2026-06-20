@@ -983,6 +983,7 @@ function onCardioTypeChange(){
   show('CAR_fieldIncline', v==='トレッドミル');
   show('CAR_fieldSpeed',   v==='トレッドミル'||v==='ランニング');
   show('CAR_fieldIntensity', v==='エアロバイク'||v==='__other__');
+  show('CAR_fieldJumpReps', v==='縄跳び');
   show('CAR_fieldMin', !!v);
   updateCardio();
 }
@@ -1018,6 +1019,7 @@ function computeCardio(){
   const speed=parseFloat(getV('CAR_speed'));
   const min=parseFloat(getV('CAR_min'));
   const intensity=getV('CAR_intensity');
+  const jumpReps=getV('CAR_jumpReps');
   const dispKcal=parseFloat(document.getElementById('CAR_kcal').value);
   const wt=getProfileWeight();
   const ht=getProfileHeight();
@@ -1047,7 +1049,7 @@ function computeCardio(){
       exSteps=Math.round(min*50); // 腕振り誤検知の固定係数
     }
   }
-  return {type,incline,speed,min,intensity,kcal,exSteps};
+  return {type,incline,speed,min,intensity,jumpReps,kcal,exSteps};
 }
 function updateCardio(){
   const el=document.getElementById('CAR_result');
@@ -1066,6 +1068,7 @@ function formCardioSummary(c){
   if(!isNaN(c.incline))parts.push('傾斜'+c.incline+'%');
   if(!isNaN(c.speed))parts.push(c.speed+'km/h');
   if(c.intensity)parts.push('強度:'+c.intensity);
+  if(c.jumpReps)parts.push(c.jumpReps+'回');
   if(!isNaN(c.min))parts.push(c.min+'分');
   const tail=[];
   if(c.kcal!==null)tail.push(c.kcal+'kcal');
@@ -1083,9 +1086,10 @@ function removeCardio(i){CARDIO_LIST.splice(i,1);renderCardioList();}
 function resetCardioForm(){
   ['CAR_type','CAR_incline','CAR_speed','CAR_min','CAR_intensity'].forEach(k=>delete SEL[k]);
   document.querySelectorAll('#trBodyCAR .btn.active').forEach(b=>b.classList.remove('active'));
-  ['CAR_typeOther','CAR_inclineOther','CAR_speedOther','CAR_minOther','CAR_kcal'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';e.style.display='none';}});
+  ['CAR_typeOther','CAR_inclineOther','CAR_speedOther','CAR_minOther','CAR_kcal','CAR_jumpRepsOther'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';e.style.display='none';}});
   const sel=document.getElementById('CAR_typeSelect');if(sel)sel.value='';
-  ['CAR_fieldIncline','CAR_fieldSpeed','CAR_fieldIntensity','CAR_fieldMin'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
+  ['CAR_type','CAR_jumpReps'].forEach(k=>delete SEL[k]);
+  ['CAR_fieldIncline','CAR_fieldSpeed','CAR_fieldIntensity','CAR_fieldJumpReps','CAR_fieldMin'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
   document.getElementById('CAR_result').style.display='none';
 }
 function renderCardioList(){
@@ -1430,6 +1434,14 @@ function buildTrainingUI(){
           <button class="btn" onclick="selCardio(this,'CAR_intensity')">中</button>
           <button class="btn" onclick="selCardio(this,'CAR_intensity')">きつい</button>
         </div>
+      </div>
+      <div id="CAR_fieldJumpReps" style="display:none;margin-top:9px;">
+        <span class="slabel">回数</span>
+        <div class="bgrp bgrp-v" id="CAR_jumpRepsBtns">
+          ${[100,150,200,300,500].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_jumpReps')">${v}</button>`).join('')}
+          <button class="btn other" onclick="selCardio(this,'CAR_jumpReps')">その他</button>
+        </div>
+        <input type="number" inputmode="numeric" class="tinput" id="CAR_jumpRepsOther" placeholder="回" style="display:none;" oninput="updateCardio()">
       </div>
       <div id="CAR_fieldMin" style="display:none;margin-top:9px;">
         <span class="slabel">時間(分)</span>
