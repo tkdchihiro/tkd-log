@@ -113,6 +113,8 @@ main{max-width:480px;margin:0 auto;padding:12px 12px 28px;}
   font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;}
 .tinput:focus{border-color:var(--blue);}
 .tinput::placeholder{color:var(--muted);}
+select.tinput{cursor:pointer;}
+select.tinput option,select.tinput optgroup{background:var(--panel);}
 textarea.tinput{resize:none;min-height:70px;}
 
 /* BOWEL */
@@ -830,6 +832,11 @@ const TRAININGS=[
 ];
 const REPS=['1','2','3','4','5'],SETS=['1','2','3','4'];
 
+// 筋トレ：プルダウン選択方式
+const DEFAULT_EXERCISES=['スクワット','ベンチプレス','ハングクリーン','ランドマインスプリットジャーク','懸垂','ハンギングレッグレイズ','SLチョップニーアップ','SLラテラルローテーション'];
+const STR_WEIGHTS=['0','25','27.5','30','50','55','60','65','70','80','90','100','105','110'];
+const STR_REPS_LIST=['1','2','3','4','5','6','8','10','12'];
+
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
@@ -838,6 +845,7 @@ const TR_ACTIVE={};
 const BOWEL={bAsa:null,bIgo:null};
 let curFood=null,curMeal='朝食',addedFoods=[],curCat='すべて';
 let histFilter='all';
+let STR_SETS=[];
 
 // calendar state per tab
 const CAL={
@@ -1006,6 +1014,8 @@ function computeCardio(){
     if(!isNaN(incline)&&!isNaN(speed)){
       const ik=nearestKey(MET_TREADMILL,incline),sk=nearestKey(MET_TREADMILL[ik],speed);
       met=MET_TREADMILL[ik][sk];
+    }else if(type==='縄跳び'){
+      met=10; // MET10（中強度縄跳び）
     }else if(intensity&&INTENSITY_MET[intensity]){
       met=INTENSITY_MET[intensity];
     }else if(!isNaN(speed)){
@@ -1125,6 +1135,94 @@ function buildStrength(key){
     detail:list.map(s=>s.w+'kg×'+s.r+'回').join(', ')
   };
 }
+// ── 筋トレ：プルダウン方式（新） ──
+function getCustomExercises(){try{return JSON.parse(localStorage.getItem('tkd_custom_exercises')||'[]');}catch{return [];}}
+function saveCustomExercises(list){localStorage.setItem('tkd_custom_exercises',JSON.stringify(list));}
+function renderStrSelect(){
+  const el=document.getElementById('STR_name');if(!el)return;
+  const custom=getCustomExercises();
+  let o='<option value="">種目を選択...</option>';
+  DEFAULT_EXERCISES.forEach(n=>{o+=`<option value="${n}">${n}</option>`;});
+  if(custom.length){o+='<optgroup label="カスタム">';custom.forEach(n=>{o+=`<option value="${n}">${n}</option>`;});o+='</optgroup>';}
+  o+='<option value="__other__">＋ その他（入力）</option>';
+  el.innerHTML=o;
+}
+function onStrNameChange(){
+  const v=document.getElementById('STR_name').value;
+  const oth=document.getElementById('STR_nameOther');
+  if(oth)oth.style.display=v==='__other__'?'block':'none';
+}
+function _strName(){
+  let name=document.getElementById('STR_name').value;
+  if(name==='__other__'){const o=document.getElementById('STR_nameOther');name=(o&&o.value.trim())||'';}
+  return name;
+}
+function _registerCustom(name){
+  if(!DEFAULT_EXERCISES.includes(name)){
+    const c=getCustomExercises();if(!c.includes(name)){c.push(name);saveCustomExercises(c);}
+    renderStrSelect();
+    setTimeout(()=>{const el=document.getElementById('STR_name');if(el)el.value=name;},0);
+  }
+}
+function _clearReps(){
+  delete SEL['STR_r'];
+  const grp=document.getElementById('STR_rBtns');if(grp)grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  const ro=document.getElementById('STR_rOther');if(ro){ro.value='';ro.style.display='none';}
+}
+function addStrSet(){
+  const name=_strName();
+  const w=getV('STR_w'),r=getV('STR_r');
+  if(!name){toast('種目を選んでください','err');return;}
+  if(w===undefined||w===null||w===''){toast('重量を選んでください（自重は0）','err');return;}
+  if(!r){toast('回数を選んでください','err');return;}
+  _registerCustom(name);
+  STR_SETS.push({name,weight:w,reps:r});
+  _clearReps();
+  renderStrSetList();
+}
+function addStrSets(){
+  const name=_strName();
+  const w=getV('STR_w');
+  const inp=document.getElementById('STR_rMulti');
+  if(!name){toast('種目を選んでください','err');return;}
+  if(w===undefined||w===null||w===''){toast('重量を選んでください（自重は0）','err');return;}
+  const repsArr=(inp.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+  if(!repsArr.length){toast('回数をカンマ区切りで入力してください','err');return;}
+  _registerCustom(name);
+  repsArr.forEach(r=>STR_SETS.push({name,weight:w,reps:r}));
+  inp.value='';
+  renderStrSetList();
+  toast(`${repsArr.length}セット追加`,'ok');
+}
+function removeStrSet(i){STR_SETS.splice(i,1);renderStrSetList();}
+function renderStrSetList(){
+  const el=document.getElementById('STR_setList');if(!el)return;
+  const counts={};
+  el.innerHTML=STR_SETS.map((s,i)=>{
+    counts[s.name]=(counts[s.name]||0)+1;
+    return `<div class="car-row"><span><b>${s.name}</b> ${s.weight}kg × ${s.reps}回 <span style="color:var(--muted);font-size:10px;">(${counts[s.name]}set)</span></span><span class="crx" onclick="removeStrSet(${i})">×</span></div>`;
+  }).join('');
+}
+// 縦持ちセット配列を構築（GAS送信・新スキーマ用）
+function buildTrainingSets(date){
+  const sets=[];
+  const counts={};
+  STR_SETS.forEach(s=>{
+    counts[s.name]=(counts[s.name]||0)+1;
+    sets.push([date,'筋トレ',s.name,counts[s.name],s.weight,s.reps,'','','']);
+  });
+  if(TR_ACTIVE['TKD']){
+    const mm=getV('MIT_m'),mr=getV('MIT_r');
+    if(mm&&mr)sets.push([date,'TKD','ミット','','',mr,mm,'','']);
+    const sm=getV('SPA_m'),sr=getV('SPA_r');
+    if(sm&&sr)sets.push([date,'TKD','スパーリング','','',sr,sm,'','']);
+    const to=(document.getElementById('TKD_other')||{}).value;
+    if(to)sets.push([date,'TKD','TKD他','','','','','',to]);
+  }
+  if(TR_ACTIVE['TAB']){const tt=getV('TAB_type');if(tt)sets.push([date,'TKD','タバタ','','','','','',tt]);}
+  if(TR_ACTIVE['OTR']){const ot=(document.getElementById('OTR_text')||{}).value;if(ot)sets.push([date,'その他','その他','','','','','',ot]);}
+  return sets;
+}
 // 睡眠時間の自動計算（入眠→起床、日跨ぎ対応）
 function parseHM(s){
   if(!s)return null;
@@ -1186,31 +1284,37 @@ document.querySelectorAll('.modal-ov').forEach(ov=>ov.addEventListener('click',e
 // ══════════════════════════════════════════
 function buildTrainingUI(){
   let h='';
-  TRAININGS.forEach(t=>{
-    h+=`<div class="tr-item">
-      <div class="tr-head" id="trHead${t.key}">
-        <span class="tr-title">${t.label}</span>
-        <button class="tog" id="tog${t.key}" onclick="toggleTr('${t.key}')">OFF</button>
+  // 筋トレ：プルダウン選択方式
+  h+=`<div class="tr-item">
+    <div class="tr-head" id="trHeadSTR">
+      <span class="tr-title">筋トレ</span>
+      <button class="tog" id="togSTR" onclick="toggleTr('STR')">OFF</button>
+    </div>
+    <div class="tr-body" id="trBodySTR">
+      <span class="slabel">種目</span>
+      <select class="tinput" id="STR_name" onchange="onStrNameChange()"></select>
+      <input type="text" class="tinput" id="STR_nameOther" placeholder="種目名を入力" style="display:none;margin-top:6px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px;">
+        <div><span class="slabel">重量(kg)</span>
+          <div class="bgrp bgrp-v" id="STR_wBtns">
+            ${STR_WEIGHTS.map(w=>`<button class="btn" onclick="sel(this,'STR_w')">${w}</button>`).join('')}
+            <button class="btn other" onclick="sel(this,'STR_w')">その他</button>
+          </div>
+          <input type="number" inputmode="decimal" class="tinput" id="STR_wOther" placeholder="kg" style="display:none;"></div>
+        <div><span class="slabel">回数</span>
+          <div class="bgrp bgrp-v" id="STR_rBtns">
+            ${STR_REPS_LIST.map(r=>`<button class="btn" onclick="sel(this,'STR_r')">${r}</button>`).join('')}
+            <button class="btn other" onclick="sel(this,'STR_r')">その他</button>
+          </div>
+          <input type="number" inputmode="numeric" class="tinput" id="STR_rOther" placeholder="回" style="display:none;"></div>
       </div>
-      <div class="tr-body" id="trBody${t.key}">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
-          <div><span class="slabel">重量(kg)</span>
-            <div class="bgrp bgrp-v" id="${t.key}_wBtns">
-              ${t.weights.map(w=>`<button class="btn" onclick="sel(this,'${t.key}_w')">${w}</button>`).join('')}
-              <button class="btn other" onclick="sel(this,'${t.key}_w')">その他</button>
-            </div>
-            <input type="number" inputmode="decimal" class="tinput" id="${t.key}_wOther" placeholder="kg" style="display:none;"></div>
-          <div><span class="slabel">回数</span>
-            <div class="bgrp bgrp-v" id="${t.key}_rBtns">
-              ${REPS.map(r=>`<button class="btn" onclick="sel(this,'${t.key}_r')">${r}</button>`).join('')}
-              <button class="btn other" onclick="sel(this,'${t.key}_r')">その他</button>
-            </div>
-            <input type="number" inputmode="numeric" class="tinput" id="${t.key}_rOther" placeholder="回" style="display:none;"></div>
-        </div>
-        <button class="btn" style="width:100%;margin-top:9px;border-color:var(--green);color:var(--green);" onclick="addSet('${t.key}')">＋ セット追加</button>
-        <div id="${t.key}_setList" style="margin-top:8px;"></div>
-      </div></div>`;
-  });
+      <button class="btn" style="width:100%;margin-top:9px;border-color:var(--green);color:var(--green);" onclick="addStrSet()">＋ 1セット追加</button>
+      <div style="display:flex;gap:6px;margin-top:6px;align-items:center;">
+        <input type="text" inputmode="numeric" class="tinput" id="STR_rMulti" placeholder="6,7,7（カンマ区切り）" style="flex:1;font-size:13px;">
+        <button class="btn" style="white-space:nowrap;border-color:var(--green);color:var(--green);" onclick="addStrSets()">まとめて追加</button>
+      </div>
+      <div id="STR_setList" style="margin-top:8px;"></div>
+    </div></div>`;
   h+=`<div class="tr-item"><div class="tr-head" id="trHeadTAB">
     <span class="tr-title">TABATA</span>
     <button class="tog" id="togTAB" onclick="toggleTr('TAB')">OFF</button></div>
@@ -1282,6 +1386,7 @@ function buildTrainingUI(){
         <button class="btn" onclick="selCardio(this,'CAR_type')">トレッドミル</button>
         <button class="btn" onclick="selCardio(this,'CAR_type')">エアロバイク</button>
         <button class="btn" onclick="selCardio(this,'CAR_type')">ランニング</button>
+        <button class="btn" onclick="selCardio(this,'CAR_type')">縄跳び</button>
         <button class="btn other" onclick="selCardio(this,'CAR_type')">その他</button>
       </div>
       <input type="text" class="tinput" id="CAR_typeOther" placeholder="種目" style="display:none;" oninput="updateCardio()">
@@ -1325,6 +1430,7 @@ function buildTrainingUI(){
       </div>
     </div></div>`;
   document.getElementById('trainingBody').innerHTML=h;
+  renderStrSelect();
   loadCardioProfile();
 }
 
@@ -1646,11 +1752,20 @@ function buildBodyText(rec){
   if(rec.ystFatigue)lines.push('疲労度: '+rec.ystFatigue);
   if(rec.ystSatisfaction)lines.push('練習満足度: '+rec.ystSatisfaction);
   if(rec.tomorrowNote)lines.push('明日への一言: '+rec.tomorrowNote);
-  TRAININGS.forEach(t=>{
-    if(rec[t.key+'_detail']){lines.push(`${t.label}: ${rec[t.key+'_detail']}`);return;}
-    const w=rec[t.key+'_w'],r=rec[t.key+'_r'],s=rec[t.key+'_s'];
-    if(w||r||s)lines.push(`${t.label}: ${[w?w+'kg':'',r?r+'回':'',s?s+'set':''].filter(Boolean).join('×')}`);
-  });
+  if(rec.trainingSets&&rec.trainingSets.length){
+    const byName={};
+    rec.trainingSets.filter(s=>s.category==='筋トレ').forEach(s=>{
+      if(!byName[s.name])byName[s.name]=[];
+      byName[s.name].push(s.weight+'kg×'+s.reps+'回');
+    });
+    Object.entries(byName).forEach(([name,sets])=>lines.push(name+': '+sets.join(', ')));
+  }else{
+    TRAININGS.forEach(t=>{
+      if(rec[t.key+'_detail']){lines.push(`${t.label}: ${rec[t.key+'_detail']}`);return;}
+      const w=rec[t.key+'_w'],r=rec[t.key+'_r'],s=rec[t.key+'_s'];
+      if(w||r||s)lines.push(`${t.label}: ${[w?w+'kg':'',r?r+'回':'',s?s+'set':''].filter(Boolean).join('×')}`);
+    });
+  }
   if(rec.tabata)lines.push('タバタ: '+rec.tabata);
   if(rec.mitt)lines.push('ミット: '+rec.mitt);
   if(rec.spar)lines.push('スパー: '+rec.spar);
@@ -1693,16 +1808,22 @@ function loadYesterdayDiary(){
       if(el)el.classList.remove('active');
     });
   });
-  // トレーニング：セット情報を復元（_detailから）。入力中のボタンはクリア
-  TRAININGS.forEach(t=>{
-    ['_w','_r'].forEach(suf=>{
-      delete SEL[t.key+suf];
-      const grp=document.getElementById(t.key+suf+'Btns');
-      if(grp)grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
-    });
-    SET_LISTS[t.key]=parseSetDetail(rec[t.key+'_detail']);
-    renderSetList(t.key);
+  // 筋トレ：STR_SETSを復元
+  ['STR_w','STR_r'].forEach(key=>{
+    delete SEL[key];
+    const grp=document.getElementById(key+'Btns');
+    if(grp)grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
   });
+  // 新形式（trainingSets）から復元
+  STR_SETS=(rec.trainingSets||[]).filter(s=>s.category==='筋トレ').map(s=>({name:s.name,weight:s.weight,reps:s.reps}));
+  // 旧形式フォールバック
+  if(!STR_SETS.length){
+    TRAININGS.forEach(t=>{
+      const detail=rec[t.key+'_detail']||'';
+      parseSetDetail(detail).forEach(s=>{STR_SETS.push({name:t.label,weight:s.w,reps:s.r});});
+    });
+  }
+  renderStrSetList();
   // 振り返り日記
   const diaryEl=document.getElementById('yesterdayDiary');
   if(diaryEl)diaryEl.value=rec.diary||'';
@@ -1737,12 +1858,6 @@ function saveMorning(){
     otherTrn:TR_ACTIVE['OTR']?document.getElementById('OTR_text').value:null,
     cardio:TR_ACTIVE['CAR']?buildCardioSummary():null,
   };
-  // 筋トレ：種目ごとのセット情報をマージ（ONの種目のみ）
-  TRAININGS.forEach(t=>{
-    if(!TR_ACTIVE[t.key])return;
-    const st=buildStrength(t.key);
-    if(st){trData[t.key+'_w']=st.w;trData[t.key+'_r']=st.r;trData[t.key+'_s']=st.s;trData[t.key+'_detail']=st.detail;}
-  });
   const hasAny=temp||weight||sleepIn||sleepOut||bOtsu||choshi||condNote||diary||tomorrowNote||
     ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
   if(!hasAny){toast('何か入力してください','err');return;}
@@ -1759,6 +1874,11 @@ function saveMorning(){
     rec.synced=false;
     setBodyLog(date,rec);
     sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
+    // 新スキーマ：体調（新）タブへ送信（今日分：体温・睡眠）
+    sendGAS({type:'condition',data:{
+      date:date.replace(/-/g,'/'),
+      temp,sleepIn:sleepIn||'',sleepOut:sleepOut||'',
+    }});
   }
 
   // ── 練習・体調・日記 → 前日（昨日）に保存 ──
@@ -1774,10 +1894,23 @@ function saveMorning(){
     if(ystSatisfaction)ystRec.ystSatisfaction=ystSatisfaction;
     if(bOtsu||choshi||condNote||Object.values(trData).some(v=>v))ystRec.hasTraining=true;
     if(diary||tomorrowNote||ystFatigue||ystSatisfaction)ystRec.hasDiary=true;
+    // 新形式：trainingSets（縦持ち）を保存
+    const ystDateSlash=ystDate.replace(/-/g,'/');
+    const sets=buildTrainingSets(ystDateSlash);
+    if(sets.length)ystRec.trainingSets=sets.map(([d,cat,name,setNo,w,r,min,kcal,memo])=>({date:d,category:cat,name,setNo,weight:w,reps:r,minPerRound:min,kcal,memo}));
     ystRec.text=buildBodyText(ystRec);
     ystRec.synced=false;
     setBodyLog(ystDate,ystRec);
     sendGAS({type:'body',body:ystRec}).then(ok=>{if(ok){ystRec.synced=true;setBodyLog(ystDate,ystRec);}});
+    // 新スキーマ：体調（新）タブへ送信（前日分：体調・日記）
+    sendGAS({type:'condition',data:{
+      date:ystDateSlash,
+      bowel:bOtsu||'',choshi:choshi||'',condNote,
+      fatigue:ystFatigue||'',satisfaction:ystSatisfaction||'',
+      diary,tomorrowNote,
+    }});
+    // 新スキーマ：トレーニング明細（新）タブへ送信
+    if(sets.length)sendGAS({type:'training',date:ystDateSlash,sets});
   }
 
   renderCal('body');updateBswBadges();
@@ -1793,7 +1926,8 @@ function saveMorning(){
       : `🌅 保存完了 — 練習・日記: ${ym}/${yd}`;
   toast(msg,'ok');
   CARDIO_LIST=[];renderCardioList();resetCardioForm();
-  TRAININGS.forEach(t=>{SET_LISTS[t.key]=[];renderSetList(t.key);});
+  STR_SETS=[];renderStrSetList();
+  TRAININGS.forEach(t=>{SET_LISTS[t.key]=[];});
 }
 
 
