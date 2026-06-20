@@ -972,6 +972,20 @@ const MET_TREADMILL={
 const INTENSITY_MET={'楽':5,'中':7,'きつい':9};
 function nearestKey(obj,v){const ks=Object.keys(obj).map(Number);return ks.reduce((a,b)=>Math.abs(b-v)<Math.abs(a-v)?b:a);}
 function selCardio(btn,key){sel(btn,key);updateCardio();}
+function onCardioTypeChange(){
+  const v=document.getElementById('CAR_typeSelect').value;
+  SEL['CAR_type']=v||null;
+  // その他テキスト
+  const oth=document.getElementById('CAR_typeOther');
+  if(oth)oth.style.display=v==='__other__'?'block':'none';
+  // フィールド表示切替
+  const show=(id,flag)=>{const el=document.getElementById(id);if(el)el.style.display=flag?'block':'none';};
+  show('CAR_fieldIncline', v==='トレッドミル');
+  show('CAR_fieldSpeed',   v==='トレッドミル'||v==='ランニング');
+  show('CAR_fieldIntensity', v==='エアロバイク'||v==='__other__');
+  show('CAR_fieldMin', !!v);
+  updateCardio();
+}
 // 体重(当日)・身長(固定)を朝の記録欄から取得。裏でlocalStorageにも保持
 function getProfileWeight(){
   const v=parseFloat((document.getElementById('mWeight')||{}).value);
@@ -1070,6 +1084,8 @@ function resetCardioForm(){
   ['CAR_type','CAR_incline','CAR_speed','CAR_min','CAR_intensity'].forEach(k=>delete SEL[k]);
   document.querySelectorAll('#trBodyCAR .btn.active').forEach(b=>b.classList.remove('active'));
   ['CAR_typeOther','CAR_inclineOther','CAR_speedOther','CAR_minOther','CAR_kcal'].forEach(id=>{const e=document.getElementById(id);if(e){e.value='';e.style.display='none';}});
+  const sel=document.getElementById('CAR_typeSelect');if(sel)sel.value='';
+  ['CAR_fieldIncline','CAR_fieldSpeed','CAR_fieldIntensity','CAR_fieldMin'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none';});
   document.getElementById('CAR_result').style.display='none';
 }
 function renderCardioList(){
@@ -1382,41 +1398,48 @@ function buildTrainingUI(){
     <div class="tr-body" id="trBodyCAR">
       <div class="car-hint" id="CAR_profHint">消費kcalは「今日の体温」欄の体重・身長から計算します</div>
       <span class="slabel">種目</span>
-      <div class="bgrp" id="CAR_typeBtns">
-        <button class="btn" onclick="selCardio(this,'CAR_type')">トレッドミル</button>
-        <button class="btn" onclick="selCardio(this,'CAR_type')">エアロバイク</button>
-        <button class="btn" onclick="selCardio(this,'CAR_type')">ランニング</button>
-        <button class="btn" onclick="selCardio(this,'CAR_type')">縄跳び</button>
-        <button class="btn other" onclick="selCardio(this,'CAR_type')">その他</button>
+      <select class="tinput" id="CAR_typeSelect" onchange="onCardioTypeChange()">
+        <option value="">種目を選択...</option>
+        <option value="トレッドミル">トレッドミル</option>
+        <option value="エアロバイク">エアロバイク</option>
+        <option value="ランニング">ランニング</option>
+        <option value="縄跳び">縄跳び</option>
+        <option value="__other__">その他</option>
+      </select>
+      <input type="text" class="tinput" id="CAR_typeOther" placeholder="種目名" style="display:none;margin-top:6px;" oninput="updateCardio()">
+      <div id="CAR_fieldIncline" style="display:none;margin-top:9px;">
+        <span class="slabel">傾斜(%)</span>
+        <div class="bgrp bgrp-v" id="CAR_inclineBtns">
+          ${[0,5,8,10,12,15].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_incline')">${v}</button>`).join('')}
+          <button class="btn other" onclick="selCardio(this,'CAR_incline')">その他</button>
+        </div>
+        <input type="number" inputmode="decimal" class="tinput" id="CAR_inclineOther" placeholder="%" style="display:none;" oninput="updateCardio()">
       </div>
-      <input type="text" class="tinput" id="CAR_typeOther" placeholder="種目" style="display:none;" oninput="updateCardio()">
-      <div class="r3" style="margin-top:11px;">
-        <div><span class="slabel">傾斜(%)</span>
-          <div class="bgrp bgrp-v" id="CAR_inclineBtns">
-            ${[0,5,8,10,12,15].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_incline')">${v}</button>`).join('')}
-            <button class="btn other" onclick="selCardio(this,'CAR_incline')">その他</button>
-          </div>
-          <input type="number" inputmode="decimal" class="tinput" id="CAR_inclineOther" placeholder="%" style="display:none;" oninput="updateCardio()"></div>
-        <div><span class="slabel">速度(km/h)</span>
-          <div class="bgrp bgrp-v" id="CAR_speedBtns">
-            ${[3,3.5,4,4.5,5,6,8].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_speed')">${v}</button>`).join('')}
-            <button class="btn other" onclick="selCardio(this,'CAR_speed')">その他</button>
-          </div>
-          <input type="number" inputmode="decimal" class="tinput" id="CAR_speedOther" placeholder="km/h" style="display:none;" oninput="updateCardio()"></div>
-        <div><span class="slabel">時間(分)</span>
-          <div class="bgrp bgrp-v" id="CAR_minBtns">
-            ${[10,20,30,40,60].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_min')">${v}</button>`).join('')}
-            <button class="btn other" onclick="selCardio(this,'CAR_min')">その他</button>
-          </div>
-          <input type="number" inputmode="numeric" class="tinput" id="CAR_minOther" placeholder="分" style="display:none;" oninput="updateCardio()"></div>
+      <div id="CAR_fieldSpeed" style="display:none;margin-top:9px;">
+        <span class="slabel">速度(km/h)</span>
+        <div class="bgrp bgrp-v" id="CAR_speedBtns">
+          ${[3,3.5,4,4.5,5,6,8].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_speed')">${v}</button>`).join('')}
+          <button class="btn other" onclick="selCardio(this,'CAR_speed')">その他</button>
+        </div>
+        <input type="number" inputmode="decimal" class="tinput" id="CAR_speedOther" placeholder="km/h" style="display:none;" oninput="updateCardio()">
       </div>
-      <div class="car-hint">エアロバイク等で傾斜・速度が無い場合は強度を選択：</div>
-      <div class="bgrp" id="CAR_intensityBtns">
-        <button class="btn" onclick="selCardio(this,'CAR_intensity')">楽</button>
-        <button class="btn" onclick="selCardio(this,'CAR_intensity')">中</button>
-        <button class="btn" onclick="selCardio(this,'CAR_intensity')">きつい</button>
+      <div id="CAR_fieldIntensity" style="display:none;margin-top:9px;">
+        <span class="slabel">強度</span>
+        <div class="bgrp" id="CAR_intensityBtns">
+          <button class="btn" onclick="selCardio(this,'CAR_intensity')">楽</button>
+          <button class="btn" onclick="selCardio(this,'CAR_intensity')">中</button>
+          <button class="btn" onclick="selCardio(this,'CAR_intensity')">きつい</button>
+        </div>
       </div>
-      <div class="car-hint">機械にカロリー表示があればこちらを優先：</div>
+      <div id="CAR_fieldMin" style="display:none;margin-top:9px;">
+        <span class="slabel">時間(分)</span>
+        <div class="bgrp bgrp-v" id="CAR_minBtns">
+          ${[10,20,30,40,60].map(v=>`<button class="btn" onclick="selCardio(this,'CAR_min')">${v}</button>`).join('')}
+          <button class="btn other" onclick="selCardio(this,'CAR_min')">その他</button>
+        </div>
+        <input type="number" inputmode="numeric" class="tinput" id="CAR_minOther" placeholder="分" style="display:none;" oninput="updateCardio()">
+      </div>
+      <div class="car-hint" style="margin-top:9px;">機械にカロリー表示があればこちらを優先：</div>
       <input type="number" inputmode="numeric" class="tinput" id="CAR_kcal" placeholder="機械表示kcal（任意）" oninput="updateCardio()">
       <div class="car-result" id="CAR_result" style="display:none;">
         <div><div class="cr-kcal" id="CAR_kcalOut">—</div><div class="cr-lbl">推定消費kcal</div></div>
