@@ -2003,8 +2003,8 @@ function saveFood(){
   const date=CAL.food.sel;
   if(!date){toast('日付を選択してください','err');return;}
   if(!addedFoods.length){toast('食材を追加してください','err');return;}
-  let tp=0,tf=0,tc=0,tk=0,tfi=0;
-  addedFoods.forEach(e=>{const r=e.grams/100;tp+=e.food.p*r;tf+=e.food.f*r;tc+=e.food.c*r;tk+=e.food.kcal*r;tfi+=(e.food.fi||0)*r;});
+  let tp=0,tf=0,tc=0,tk=0,tfi=0,tna=0;
+  addedFoods.forEach(e=>{const r=e.grams/100;tp+=e.food.p*r;tf+=e.food.f*r;tc+=e.food.c*r;tk+=e.food.kcal*r;tfi+=(e.food.fi||0)*r;tna+=(e.food.na||0)*r;});
   const note=document.getElementById('foodNote').value;
   const lines=['【食事記録】'];
   const meals={};
@@ -2015,11 +2015,11 @@ function saveFood(){
       lines.push(`  ${e.food.name} ${e.grams}g → ${Math.round(e.food.kcal*r)}kcal P:${(e.food.p*r).toFixed(1)}g C:${(e.food.c*r).toFixed(1)}g 繊維:${((e.food.fi||0)*r).toFixed(1)}g`);
     });
   });
-  lines.push(`合計: ${Math.round(tk)}kcal P:${tp.toFixed(1)}g F:${tf.toFixed(1)}g C:${tc.toFixed(1)}g 繊維:${tfi.toFixed(1)}g`);
+  lines.push(`合計: ${Math.round(tk)}kcal P:${tp.toFixed(1)}g F:${tf.toFixed(1)}g C:${tc.toFixed(1)}g 繊維:${tfi.toFixed(1)}g Na:${(tna/1000).toFixed(1)}g`);
   if(note)lines.push('メモ: '+note);
-  const rec={date,type:'food',note,totalKcal:tk,totalP:tp,totalF:tf,totalC:tc,totalFi:tfi,
-    text:lines.join('\n'),synced:false,pfc:{p:tp,f:tf,c:tc,kcal:tk,fi:tfi},
-    items:addedFoods.map(e=>{const r=e.grams/100;return{meal:e.meal,name:e.food.name,grams:e.grams,kcal:e.food.kcal*r,p:e.food.p*r,f:e.food.f*r,c:e.food.c*r,fi:(e.food.fi||0)*r};})};
+  const rec={date,type:'food',note,totalKcal:tk,totalP:tp,totalF:tf,totalC:tc,totalFi:tfi,totalNa:tna,
+    text:lines.join('\n'),synced:false,pfc:{p:tp,f:tf,c:tc,kcal:tk,fi:tfi,na:tna},
+    items:addedFoods.map(e=>{const r=e.grams/100;return{meal:e.meal,name:e.food.name,grams:e.grams,kcal:e.food.kcal*r,p:e.food.p*r,f:e.food.f*r,c:e.food.c*r,fi:(e.food.fi||0)*r,na:(e.food.na||0)*r};})};
   setFoodLog(date,rec);
   renderCal('food');
   sendGAS({type:'food',food:rec}).then(ok=>{if(ok){rec.synced=true;setFoodLog(date,rec);}});
@@ -2231,6 +2231,11 @@ function renderHistory(){
       <button class="log-del" onclick="delLog('${date}')">✕</button>`;
     if(body)html+=`<div class="log-text" style="margin-bottom:${food?'10px':'0'};">${escHtml(body.text)}</div>`;
     if(food)html+=`<div class="log-text">${escHtml(food.text)}</div>`;
+    // 編集ボタン
+    html+='<div style="display:flex;gap:6px;margin-top:8px;">';
+    if(food)html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(59,130,246,.12);border:1px solid var(--blue);border-radius:6px;color:var(--blue);cursor:pointer;" onclick="editFoodLog('${date}')">🍽 食事を編集</button>`;
+    if(body&&(body.hasMorning||body.hasTraining))html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(168,85,247,.12);border:1px solid var(--purple);border-radius:6px;color:var(--purple);cursor:pointer;" onclick="editBodyLog('${date}')">📝 体調を編集</button>`;
+    html+='</div>';
     html+='</div>';
   }
   if(!html)html='<div class="empty">記録はまだありません</div>';
@@ -2240,6 +2245,50 @@ function delLog(date){
   localStorage.removeItem('body_'+date);
   localStorage.removeItem('food_'+date);
   renderHistory();renderCal('body');renderCal('food');updateBswBadges();
+}
+
+function editFoodLog(date){
+  const rec=getFoodLog(date);
+  if(!rec||!rec.items||!rec.items.length){toast('編集できる食事データがありません','err');return;}
+  // items を addedFoods に復元
+  addedFoods=rec.items.map(function(it){
+    // food オブジェクトを復元（100gあたりに逆算）
+    var r=it.grams/100;
+    var food={name:it.name,kcal:r?it.kcal/r:0,p:r?it.p/r:0,f:r?it.f/r:0,c:r?it.c/r:0,fi:r?(it.fi||0)/r:0,na:r?(it.na||0)/r:0};
+    return{food:food,grams:it.grams,meal:it.meal,id:Date.now()+Math.random()};
+  });
+  // カレンダーの選択日を合わせる
+  CAL.food.sel=date;
+  // メモ復元
+  var noteEl=document.getElementById('foodNote');
+  if(noteEl)noteEl.value=rec.note||'';
+  // 食事タブに切り替え
+  switchTab('food',document.querySelectorAll('.bnav-btn')[1]);
+  renderFoodList();
+  renderCal('food');
+  toast('食事を編集中: '+date,'ok');
+}
+
+function editBodyLog(date){
+  var rec=getBodyLog(date);
+  if(!rec){toast('編集できる体調データがありません','err');return;}
+  // カレンダーの選択日を合わせる
+  CAL.body.sel=date;
+  // フィールドを復元
+  if(rec.temp){var btns=document.querySelectorAll('#tempBtns .btn');btns.forEach(function(b){if(b.textContent===rec.temp)sel(b,'temp');});}
+  if(rec.weight){var we=document.getElementById('weightInput');if(we)we.value=rec.weight;}
+  if(rec.sleepIn){var btns=document.querySelectorAll('#sleepInBtns .btn');btns.forEach(function(b){if(b.textContent===rec.sleepIn)sel(b,'sleepIn');});}
+  if(rec.sleepOut){var btns=document.querySelectorAll('#sleepOutBtns .btn');btns.forEach(function(b){if(b.textContent===rec.sleepOut)sel(b,'sleepOut');});}
+  if(rec.choshi){var btns=document.querySelectorAll('#choshiBtns .btn');btns.forEach(function(b){if(b.textContent===rec.choshi)sel(b,'choshi');});}
+  if(rec.ystFatigue){var btns=document.querySelectorAll('#ystFatigueBtns .btn');btns.forEach(function(b){if(b.textContent===rec.ystFatigue)sel(b,'ystFatigue');});}
+  if(rec.ystSatisfaction){var btns=document.querySelectorAll('#ystSatisfactionBtns .btn');btns.forEach(function(b){if(b.textContent===rec.ystSatisfaction)sel(b,'ystSatisfaction');});}
+  var condEl=document.getElementById('condNote');if(condEl&&rec.condNote)condEl.value=rec.condNote;
+  var diaryEl=document.getElementById('yesterdayDiary');if(diaryEl&&rec.diary)diaryEl.value=rec.diary;
+  var tmrEl=document.getElementById('tomorrowNote');if(tmrEl&&rec.tomorrowNote)tmrEl.value=rec.tomorrowNote;
+  // 体調タブに切り替え
+  switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
+  renderCal('body');
+  toast('体調を編集中: '+date,'ok');
 }
 
 // ══════════════════════════════════════════
@@ -2562,6 +2611,26 @@ function fetchAdvice(){
   if(TKD_CONFIG.adviceGasUrl && TKD_CONFIG.adviceGasUrl.startsWith('https://script.google.com/macros/s/')){
     setAdviceGasUrl(TKD_CONFIG.adviceGasUrl);
   }
+})();
+
+// 文字化けカスタム食材を自動修正（1回だけ実行）
+(function fixMojibake(){
+  if(localStorage.getItem('tkd_mojibake_fixed'))return;
+  var fixes={
+    'チー���（カテージ）':'チーズ（カテージ）',
+    '��凍ストロベリーダイスカット':'冷凍ストロベリーダイスカット',
+    '���スタ (乾)':'パスタ (乾)',
+    '国��小豆の赤飯おむすび':'国産小豆の赤飯おむすび',
+    'みなさまのお墨付き いか姿��ライ':'みなさまのお墨付き いか姿フライ',
+    'うし・しまちょう（大腸・���）':'うし・しまちょう（大腸・生）',
+    'カオマン��イ':'カオマンガイ',
+    '讃岐 熟成う���ん':'讃岐 熟成うどん'
+  };
+  var customs=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  var changed=0;
+  customs.forEach(function(f){if(fixes[f.name]){f.name=fixes[f.name];changed++;}});
+  if(changed){localStorage.setItem('tkd_custom_foods',JSON.stringify(customs));console.log('[fixMojibake] '+changed+'件修正');}
+  localStorage.setItem('tkd_mojibake_fixed','1');
 })();
 buildTrainingUI();
 buildFoodCats();
