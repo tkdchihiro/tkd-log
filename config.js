@@ -12,4 +12,7 @@ const TKD_CONFIG = {
 
   // スプレッドシートのURL（任意・ヘッダーの「Sheets」ボタンから開けます）
   sheetUrl: '',
+
+  // アドバイス生成用GAS URL（Code.gs v9のWebアプリURL）
+  adviceGasUrl: 'https://script.google.com/macros/s/AKfycby8NrMF4G07spsDjj8hxfLSv8U2vtFGt1_PjQwVp8N2euwiplyazsM25mCaNyBA8Uoe/exec',
 };

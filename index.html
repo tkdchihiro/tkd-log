@@ -417,6 +417,8 @@ textarea.tinput{resize:none;min-height:70px;}
           <input type="number" inputmode="decimal" step="0.1" class="tinput" id="mWeight" placeholder="kg" style="margin-top:0;" oninput="onProfileInput()"></div>
         <div><span class="slabel">身長(cm) <span style="color:var(--muted);">※一度だけ</span></span>
           <input type="number" inputmode="decimal" class="tinput" id="mHeight" placeholder="cm" style="margin-top:0;" oninput="onProfileInput()"></div>
+        <div><span class="slabel">基礎代謝(kcal) <span style="color:var(--muted);">※タニタ値</span></span>
+          <input type="number" inputmode="numeric" class="tinput" id="mBmr" placeholder="例: 1350" style="margin-top:0;" oninput="onProfileInput()"></div>
       </div>
     </div>
   </div>
@@ -543,7 +545,23 @@ textarea.tinput{resize:none;min-height:70px;}
   <button class="save-btn blue" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
 </div>
 
+<!-- AIアドバイスカード -->
+<div id="adviceCard" style="display:none;margin:12px 0;padding:14px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;border:1px solid rgba(255,215,0,.2);">
+  <div style="font-size:13px;font-weight:600;color:#ffd700;margin-bottom:8px;">🤖 今日のアドバイス</div>
+  <div id="adviceCardBody" style="font-size:12px;line-height:1.8;color:#e0e0e0;white-space:pre-wrap;"></div>
+  <div id="adviceLoading" style="display:none;text-align:center;padding:20px;color:#aaa;font-size:12px;">
+    ⏳ AIがデータを分析中...（15〜30秒）
+  </div>
+</div>
 
+<!-- 分析パネル -->
+<div id="analysisPanel" style="display:none;margin:12px 0;padding:12px;background:var(--card);border-radius:10px;border:1px solid var(--border);">
+  <div style="font-size:13px;font-weight:600;color:var(--fg);margin-bottom:8px;">📊 昨日の分析</div>
+  <div id="analysisContent" style="font-size:12px;line-height:1.7;color:var(--fg-sub);white-space:pre-wrap;"></div>
+  <div style="font-size:13px;font-weight:600;color:var(--fg);margin:10px 0 6px;">📅 週間サマリー（過去7日）</div>
+  <div id="weeklyContent" style="font-size:12px;line-height:1.7;color:var(--fg-sub);white-space:pre-wrap;"></div>
+  <div id="adviceContent" style="margin-top:8px;padding:8px;background:var(--bg2,#f5f5f5);border-radius:6px;font-size:12px;line-height:1.7;"></div>
+</div>
 
 </main>
 </div>
@@ -1000,17 +1018,23 @@ function getProfileHeight(){
   try{const p=JSON.parse(localStorage.getItem('tkd_profile')||'{}');if(p.ht)return p.ht;}catch{}
   return 170;
 }
-// 朝の記録ロード時に身長(固定)と直近体重を補完表示
+function getProfileBmr(){
+  const v=parseFloat((document.getElementById('mBmr')||{}).value);
+  if(!isNaN(v)&&v>0)return v;
+  try{const p=JSON.parse(localStorage.getItem('tkd_profile')||'{}');if(p.bmr)return p.bmr;}catch{}
+  return 0;
+}
 function loadCardioProfile(){
   try{const p=JSON.parse(localStorage.getItem('tkd_profile')||'{}');
-    const hEl=document.getElementById('mHeight'),wEl=document.getElementById('mWeight');
-    if(hEl&&p.ht&&!hEl.value)hEl.value=p.ht; // 身長は前回値を自動補完
+    const hEl=document.getElementById('mHeight'),wEl=document.getElementById('mWeight'),bEl=document.getElementById('mBmr');
+    if(hEl&&p.ht&&!hEl.value)hEl.value=p.ht;
     if(wEl&&p.wt&&!wEl.value)wEl.placeholder=p.wt+'（前回）';
+    if(bEl&&p.bmr&&!bEl.value){bEl.value=p.bmr;}
   }catch{}
 }
 function onProfileInput(){
-  const wt=getProfileWeight(),ht=getProfileHeight();
-  localStorage.setItem('tkd_profile',JSON.stringify({wt,ht}));
+  const wt=getProfileWeight(),ht=getProfileHeight(),bmr=getProfileBmr();
+  localStorage.setItem('tkd_profile',JSON.stringify({wt,ht,bmr:bmr||undefined}));
   updateCardio();
 }
 function computeCardio(){
@@ -1960,6 +1984,14 @@ function saveMorning(){
       ? `🌅 保存完了 — 体温・体重・睡眠: ${tm}/${td}`
       : `🌅 保存完了 — 練習・日記: ${ym}/${yd}`;
   toast(msg,'ok');
+  if(hasYst) fetchAdvice();
+  // 分析パネルを更新（リセット前にkcal/steps取得）
+  const _cardioKcal=CARDIO_LIST.reduce((s,c)=>s+(c.kcal||0),0);
+  const _cardioSteps=CARDIO_LIST.reduce((s,c)=>s+(c.exSteps||0),0);
+  const _weight=parseFloat(weight)||58;
+  const _bmr=getProfileBmr();
+  const _ystDate=getYesterdayDate(date);
+  setTimeout(function(){fetchAndRenderAnalysis(_ystDate,_cardioKcal,_cardioSteps,_weight,_bmr);},1500);
   CARDIO_LIST=[];renderCardioList();resetCardioForm();
   STR_SETS=[];renderStrSetList();
   TRAININGS.forEach(t=>{SET_LISTS[t.key]=[];});
@@ -2013,6 +2045,78 @@ function openSheetUrl(){
   const url=localStorage.getItem('tkd_sheet_url');
   if(url)window.open(url,'_blank');
   else openModal('gasModal');
+}
+
+// ── GAS読み取り（JSONP方式）──
+function fetchGAS(params){
+  const url=getGasUrl();
+  if(!url)return Promise.resolve(null);
+  return new Promise(function(resolve){
+    const cbName='_gasCb_'+Date.now();
+    const qs=Object.entries(params).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    const s=document.createElement('script');
+    const tid=setTimeout(function(){delete window[cbName];s.remove();resolve(null);},10000);
+    window[cbName]=function(data){clearTimeout(tid);delete window[cbName];s.remove();resolve(data);};
+    s.onerror=function(){clearTimeout(tid);delete window[cbName];s.remove();resolve(null);};
+    s.src=url+'?'+qs+'&callback='+cbName;
+    document.head.appendChild(s);
+  });
+}
+
+function fetchAndRenderAnalysis(ystDate,cardioKcal,cardioSteps,weight,bmr){
+  var panel=document.getElementById('analysisPanel');
+  var content=document.getElementById('analysisContent');
+  if(!panel||!content)return;
+  panel.style.display='block';
+  content.textContent='分析中...';
+  document.getElementById('weeklyContent').textContent='';
+  document.getElementById('adviceContent').textContent='';
+  var dateSlash=ystDate.replace(/-/g,'/');
+  fetchGAS({type:'getanalysis',date:dateSlash,cardioKcal:cardioKcal||0,cardioSteps:cardioSteps||0,weight:weight||58,bmr:bmr||0}).then(function(data){
+    if(!data||data.status!=='ok'){content.textContent='分析データを取得できませんでした';return;}
+    renderAnalysis(data);
+  });
+}
+
+function renderAnalysis(data){
+  var d=data.daily||{};
+  var w=data.weekly||{};
+  var lines=[];
+  if(d.totalSteps!=null)lines.push('歩数: '+Number(d.totalSteps).toLocaleString()+'歩');
+  if(d.bmr)lines.push('基礎代謝: '+d.bmr+'kcal');
+  if(d.walkKcal!=null)lines.push('歩行消費: '+d.walkKcal+'kcal');
+  if(d.cardioKcal)lines.push('有酸素消費: '+d.cardioKcal+'kcal');
+  if(d.consumption!=null)lines.push('活動消費計: '+Math.round(d.consumption)+'kcal');
+  if(d.intake!=null)lines.push('摂取: '+Math.round(d.intake)+'kcal');
+  if(d.intakeP!=null)lines.push('  P:'+d.intakeP+'g  F:'+d.intakeF+'g  C:'+d.intakeC+'g');
+  if(d.balance!=null){
+    var sign=d.balance>=0?'+':'';
+    lines.push('収支: '+sign+Math.round(d.balance)+'kcal');
+  }
+  if(d.sleep){
+    var sh=(d.sleep.total/60).toFixed(1);
+    lines.push('睡眠: '+sh+'h（深:'+d.sleep.deep+'分 REM:'+d.sleep.rem+'分）');
+  }
+  document.getElementById('analysisContent').textContent=lines.join('\n')||'データなし';
+
+  var wlines=[];
+  if(w.period)wlines.push('期間: '+w.period);
+  if(w.trainDays!=null)wlines.push('練習日数: '+w.trainDays+'日/7日');
+  if(w.avgConsumption!=null)wlines.push('平均消費: '+Math.round(w.avgConsumption)+'kcal');
+  if(w.avgIntake!=null)wlines.push('平均摂取: '+Math.round(w.avgIntake)+'kcal');
+  if(w.avgBalance!=null){
+    var wsign=w.avgBalance>=0?'+':'';
+    wlines.push('平均収支: '+wsign+Math.round(w.avgBalance)+'kcal/日');
+  }
+  if(w.avgP!=null)wlines.push('平均PFC: P'+w.avgP+'g F'+w.avgF+'g C'+w.avgC+'g');
+  if(w.avgSleep!=null)wlines.push('平均睡眠: '+(w.avgSleep/60).toFixed(1)+'h');
+  if(w.goodDays!=null)wlines.push('調子: 良'+w.goodDays+'日 / 悪'+w.badDays+'日');
+  document.getElementById('weeklyContent').textContent=wlines.join('\n')||'データなし';
+
+  var advices=[];
+  if(d.advice)advices.push.apply(advices,Array.isArray(d.advice)?d.advice:[d.advice]);
+  if(w.advice)advices.push.apply(advices,Array.isArray(w.advice)?w.advice:[w.advice]);
+  document.getElementById('adviceContent').textContent=advices.join('\n')||'';
 }
 
 // ── GAS送信（GETパラメータ方式でCORS回避）──
@@ -2405,6 +2509,43 @@ function toast(msg,type=''){
   clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2500);
 }
 
+// ── アドバイスGAS URL 管理 ──
+function getAdviceGasUrl(){return localStorage.getItem('tkd_advice_gas_url')||'';}
+function setAdviceGasUrl(u){localStorage.setItem('tkd_advice_gas_url',u);}
+
+function fetchAdvice(){
+  var url=getAdviceGasUrl();
+  if(!url){console.log('[advice] adviceGasUrl未設定');return;}
+  var card=document.getElementById('adviceCard');
+  var body=document.getElementById('adviceCardBody');
+  var loading=document.getElementById('adviceLoading');
+  card.style.display='block';
+  body.textContent='';
+  loading.style.display='block';
+  var cbName='_adviceCb_'+Date.now();
+  var timeout=setTimeout(function(){
+    loading.textContent='⚠ タイムアウト（60秒）';
+    delete window[cbName];
+  },60000);
+  window[cbName]=function(res){
+    clearTimeout(timeout);
+    loading.style.display='none';
+    delete window[cbName];
+    if(res&&res.ok){
+      body.textContent=res.advice||'（アドバイスなし）';
+    }else{
+      body.textContent='⚠ エラー: '+(res&&res.error||'不明');
+    }
+  };
+  var s=document.createElement('script');
+  s.src=url+'?action=advice&callback='+cbName;
+  s.onerror=function(){
+    clearTimeout(timeout);loading.style.display='none';
+    body.textContent='⚠ 通信エラー';delete window[cbName];
+  };
+  document.body.appendChild(s);
+}
+
 // ══════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════
@@ -2417,6 +2558,9 @@ function toast(msg,type=''){
   }
   if(TKD_CONFIG.sheetUrl && TKD_CONFIG.sheetUrl.startsWith('https://')){
     localStorage.setItem('tkd_sheet_url', TKD_CONFIG.sheetUrl);
+  }
+  if(TKD_CONFIG.adviceGasUrl && TKD_CONFIG.adviceGasUrl.startsWith('https://script.google.com/macros/s/')){
+    setAdviceGasUrl(TKD_CONFIG.adviceGasUrl);
   }
 })();
 buildTrainingUI();
