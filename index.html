@@ -497,6 +497,15 @@ textarea.tinput{resize:none;min-height:70px;}
         <button class="btn" onclick="sel(this,'choshi')">△</button>
         <button class="btn" onclick="sel(this,'choshi')">×</button>
       </div>
+      <span class="flabel">水分（mL）</span>
+      <div class="btn-row">
+        <button class="btn" onclick="addWater(500)">+500</button>
+        <button class="btn" onclick="addWater(250)">+250</button>
+        <button class="btn" onclick="addWater(1000)">+1L</button>
+        <button class="btn" onclick="addWater(-250)">-250</button>
+        <input type="number" id="waterMl" class="tinput" style="width:80px;display:inline" placeholder="0" readonly>
+        <span style="font-size:0.85em;color:var(--sub)">mL</span>
+      </div>
       <span class="flabel">メモ（体調）</span>
       <textarea class="tinput" id="condNote" placeholder="例: 夜眠かった、筋肉痛なし..."></textarea>
     </div>
@@ -968,6 +977,12 @@ function toggleSec(h){
   const o=b.classList.toggle('open');
   ch.classList.toggle('open',o);h.classList.toggle('open',o);
 }
+function addWater(ml){
+  const el=document.getElementById('waterMl');
+  if(!el)return;
+  const cur=parseInt(el.value)||0;
+  el.value=Math.max(0,cur+ml);
+}
 function sel(btn,key){
   const grp=document.getElementById(key+'Btns')||document.getElementById(key);
   if(grp)grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
@@ -1102,7 +1117,9 @@ function formCardioSummary(c){
 function addCardio(){
   const c=computeCardio();
   if(c.kcal===null&&!c.exSteps){toast('種目と時間などを入力してください','err');return;}
-  CARDIO_LIST.push({summary:formCardioSummary(c),kcal:c.kcal||0,exSteps:c.exSteps||0});
+  const type=c.type==='__other__'?(document.getElementById('CAR_typeOther').value||'有酸素'):(c.type||'有酸素');
+  CARDIO_LIST.push({summary:formCardioSummary(c),kcal:c.kcal||0,exSteps:c.exSteps||0,
+    name:type,speed:c.speed,incline:c.incline,min:c.min,intensity:c.intensity,jumpReps:c.jumpReps});
   resetCardioForm();
   renderCardioList();
 }
@@ -1265,6 +1282,28 @@ function buildTrainingSets(date){
   }
   if(TR_ACTIVE['TAB']){const tt=getV('TAB_type');if(tt)sets.push([date,'TKD','タバタ','','','','','',tt]);}
   if(TR_ACTIVE['OTR']){const ot=(document.getElementById('OTR_text')||{}).value;if(ot)sets.push([date,'その他','その他','','','','','',ot]);}
+  // 有酸素（CARDIO_LIST） — sets: [日付,種別,種目,セット,重量,回数,時間,kcal,メモ,速度,傾斜]
+  if(TR_ACTIVE['CAR']){
+    function cardioRow(date,name,min,kcal,speed,incline,memo){
+      return [date,'有酸素',name||'有酸素','','','',min||'',kcal||'',memo,
+        (!isNaN(speed)&&speed>0)?speed:'',(!isNaN(incline)&&incline>=0)?incline:''];
+    }
+    CARDIO_LIST.forEach(function(c){
+      const memo=[];
+      if(c.intensity)memo.push('強度:'+c.intensity);
+      if(c.jumpReps)memo.push(c.jumpReps+'回');
+      sets.push(cardioRow(date,c.name,c.min,c.kcal,c.speed,c.incline,memo.join(' ')));
+    });
+    // 未追加のフォーム入力を救済
+    const cur=computeCardio();
+    if(cur.kcal!==null||cur.exSteps){
+      const curType=cur.type==='__other__'?(document.getElementById('CAR_typeOther').value||'有酸素'):(cur.type||'有酸素');
+      const curMemo=[];
+      if(cur.intensity)curMemo.push('強度:'+cur.intensity);
+      if(cur.jumpReps)curMemo.push(cur.jumpReps+'回');
+      sets.push(cardioRow(date,curType,cur.min,cur.kcal,cur.speed,cur.incline,curMemo.join(' ')));
+    }
+  }
   return sets;
 }
 // 睡眠時間の自動計算（入眠→起床、日跨ぎ対応）
@@ -1962,11 +2001,13 @@ function saveMorning(){
     setBodyLog(ystDate,ystRec);
     sendGAS({type:'body',body:ystRec}).then(ok=>{if(ok){ystRec.synced=true;setBodyLog(ystDate,ystRec);}});
     // 新スキーマ：体調（新）タブへ送信（前日分：体調・日記）
+    var waterVal=parseInt(document.getElementById('waterMl').value)||0;
     sendGAS({type:'condition',data:{
       date:ystDateSlash,
       bowel:bOtsu||'',choshi:choshi||'',condNote,
       fatigue:ystFatigue||'',satisfaction:ystSatisfaction||'',
       diary,tomorrowNote,
+      water:waterVal>0?waterVal:'',
     }});
     // 新スキーマ：トレーニング明細（新）タブへ送信
     if(sets.length)sendGAS({type:'training',date:ystDateSlash,sets});
