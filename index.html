@@ -1084,6 +1084,8 @@ function computeCardio(){
   if(min>0){
     if(!isNaN(speed)&&speed>0){
       exSteps=Math.round(speed*(min/60)*1000/stride); // トレッドミル/ランニング
+    }else if(type==='ステアクライマー'&&kcal){
+      exSteps=Math.round(kcal/0.185); // 実測値: 300kcal/1623段=0.185kcal/段(58kg)
     }else if(type==='エアロバイク'){
       exSteps=Math.round(min*50); // 腕振り誤検知の固定係数
     }
@@ -1468,6 +1470,7 @@ function buildTrainingUI(){
       <select class="tinput" id="CAR_typeSelect" onchange="onCardioTypeChange()">
         <option value="">種目を選択...</option>
         <option value="トレッドミル">トレッドミル</option>
+        <option value="ステアクライマー">ステアクライマー</option>
         <option value="エアロバイク">エアロバイク</option>
         <option value="ランニング">ランニング</option>
         <option value="縄跳び">縄跳び</option>
@@ -2166,17 +2169,23 @@ function renderAnalysis(data){
 function sendGAS(data){
   const url=getGasUrl();
   if(!url)return Promise.resolve(false);
-  return new Promise(function(resolve){
-    try{
-      const payload=encodeURIComponent(JSON.stringify(data));
-      const img=new Image();
-      // Image経由のGETはno-corsと同等、CORSエラーなし
-      // onerrorでもGASには届いている（JSONはimgとして解釈失敗するだけ）
-      img.onload=img.onerror=function(){resolve(true);};
-      img.src=url+'?payload='+payload;
-      // 5秒タイムアウト
-      setTimeout(function(){resolve(true);},5000);
-    }catch(e){resolve(false);}
+  // POST(no-cors): URLサイズ上限なし。レスポンスは読めないがGASには確実に届く
+  return fetch(url,{
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},  // preflight回避のためtext/plain
+    body:JSON.stringify(data)
+  }).then(function(){return true;}).catch(function(){
+    // フォールバック: 旧Image GET方式（小さいpayloadなら届く）
+    return new Promise(function(resolve){
+      try{
+        const payload=encodeURIComponent(JSON.stringify(data));
+        const img=new Image();
+        img.onload=img.onerror=function(){resolve(true);};
+        img.src=url+'?payload='+payload;
+        setTimeout(function(){resolve(true);},5000);
+      }catch(e){resolve(false);}
+    });
   });
 }
 
