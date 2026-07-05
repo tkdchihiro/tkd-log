@@ -2351,6 +2351,17 @@ function editTrainingLog(date){
   if(tkd.find(s=>s.name==='タバタ'))TR_ACTIVE['TAB']=true;
   if(tkd.find(s=>s.name==='その他'))TR_ACTIVE['OTR']=true;
   buildTrainingUI();
+  // buildTrainingUI はすべてOFFでDOMを生成するため、TR_ACTIVEに従って表示状態を適用
+  Object.keys(TR_ACTIVE).forEach(function(k){
+    if(!TR_ACTIVE[k])return;
+    const t=document.getElementById('tog'+k);
+    const b=document.getElementById('trBody'+k);
+    const h=document.getElementById('trHead'+k);
+    if(t){t.textContent='ON';t.classList.add('on');}
+    if(b)b.classList.add('show');
+    if(h)h.classList.add('open');
+  });
+  renderStrSetList();
   renderCardioList();
   // MIT/SPA ラウンド・分数ボタン復元（buildTrainingUI後にDOMが存在する）
   const mitSet=tkd.find(s=>s.name==='ミット');
