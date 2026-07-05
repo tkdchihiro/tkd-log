@@ -1081,11 +1081,11 @@ function computeCardio(){
   // 歩数除外
   let exSteps=0;
   const stride=ht*0.45/100; // m
-  if(min>0){
+  if(type==='ステアクライマー'&&kcal){
+    exSteps=Math.round(kcal/0.185); // 実測値: 300kcal/1623段=0.185kcal/段(58kg)
+  }else if(min>0){
     if(!isNaN(speed)&&speed>0){
       exSteps=Math.round(speed*(min/60)*1000/stride); // トレッドミル/ランニング
-    }else if(type==='ステアクライマー'&&kcal){
-      exSteps=Math.round(kcal/0.185); // 実測値: 300kcal/1623段=0.185kcal/段(58kg)
     }else if(type==='エアロバイク'){
       exSteps=Math.round(min*50); // 腕振り誤検知の固定係数
     }
@@ -1878,6 +1878,11 @@ function buildBodyText(rec){
 
 // 朝の記録（体温・睡眠）→ 選択日にupsert
 // 前日の日付文字列を返す（YYYY-MM-DD形式）
+function getNextDate(dateStr){
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const dt=new Date(y,m-1,d+1);
+  return fmt(dt);
+}
 function getYesterdayDate(dateStr){
   // toISOString()はUTC変換でJSTだと日付がズレるため文字列操作で計算
   const [y,m,d]=dateStr.split('-').map(Number);
@@ -2284,7 +2289,8 @@ function renderHistory(){
     // 編集ボタン
     html+='<div style="display:flex;gap:6px;margin-top:8px;">';
     if(food)html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(59,130,246,.12);border:1px solid var(--blue);border-radius:6px;color:var(--blue);cursor:pointer;" onclick="editFoodLog('${date}')">🍽 食事を編集</button>`;
-    if(body&&(body.hasMorning||body.hasTraining))html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(168,85,247,.12);border:1px solid var(--purple);border-radius:6px;color:var(--purple);cursor:pointer;" onclick="editBodyLog('${date}')">📝 体調を編集</button>`;
+    if(body&&body.hasMorning)html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(168,85,247,.12);border:1px solid var(--purple);border-radius:6px;color:var(--purple);cursor:pointer;" onclick="editBodyLog('${date}')">📝 体調を編集</button>`;
+    if(body&&body.hasTraining)html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(34,197,94,.12);border:1px solid var(--green);border-radius:6px;color:var(--green);cursor:pointer;" onclick="editTrainingLog('${date}')">💪 練習を編集</button>`;
     html+='</div>';
     html+='</div>';
   }
@@ -2319,6 +2325,38 @@ function editFoodLog(date){
   toast('食事を編集中: '+date,'ok');
 }
 
+function editTrainingLog(date){
+  const rec=getBodyLog(date);
+  if(!rec||!rec.hasTraining){toast('編集できるトレーニングデータがありません','err');return;}
+  // トレーニングは翌朝に「昨日の練習」として入力するため、カレンダーを翌日に合わせる
+  CAL.body.sel=getNextDate(date);
+  // 筋トレ復元
+  STR_SETS=(rec.trainingSets||[]).filter(s=>s.category==='筋トレ').map(s=>({name:s.name,weight:s.weight,reps:s.reps}));
+  // 有酸素復元
+  CARDIO_LIST=(rec.trainingSets||[]).filter(s=>s.category==='有酸素').map(function(s){
+    const kcal=s.kcal||0;
+    const min=s.minPerRound||0;
+    let exSteps=0;
+    if(s.name==='ステアクライマー'&&kcal)exSteps=Math.round(kcal/0.185);
+    else if(s.name==='エアロバイク'&&min)exSteps=Math.round(min*50);
+    else if(min>0){const ht=getProfileHeight();const stride=ht*0.45/100;const spd=s.speed||0;if(spd>0)exSteps=Math.round(spd*(min/60)*1000/stride);}
+    return{summary:s.name+(min?' '+min+'分':'')+(kcal?' '+kcal+'kcal':''),kcal,exSteps,name:s.name,min,speed:s.speed||0,incline:s.incline||0};
+  });
+  // TR_ACTIVE復元
+  Object.keys(TR_ACTIVE).forEach(k=>delete TR_ACTIVE[k]);
+  if(STR_SETS.length)TR_ACTIVE['STR']=true;
+  if(CARDIO_LIST.length)TR_ACTIVE['CAR']=true;
+  const tkd=(rec.trainingSets||[]).filter(s=>s.category==='TKD');
+  if(tkd.find(s=>s.name==='ミット'))TR_ACTIVE['MIT']=true;
+  if(tkd.find(s=>s.name==='スパーリング'))TR_ACTIVE['SPR']=true;
+  if(tkd.find(s=>s.name==='タバタ'))TR_ACTIVE['TAB']=true;
+  if(tkd.find(s=>s.name==='その他'))TR_ACTIVE['OTR']=true;
+  buildTrainingUI();
+  switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
+  renderCal('body');
+  setTimeout(function(){const el=document.getElementById('trainingBody');if(el)el.scrollIntoView({behavior:'smooth'});},300);
+  toast('トレーニングを編集中: '+date,'ok');
+}
 function editBodyLog(date){
   var rec=getBodyLog(date);
   if(!rec){toast('編集できる体調データがありません','err');return;}
