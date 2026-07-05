@@ -2347,12 +2347,22 @@ function editTrainingLog(date){
   if(STR_SETS.length)TR_ACTIVE['STR']=true;
   if(CARDIO_LIST.length)TR_ACTIVE['CAR']=true;
   const tkd=(rec.trainingSets||[]).filter(s=>s.category==='TKD');
-  if(tkd.find(s=>s.name==='ミット'))TR_ACTIVE['MIT']=true;
-  if(tkd.find(s=>s.name==='スパーリング'))TR_ACTIVE['SPR']=true;
+  if(tkd.length)TR_ACTIVE['TKD']=true;
   if(tkd.find(s=>s.name==='タバタ'))TR_ACTIVE['TAB']=true;
   if(tkd.find(s=>s.name==='その他'))TR_ACTIVE['OTR']=true;
   buildTrainingUI();
   renderCardioList();
+  // MIT/SPA ラウンド・分数ボタン復元（buildTrainingUI後にDOMが存在する）
+  const mitSet=tkd.find(s=>s.name==='ミット');
+  if(mitSet){
+    document.querySelectorAll('#MIT_mBtns .btn').forEach(function(b){if(b.textContent===mitSet.minPerRound)sel(b,'MIT_m');});
+    document.querySelectorAll('#MIT_rBtns .btn').forEach(function(b){if(b.textContent===String(mitSet.reps))sel(b,'MIT_r');});
+  }
+  const spaSet=tkd.find(s=>s.name==='スパーリング');
+  if(spaSet){
+    document.querySelectorAll('#SPA_mBtns .btn').forEach(function(b){if(b.textContent===spaSet.minPerRound)sel(b,'SPA_m');});
+    document.querySelectorAll('#SPA_rBtns .btn').forEach(function(b){if(b.textContent===String(spaSet.reps))sel(b,'SPA_r');});
+  }
   switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
   renderCal('body');
   setTimeout(function(){const el=document.getElementById('trainingBody');if(el)el.scrollIntoView({behavior:'smooth'});},300);
@@ -2374,6 +2384,13 @@ function editBodyLog(date){
   var condEl=document.getElementById('condNote');if(condEl&&rec.condNote)condEl.value=rec.condNote;
   var diaryEl=document.getElementById('yesterdayDiary');if(diaryEl&&rec.diary)diaryEl.value=rec.diary;
   var tmrEl=document.getElementById('tomorrowNote');if(tmrEl&&rec.tomorrowNote)tmrEl.value=rec.tomorrowNote;
+  // 便通復元
+  if(rec.bOtsu){
+    const rm={'○':'o','×':'x','△':'d'};
+    const am=rec.bOtsu.match(/朝:([○×△])/),im=rec.bOtsu.match(/以降:([○×△])/);
+    if(am&&rm[am[1]])selBowel('bAsa',rm[am[1]]);
+    if(im&&rm[im[1]])selBowel('bIgo',rm[im[1]]);
+  }
   // 体調タブに切り替え
   switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
   renderCal('body');
