@@ -2352,6 +2352,7 @@ function editTrainingLog(date){
   if(tkd.find(s=>s.name==='タバタ'))TR_ACTIVE['TAB']=true;
   if(tkd.find(s=>s.name==='その他'))TR_ACTIVE['OTR']=true;
   buildTrainingUI();
+  renderCardioList();
   switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
   renderCal('body');
   setTimeout(function(){const el=document.getElementById('trainingBody');if(el)el.scrollIntoView({behavior:'smooth'});},300);
