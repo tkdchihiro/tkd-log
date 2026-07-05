@@ -2215,7 +2215,7 @@ async function syncAll(){
   toast('✓ '+sent+'件をスプシに送信しました','ok');
 }
 
-async function testAndSaveGas(){
+function testAndSaveGas(){
   const urlEl=document.getElementById('gasUrlInput');
   const sheetEl=document.getElementById('sheetUrlInput');
   const st=document.getElementById('gasSt');
@@ -2225,27 +2225,12 @@ async function testAndSaveGas(){
   if(!url.startsWith('https://script.google.com/macros/s/')){
     st.textContent='GASのURLではありません';st.className='gas-st err';return;
   }
-  st.textContent='接続テスト中...';st.className='gas-st';
-  // scriptタグ経由でGASに到達確認（onerrorでも到達していればOK）
-  const ok=await new Promise(function(resolve){
-    const s=document.createElement('script');
-    const tid=setTimeout(function(){s.remove();resolve(true);},5000);
-    s.onload=function(){clearTimeout(tid);s.remove();resolve(true);};
-    s.onerror=function(){clearTimeout(tid);s.remove();resolve(true);};// GASはJSONを返すのでscriptエラーになるが到達はしている
-    s.src=url;
-    document.head.appendChild(s);
-  });
-  if(ok){
-    setGasUrl(url);
-    if(sheetUrl)localStorage.setItem('tkd_sheet_url',sheetUrl);
-    updateGasInd();
-    st.textContent='✓ 接続OK・URL保存しました';
-    st.className='gas-st ok';
-    setTimeout(function(){closeModal('gasModal');},1500);
-  }else{
-    st.textContent='接続できませんでした';
-    st.className='gas-st err';
-  }
+  setGasUrl(url);
+  if(sheetUrl)localStorage.setItem('tkd_sheet_url',sheetUrl);
+  updateGasInd();
+  st.textContent='✓ URL保存しました';
+  st.className='gas-st ok';
+  setTimeout(function(){closeModal('gasModal');},1000);
 }
 
 // ══════════════════════════════════════════
