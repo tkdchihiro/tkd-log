@@ -2081,8 +2081,8 @@ function saveFood(){
 //  GAS
 // ══════════════════════════════════════════
 var DEFAULT_GAS_URL='https://script.google.com/macros/s/AKfycby8NrMF4G07spsDjj8hxfLSv8U2vtFGt1_PjQwVp8N2euwiplyazsM25mCaNyBA8Uoe/exec';
-function getGasUrl(){return localStorage.getItem('tkd_gas_url')||DEFAULT_GAS_URL;}
-function setGasUrl(u){localStorage.setItem('tkd_gas_url',u);}
+function getGasUrl(){return DEFAULT_GAS_URL;}
+function setGasUrl(u){}
 function updateGasInd(){
   const u=getGasUrl();
   const el=document.getElementById('gasInd');
