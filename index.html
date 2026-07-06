@@ -2333,9 +2333,10 @@ function editTrainingLog(date){
   if(STR_SETS.length)TR_ACTIVE['STR']=true;
   if(CARDIO_LIST.length)TR_ACTIVE['CAR']=true;
   const tkd=(rec.trainingSets||[]).filter(s=>s.category==='TKD');
+  const otr=(rec.trainingSets||[]).filter(s=>s.category==='その他');
   if(tkd.length)TR_ACTIVE['TKD']=true;
   if(tkd.find(s=>s.name==='タバタ'))TR_ACTIVE['TAB']=true;
-  if(tkd.find(s=>s.name==='その他'))TR_ACTIVE['OTR']=true;
+  if(otr.length)TR_ACTIVE['OTR']=true;
   buildTrainingUI();
   // buildTrainingUI はすべてOFFでDOMを生成するため、TR_ACTIVEに従って表示状態を適用
   Object.keys(TR_ACTIVE).forEach(function(k){
@@ -2349,6 +2350,16 @@ function editTrainingLog(date){
   });
   renderStrSetList();
   renderCardioList();
+  // タバタ種目ボタン復元
+  const tabSet=tkd.find(s=>s.name==='タバタ');
+  if(tabSet&&tabSet.minPerRound){
+    document.querySelectorAll('#TAB_typeBtns .btn').forEach(function(b){if(b.textContent===tabSet.minPerRound)sel(b,'TAB_type');});
+  }
+  // その他テキスト復元
+  if(otr.length){
+    const otrEl=document.getElementById('OTR_text');
+    if(otrEl)otrEl.value=otr.map(function(s){return s.memo||'';}).filter(Boolean).join(' ');
+  }
   // MIT/SPA ラウンド・分数ボタン復元（buildTrainingUI後にDOMが存在する）
   const mitSet=tkd.find(s=>s.name==='ミット');
   if(mitSet){
