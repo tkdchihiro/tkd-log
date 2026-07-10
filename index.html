@@ -945,6 +945,7 @@ function renderCal(tab){
   const rem=(7-((first+last)%7))%7;
   for(let i=1;i<=rem;i++) h+=`<div class="cal-day other-m">${i}</div>`;
   gridEl.innerHTML=h;
+  if(tab==='body'&&typeof updateEntryModeLabels==='function')updateEntryModeLabels();
 }
 function selDay(tab,s){CAL[tab].sel=s;renderCal(tab);updateBswBadges();if(tab==='body')loadYesterdayDiary();}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
@@ -1964,6 +1965,16 @@ function setEntryMode(m){
   if(t)t.classList.toggle('active',m==='today');
   const b=document.getElementById('saveMorningBtn');
   if(b)b.textContent=(m==='today')?'🌙 今日の記録を保存 →':'🌅 朝の記録を保存 →';
+  updateEntryModeLabels();
+}
+// トグルに実際の保存先日付を表示（深夜0時またぎでも迷わないように）
+function updateEntryModeLabels(){
+  const y=document.getElementById('entryModeYst'),t=document.getElementById('entryModeTod');
+  const sel=CAL.body.sel;
+  if(!sel||!y||!t)return;
+  const md=s=>{const p=s.split('-');return (+p[1])+'/'+(+p[2]);};
+  y.textContent='🌅 昨日の分 ('+md(getYesterdayDate(sel))+')';
+  t.textContent='🌙 今日の分 ('+md(sel)+')';
 }
 
 function saveMorning(){
