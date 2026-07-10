@@ -551,7 +551,14 @@ textarea.tinput{resize:none;min-height:70px;}
       </div>
     </div>
   </div>
-  <button class="save-btn blue" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 4px;">
+    <span class="flabel" style="margin:0;">練習・体調・日記の保存先</span>
+    <div class="btn-row" style="margin:0;">
+      <button class="btn" id="entryModeYst" onclick="setEntryMode('yesterday')">🌅 昨日の分</button>
+      <button class="btn" id="entryModeTod" onclick="setEntryMode('today')">🌙 今日の分</button>
+    </div>
+  </div>
+  <button class="save-btn blue" id="saveMorningBtn" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
 </div>
 
 <!-- AIアドバイスカード -->
@@ -1945,9 +1952,25 @@ function loadYesterdayDiary(){
     });
   });
 }
+// ── 記録モード ──
+// 'yesterday' = 朝入力（練習・体調・日記は前日分として保存。従来動作）
+// 'today'     = 夜入力（当日分として保存。夜に思い出が新しいうちに書く運用）
+// 17時以降に開いたら夜モードを初期選択。体温・体重・睡眠は常に選択日に保存で変わらない。
+var ENTRY_MODE='yesterday';
+function setEntryMode(m){
+  ENTRY_MODE=m;
+  const y=document.getElementById('entryModeYst'),t=document.getElementById('entryModeTod');
+  if(y)y.classList.toggle('active',m==='yesterday');
+  if(t)t.classList.toggle('active',m==='today');
+  const b=document.getElementById('saveMorningBtn');
+  if(b)b.textContent=(m==='today')?'🌙 今日の記録を保存 →':'🌅 朝の記録を保存 →';
+}
+
 function saveMorning(){
   const date=CAL.body.sel;
   if(!date){toast('日付を選択してください','err');return;}
+  // 練習・体調・日記の保存先（夜モード=選択日そのもの、朝モード=前日）
+  const trTarget=(ENTRY_MODE==='today')?date:getYesterdayDate(date);
   const temp=getV('temp'),sleepIn=getV('sleepIn'),sleepOut=getV('sleepOut');
   const weight=(document.getElementById('mWeight').value||'').trim();
   const bOtsu=getBowelText(),choshi=getV('choshi'),condNote=document.getElementById('condNote').value.trim();
@@ -1991,7 +2014,7 @@ function saveMorning(){
   const hasYst=bOtsu||choshi||condNote||diary||tomorrowNote||
     ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
   if(hasYst){
-    const ystDate=getYesterdayDate(date);
+    const ystDate=trTarget;
     const ystRec=getBodyLog(ystDate)||{date:ystDate,type:'body',synced:false};
     Object.assign(ystRec,trData);
     if(diary)ystRec.diary=diary;
@@ -2022,24 +2045,26 @@ function saveMorning(){
   }
 
   renderCal('body');updateBswBadges();
-  const ystDate2=getYesterdayDate(date);
+  const ystDate2=trTarget;
   const [,tm,td]=date.split('-');
   const [,ym,yd]=ystDate2.split('-');
-  console.log('[saveMorning] 選択日:'+date+' 体温保存先:'+date+' 練習保存先:'+ystDate2);
+  console.log('[saveMorning] モード:'+ENTRY_MODE+' 選択日:'+date+' 体温保存先:'+date+' 練習保存先:'+ystDate2);
   const hasMorn=temp||weight||sleepIn||sleepOut;
+  const icon=(ENTRY_MODE==='today')?'🌙':'🌅';
   const msg=hasMorn&&hasYst
-    ? `🌅 保存完了 — 体温・体重・睡眠: ${tm}/${td} ／ 練習・日記: ${ym}/${yd}`
+    ? `${icon} 保存完了 — 体温・体重・睡眠: ${tm}/${td} ／ 練習・日記: ${ym}/${yd}`
     : hasMorn
-      ? `🌅 保存完了 — 体温・体重・睡眠: ${tm}/${td}`
-      : `🌅 保存完了 — 練習・日記: ${ym}/${yd}`;
+      ? `${icon} 保存完了 — 体温・体重・睡眠: ${tm}/${td}`
+      : `${icon} 保存完了 — 練習・日記: ${ym}/${yd}`;
   toast(msg,'ok');
-  if(hasYst) fetchAdvice();
+  // アドバイス生成は朝モードのみ（夜モードは翌朝の保存時に昨日分として生成される）
+  if(ENTRY_MODE!=='today') fetchAdvice();
   // 分析パネルを更新（リセット前にkcal/steps取得）
   const _cardioKcal=CARDIO_LIST.reduce((s,c)=>s+(c.kcal||0),0);
   const _cardioSteps=CARDIO_LIST.reduce((s,c)=>s+(c.exSteps||0),0);
   const _weight=parseFloat(weight)||58;
   const _bmr=getProfileBmr();
-  const _ystDate=getYesterdayDate(date);
+  const _ystDate=trTarget;
   setTimeout(function(){fetchAndRenderAnalysis(_ystDate,_cardioKcal,_cardioSteps,_weight,_bmr);},1500);
   CARDIO_LIST=[];renderCardioList();resetCardioForm();
   STR_SETS=[];renderStrSetList();
@@ -2712,6 +2737,11 @@ function fetchAdvice(){
 // ══════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════
+
+// 記録モードの初期値: 17時以降に開いたら「🌙 今日の分」、それ以外は「🌅 昨日の分」
+(function initEntryMode(){
+  setEntryMode((new Date().getHours()>=17)?'today':'yesterday');
+})();
 
 // config.jsの設定を自動適用（localStorageより優先）
 (function applyConfig(){
