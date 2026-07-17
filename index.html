@@ -546,6 +546,21 @@ textarea.tinput{resize:none;min-height:70px;}
         </div>
       </div>
       <div style="margin-top:10px;">
+        <span class="flabel">練習のきつさ RPE（1=楽 〜 10=限界）</span>
+        <div class="btn-row" id="ystRpe" style="flex-wrap:wrap;">
+          <button class="btn" onclick="sel(this,'ystRpe')">1</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">2</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">3</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">4</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">5</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">6</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">7</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">8</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">9</button>
+          <button class="btn" onclick="sel(this,'ystRpe')">10</button>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
         <span class="flabel">今日意識すること</span>
         <textarea class="tinput" id="tomorrowNote" rows="2" placeholder="例: スパーリングに集中する。体重を意識して食事を調整。"></textarea>
       </div>
@@ -1944,7 +1959,7 @@ function loadYesterdayDiary(){
   const tmrEl=document.getElementById('tomorrowNote');
   if(tmrEl)tmrEl.value=rec.tomorrowNote||'';
   // 疲労度・満足度
-  ['ystFatigue','ystSatisfaction'].forEach(id=>{
+  ['ystFatigue','ystSatisfaction','ystRpe'].forEach(id=>{
     const saved=rec[id]||'';
     const grp=document.getElementById(id);
     if(!grp)return;
@@ -1989,6 +2004,7 @@ function saveMorning(){
   const tomorrowNote=document.getElementById('tomorrowNote').value.trim();
   const ystFatigue=getV('ystFatigue');
   const ystSatisfaction=getV('ystSatisfaction');
+  const ystRpe=getV('ystRpe');
   const trData={
     bOtsu,choshi,condNote,
     tabata:TR_ACTIVE['TAB']?getV('TAB_type'):null,
@@ -1999,7 +2015,7 @@ function saveMorning(){
     cardio:TR_ACTIVE['CAR']?buildCardioSummary():null,
   };
   const hasAny=temp||weight||sleepIn||sleepOut||bOtsu||choshi||condNote||diary||tomorrowNote||
-    ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
+    ystFatigue||ystSatisfaction||ystRpe||Object.values(trData).some(v=>v);
   if(!hasAny){toast('何か入力してください','err');return;}
 
   // ── 体温・体重・睡眠 → 選択日（今日）に保存 ──
@@ -2023,7 +2039,7 @@ function saveMorning(){
 
   // ── 練習・体調・日記 → 前日（昨日）に保存 ──
   const hasYst=bOtsu||choshi||condNote||diary||tomorrowNote||
-    ystFatigue||ystSatisfaction||Object.values(trData).some(v=>v);
+    ystFatigue||ystSatisfaction||ystRpe||Object.values(trData).some(v=>v);
   if(hasYst){
     const ystDate=trTarget;
     const ystRec=getBodyLog(ystDate)||{date:ystDate,type:'body',synced:false};
@@ -2032,6 +2048,7 @@ function saveMorning(){
     if(tomorrowNote)ystRec.tomorrowNote=tomorrowNote;
     if(ystFatigue)ystRec.ystFatigue=ystFatigue;
     if(ystSatisfaction)ystRec.ystSatisfaction=ystSatisfaction;
+    if(ystRpe)ystRec.ystRpe=ystRpe;
     if(bOtsu||choshi||condNote||Object.values(trData).some(v=>v))ystRec.hasTraining=true;
     if(diary||tomorrowNote||ystFatigue||ystSatisfaction)ystRec.hasDiary=true;
     // 新形式：trainingSets（縦持ち）を保存
@@ -2048,6 +2065,7 @@ function saveMorning(){
       date:ystDateSlash,
       bowel:bOtsu||'',choshi:choshi||'',condNote,
       fatigue:ystFatigue||'',satisfaction:ystSatisfaction||'',
+      rpe:ystRpe||'',
       diary,tomorrowNote,
       water:waterVal>0?waterVal:'',
     }});
