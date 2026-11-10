@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>TKD Log</title>
@@ -11,19 +11,24 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@300;400;700&display=swap');
 :root{
-  --red:#e8192c;--dark:#09090f;--panel:#13131d;--panel2:#1a1a26;
-  --border:#22223a;--text:#eeeef8;--muted:#555570;
-  --green:#22c55e;--blue:#3b82f6;--gold:#f59e0b;--purple:#a855f7;
+  /* 塗り用の赤は据え置き。文字用は --red-text（暗背景でコントラスト比 5.6） */
+  --red:#e8192c;--red-text:#ff4d5e;
+  --dark:#09090f;--panel:#13131d;--panel2:#1a1a26;
+  --border:#2a2a40;--text:#eeeef8;
+  /* --muted: 補助の文字色（AA 4.5 以上）／ --faint: 装飾専用（文字には使わない） */
+  --muted:#8a8aa8;--faint:#3a3a55;
+  --green:#22c55e;--blue:#3b82f6;--save-blue:#2563eb;--gold:#f59e0b;--purple:#a855f7;
+  --nav-h:58px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;overscroll-behavior:none;}
-body{background:var(--dark);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-weight:300;}
+html,body{min-height:100%;overscroll-behavior-y:none;}
+body{background:var(--dark);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-weight:400;}
 
 /* HEADER */
 header{display:flex;align-items:center;justify-content:space-between;
   padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top));
   background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
-.logo{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:5px;color:var(--red);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:5px;color:var(--red-text);}
 .logo span{color:var(--text);}
 .hacts{display:flex;gap:6px;align-items:center;}
 .hbtn{min-height:34px;padding:0 11px;background:transparent;border:1px solid var(--border);
@@ -36,16 +41,16 @@ header{display:flex;align-items:center;justify-content:space-between;
   padding-bottom:env(safe-area-inset-bottom);
   background:var(--panel);border-top:1px solid var(--border);display:flex;z-index:100;}
 .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:8px 0 6px;cursor:pointer;color:var(--muted);font-size:9px;letter-spacing:1px;
+  min-height:var(--nav-h);padding:8px 0 6px;cursor:pointer;color:var(--muted);font-size:11px;letter-spacing:1px;
   border:none;background:none;gap:3px;font-family:'Noto Sans JP',sans-serif;}
-.bnav-btn.active{color:var(--red);}
+.bnav-btn.active{color:var(--red-text);}
 .bnav-icon{font-size:20px;line-height:1;}
 
 /* SCROLL AREA */
-.tab-pane{display:none;height:calc(100dvh - 50px - calc(50px + env(safe-area-inset-bottom)));
-  overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.tab-pane{display:none;}
 .tab-pane.active{display:block;}
-main{max-width:480px;margin:0 auto;padding:12px 12px 28px;}
+/* 本体（body）をスクロールさせ、下端はナビ＋ホームバー分の余白を確保（保存ボタンが隠れない） */
+main{max-width:480px;margin:0 auto;padding:12px 12px calc(var(--nav-h) + 28px + env(safe-area-inset-bottom));}
 
 /* CALENDAR */
 .cal-wrap{background:var(--panel2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:10px;}
@@ -54,12 +59,12 @@ main{max-width:480px;margin:0 auto;padding:12px 12px 28px;}
   color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .cal-title{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:3px;}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:6px;}
-.cal-dow{text-align:center;font-size:9px;color:var(--muted);padding:4px 0;letter-spacing:1px;}
+.cal-dow{text-align:center;font-size:11px;color:var(--muted);padding:4px 0;letter-spacing:1px;}
 .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;
   border-radius:8px;cursor:pointer;font-size:13px;transition:all .1s;margin:1px;position:relative;}
 .cal-day:active{transform:scale(.88);}
-.cal-day.other-m{color:#2a2a44;}
-.cal-day.is-today{border:1px solid var(--red);color:var(--red);}
+.cal-day.other-m{color:var(--faint);}
+.cal-day.is-today{border:1px solid var(--red);color:var(--red-text);}
 .cal-day.is-sel{background:var(--red);color:#fff;font-weight:700;}
 /* dot indicators */
 .cal-day::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);
@@ -76,11 +81,11 @@ main{max-width:480px;margin:0 auto;padding:12px 12px 28px;}
   color:var(--muted);cursor:pointer;font-family:'Noto Sans JP',sans-serif;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .15s;}
 .bsw-btn .bsw-main{font-size:13px;font-weight:700;}
-.bsw-btn .bsw-sub{font-size:9px;opacity:.65;letter-spacing:.5px;}
+.bsw-btn .bsw-sub{font-size:11px;opacity:.65;letter-spacing:.5px;}
 .bsw-btn.active-blue{background:rgba(59,130,246,.12);border-color:var(--blue);color:var(--blue);}
-.bsw-btn.active-red{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red);}
+.bsw-btn.active-red{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red-text);}
 /* status badges on switch buttons */
-.bsw-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px;vertical-align:middle;}
+.bsw-badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 5px;border-radius:8px;margin-left:4px;vertical-align:middle;}
 .bsw-badge.done{background:var(--green);color:#000;}
 .bsw-badge.empty{background:var(--border);color:var(--muted);}
 
@@ -89,15 +94,15 @@ main{max-width:480px;margin:0 auto;padding:12px 12px 28px;}
 .sec-head{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer;user-select:none;}
 .sec-head.open{border-bottom:1px solid var(--border);}
 .sec-num{width:26px;height:26px;border:1px solid var(--red);border-radius:6px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:12px;color:var(--red);}
-.sec-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--red);flex:1;}
+  display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:12px;color:var(--red-text);}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:3px;color:var(--red-text);flex:1;}
 .chev{color:var(--muted);font-size:13px;transition:transform .2s;}
 .chev.open{transform:rotate(180deg);}
 .sec-body{padding:14px;display:none;}
 .sec-body.open{display:block;}
 
 /* FORM */
-.flabel{display:block;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;margin-top:14px;}
+.flabel{display:block;font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;margin-top:14px;}
 .flabel:first-child{margin-top:0;}
 .bgrp{display:flex;flex-wrap:wrap;gap:7px;}
 .bgrp-v{flex-direction:column;align-items:flex-start;}
@@ -107,7 +112,7 @@ main{max-width:480px;margin:0 auto;padding:12px 12px 28px;}
 .btn:active{transform:scale(.95);}
 .btn.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:700;}
 .btn.other{border-color:#252538;color:var(--muted);font-size:12px;}
-.btn.other.active{background:#252538;border-color:#3a3a55;color:var(--text);}
+.btn.other.active{background:#252538;border-color:var(--faint);color:var(--text);}
 .tinput{background:#09090f;border:1px solid var(--border);border-radius:8px;color:var(--text);
   font-size:16px;padding:11px 13px;width:100%;margin-top:6px;outline:none;
   font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;}
@@ -129,7 +134,7 @@ textarea.tinput{resize:none;min-height:70px;}
 .bowel-btn:last-child{border-right:none;}
 .bowel-btn:active{opacity:.7;}
 .bowel-btn.sel-o{background:rgba(34,197,94,.15);color:var(--green);}
-.bowel-btn.sel-x{background:rgba(232,25,44,.15);color:var(--red);}
+.bowel-btn.sel-x{background:rgba(232,25,44,.15);color:var(--red-text);}
 .bowel-btn.sel-d{background:rgba(245,158,11,.15);color:var(--gold);}
 
 /* TRAINING */
@@ -139,17 +144,17 @@ textarea.tinput{resize:none;min-height:70px;}
 .tr-title{font-size:12px;font-weight:700;letter-spacing:2px;}
 .tog{min-height:32px;padding:0 13px;background:none;border:1px solid var(--border);
   border-radius:6px;color:var(--muted);cursor:pointer;font-size:11px;letter-spacing:1px;transition:all .15s;}
-.tog.on{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red);}
+.tog.on{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red-text);}
 .tr-body{padding:12px;display:none;}
 .tr-body.show{display:block;}
 .r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;}
-.slabel{display:block;font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
+.slabel{display:block;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:5px;}
 .divider{border:none;border-top:1px solid var(--border);margin:11px 0;}
 .sleep-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
 .sleep-dur{margin-top:12px;padding:10px 12px;background:rgba(59,130,246,.1);border:1px solid var(--blue);
   border-radius:8px;text-align:center;font-size:13px;color:var(--blue);letter-spacing:1px;}
 .sleep-dur b{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin:0 3px;}
-.sleep-dur.short{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red);}
+.sleep-dur.short{background:rgba(232,25,44,.1);border-color:var(--red);color:var(--red-text);}
 /* CARDIO */
 .car-prof{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;
   padding:9px;background:#09090f;border:1px solid var(--border);border-radius:8px;}
@@ -157,12 +162,12 @@ textarea.tinput{resize:none;min-height:70px;}
 .car-result{margin-top:11px;padding:11px 12px;background:rgba(34,197,94,.08);
   border:1px solid var(--green);border-radius:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
 .car-result .cr-kcal{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--green);letter-spacing:1px;}
-.car-result .cr-lbl{font-size:9px;color:var(--muted);letter-spacing:1px;}
+.car-result .cr-lbl{font-size:11px;color:var(--muted);letter-spacing:1px;}
 .car-result .cr-steps{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);letter-spacing:1px;}
-.car-hint{font-size:10px;color:var(--muted);margin:8px 0 2px;letter-spacing:.5px;}
+.car-hint{font-size:11px;color:var(--muted);margin:8px 0 2px;letter-spacing:.5px;}
 .car-row{display:flex;align-items:center;justify-content:space-between;gap:8px;
   padding:8px 10px;background:#09090f;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:12px;}
-.car-row .crx{color:var(--red);font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;}
+.car-row .crx{color:var(--red-text);font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;}
 
 /* FOOD */
 .mtabs{display:flex;gap:6px;margin-bottom:11px;}
@@ -186,7 +191,7 @@ textarea.tinput{resize:none;min-height:70px;}
 .fopt{padding:11px 13px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border);}
 .fopt:last-child{border-bottom:none;}
 .fopt:active{background:rgba(59,130,246,.08);}
-.fopt-sub{font-size:10px;color:var(--muted);margin-top:2px;}
+.fopt-sub{font-size:11px;color:var(--muted);margin-top:2px;}
 .gram-btns{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0;}
 .gbtn{min-height:44px;padding:0 16px;background:transparent;border:1px solid var(--border);
   border-radius:8px;color:var(--text);font-size:14px;cursor:pointer;transition:all .12s;}
@@ -195,7 +200,7 @@ textarea.tinput{resize:none;min-height:70px;}
   background:var(--panel2);border:1px solid var(--border);border-radius:8px;margin-bottom:5px;}
 .food-row-info{flex:1;min-width:0;}
 .food-row-name{font-size:13px;font-weight:700;}
-.food-row-detail{font-size:10px;color:var(--muted);margin-top:1px;}
+.food-row-detail{font-size:11px;color:var(--muted);margin-top:1px;}
 .fdel{min-width:34px;min-height:34px;background:none;border:1px solid var(--border);
   border-radius:6px;color:var(--muted);cursor:pointer;font-size:13px;flex-shrink:0;}
 
@@ -204,25 +209,25 @@ textarea.tinput{resize:none;min-height:70px;}
 .pfc-head{font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:3px;color:var(--blue);margin-bottom:9px;}
 .pfc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:9px;}
 .pfc-cell{text-align:center;}
-.pfc-lbl{font-size:8px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;}
+.pfc-lbl{font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;}
 .pfc-val{font-size:15px;font-weight:700;margin-top:2px;}
 .pfc-val.p{color:#f472b6;}.pfc-val.f{color:#fb923c;}.pfc-val.c{color:#facc15;}.pfc-val.fi{color:#4ade80;}
 .pfc-kcal{text-align:center;font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--blue);}
-.pfc-kcal-lbl{text-align:center;font-size:9px;color:var(--muted);letter-spacing:2px;}
+.pfc-kcal-lbl{text-align:center;font-size:11px;color:var(--muted);letter-spacing:2px;}
 
 /* FREQUENT FOODS SUGGEST */
 .freq-section{margin-bottom:10px;}
-.freq-label{font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.freq-label{font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
 .freq-chips{display:flex;flex-wrap:wrap;gap:6px;}
 .freq-chip{padding:5px 11px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4);border-radius:16px;cursor:pointer;font-size:12px;color:var(--gold);white-space:nowrap;transition:all .15s;}
 .freq-chip:active{background:rgba(245,158,11,.25);transform:scale(.95);}
-.freq-chip .freq-cnt{font-size:9px;opacity:.7;margin-left:3px;}
+.freq-chip .freq-cnt{font-size:11px;opacity:.7;margin-left:3px;}
 
 /* RECIPE */
 .recipe-row{display:flex;align-items:center;gap:8px;padding:11px 13px;
   background:var(--panel2);border:1px solid var(--purple);border-radius:8px;margin-bottom:5px;}
 .recipe-name{font-size:13px;font-weight:700;color:var(--purple);}
-.recipe-detail{font-size:10px;color:var(--muted);margin-top:1px;}
+.recipe-detail{font-size:11px;color:var(--muted);margin-top:1px;}
 .recipe-add{min-height:32px;padding:0 11px;background:rgba(168,85,247,.15);
   border:1px solid var(--purple);border-radius:6px;color:var(--purple);font-size:11px;cursor:pointer;white-space:nowrap;}
 
@@ -231,7 +236,7 @@ textarea.tinput{resize:none;min-height:70px;}
   font-size:19px;letter-spacing:4px;padding:15px;cursor:pointer;width:100%;margin-top:14px;
   min-height:52px;-webkit-appearance:none;}
 .save-btn:active{opacity:.8;}
-.save-btn.blue{background:var(--blue);}
+.save-btn.blue{background:var(--save-blue);}
 .save-btn.red{background:var(--red);}
 
 /* MODAL */
@@ -254,43 +259,113 @@ textarea.tinput{resize:none;min-height:70px;}
 .cf-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px;}
 .cf-field{display:flex;flex-direction:column;gap:3px;}
 .cf-full{grid-column:1/-1;}
-.cf-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;}
+.cf-lbl{font-size:11px;color:var(--muted);letter-spacing:1px;}
 .cf-inp{background:#09090f;border:1px solid var(--border);border-radius:8px;
   color:var(--text);font-size:16px;padding:9px 11px;outline:none;
   font-family:'Noto Sans JP',sans-serif;-webkit-appearance:none;width:100%;}
 .cf-inp:focus{border-color:var(--purple);}
 .cf-inp::placeholder{color:var(--muted);}
 .gas-st{font-size:11px;margin-top:7px;}
-.gas-st.ok{color:var(--green);}.gas-st.err{color:var(--red);}
+.gas-st.ok{color:var(--green);}.gas-st.err{color:var(--red-text);}
 
 /* HISTORY */
 .hfbtns{display:flex;gap:6px;margin-bottom:11px;}
 .hfbtn{min-height:34px;padding:0 13px;border:1px solid var(--border);border-radius:16px;
   cursor:pointer;font-size:12px;color:var(--muted);background:transparent;transition:all .15s;}
-.hfbtn.active{border-color:var(--red);color:var(--red);}
+.hfbtn.active{border-color:var(--red);color:var(--red-text);}
 .log-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;
   padding:13px;margin-bottom:7px;position:relative;}
 .log-card.subtype-morning{border-left:3px solid var(--blue);}
 .log-card.subtype-training{border-left:3px solid var(--red);}
 .log-card.subtype-food{border-left:3px solid var(--green);}
 .log-date{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;margin-bottom:5px;color:var(--text);}
-.log-subtype{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
+.log-subtype{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:4px;}
 .log-text{font-size:11px;color:var(--muted);line-height:1.9;white-space:pre-wrap;word-break:break-all;}
 .log-del{position:absolute;top:9px;right:9px;min-width:34px;min-height:34px;background:none;
   border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:12px;
   display:flex;align-items:center;justify-content:center;}
-.sync-ok{position:absolute;top:11px;right:48px;font-size:10px;color:var(--green);}
+.sync-ok{position:absolute;top:11px;right:48px;font-size:11px;color:var(--green);}
 
 /* TOAST */
-.toast{position:fixed;bottom:calc(60px + env(safe-area-inset-bottom));left:50%;
+.toast{position:fixed;bottom:calc(var(--nav-h) + 10px + env(safe-area-inset-bottom));left:50%;
   transform:translateX(-50%);background:var(--panel2);border:1px solid var(--border);
   color:var(--text);font-size:12px;padding:9px 18px;border-radius:18px;
-  opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;
+  opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;
+  max-width:calc(100vw - 32px);width:max-content;text-align:center;line-height:1.5;
   box-shadow:0 4px 16px rgba(0,0,0,.5);}
 .toast.show{opacity:1;}
 .toast.ok{border-color:var(--green);color:var(--green);}
-.toast.err{border-color:var(--red);color:var(--red);}
+.toast.err{border-color:var(--red);color:var(--red-text);}
 .empty{color:var(--muted);font-size:12px;text-align:center;padding:22px;}
+
+/* 汎用の横並び（以前は未定義だった） */
+.btn-row{display:flex;flex-wrap:wrap;gap:7px;align-items:center;}
+
+/* タップ領域：見た目は小さいまま、当たり判定を最低 44px に広げる */
+.hbtn,.fdel,.log-del,.cal-nav-btn,.tog,.crx,.fcat,.freq-chip,.hfbtn,.recipe-add,.db-btn,.log-act,.mtab{position:relative;}
+.hbtn::after,.fdel::after,.log-del::after,.cal-nav-btn::after,.tog::after,.crx::after,.fcat::after,
+.freq-chip::after,.hfbtn::after,.recipe-add::after,.db-btn::after,.log-act::after{
+  content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%);}
+.crx{display:inline-flex;align-items:center;justify-content:center;}
+.fcats{padding-top:6px;padding-bottom:8px;}
+
+/* 分析パネル／AIアドバイス（暗背景＋読める文字色） */
+.ana-panel{margin:12px 0;padding:12px;background:var(--panel);border-radius:10px;border:1px solid var(--border);}
+.ana-head{font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;}
+.ana-body{font-size:12px;line-height:1.7;color:var(--muted);white-space:pre-wrap;}
+.ana-advice{margin-top:8px;padding:8px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;
+  font-size:12px;line-height:1.7;color:var(--text);white-space:pre-wrap;}
+.ana-advice:empty{display:none;}
+
+/* 保存ボタンの状態・送信結果 */
+.save-btn:disabled{opacity:.6;cursor:wait;}
+.save-btn.done{background:var(--green);color:#04210f;}
+.save-status{display:none;margin-top:8px;padding:9px 11px;border:1px solid var(--red);border-radius:8px;
+  background:rgba(232,25,44,.08);color:var(--red-text);font-size:12px;line-height:1.6;align-items:center;gap:8px;}
+.save-status.show{display:flex;}
+.save-status span{flex:1;}
+.save-status button{min-height:36px;padding:0 12px;border:1px solid var(--red-text);border-radius:6px;
+  background:none;color:var(--red-text);font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.save-status.ok{border-color:var(--green);background:rgba(34,197,94,.08);color:var(--green);}
+.hbtn.warn{border-color:var(--red-text);color:var(--red-text);}
+.hbtn[hidden]{display:none;}
+
+/* 記録タブのカード */
+.log-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:44px;flex-wrap:wrap;}
+.log-head .log-date{margin-bottom:0;}
+.log-badges{display:flex;gap:4px;flex-wrap:wrap;}
+.badge{font-size:11px;border-radius:4px;padding:1px 6px;}
+.badge.morning{background:rgba(59,130,246,.15);color:var(--blue);}
+.badge.training{background:rgba(232,25,44,.12);color:var(--red-text);}
+.badge.food{background:rgba(34,197,94,.12);color:var(--green);}
+.badge.synced{color:var(--green);padding:1px 2px;}
+.badge.pending{color:var(--gold);padding:1px 2px;}
+.log-text.gap{margin-bottom:10px;}
+.log-acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.log-act{font-size:12px;min-height:32px;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.log-act.food{background:rgba(59,130,246,.12);border:1px solid var(--blue);color:var(--blue);}
+.log-act.body{background:rgba(168,85,247,.12);border:1px solid var(--purple);color:var(--purple);}
+.log-act.train{background:rgba(34,197,94,.12);border:1px solid var(--green);color:var(--green);}
+
+/* 食材DBのカード */
+.db-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:7px;}
+.db-card.custom{border-left:3px solid var(--purple);}
+.db-row{display:flex;align-items:flex-start;gap:8px;}
+.db-info{flex:1;min-width:0;}
+.db-name{font-size:13px;font-weight:700;margin-bottom:3px;}
+.db-cat{font-size:11px;color:var(--muted);font-weight:400;}
+.db-meta{font-size:11px;color:var(--muted);line-height:1.8;}
+.db-per{font-size:11px;color:var(--muted);}
+.db-acts{display:flex;flex-direction:column;gap:5px;flex-shrink:0;}
+.db-btn{min-height:32px;padding:0 11px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.db-btn.edit{background:rgba(168,85,247,.12);border:1px solid var(--purple);color:var(--purple);}
+.db-btn.del{background:none;border:1px solid var(--border);color:var(--muted);}
+.fopt-cat{color:var(--muted);font-size:11px;}
+.fopt-badge{font-size:11px;border-radius:3px;padding:0 4px;margin-right:3px;}
+.fopt-badge.api{background:rgba(59,130,246,.2);color:var(--blue);}
+.fopt-badge.custom{background:rgba(168,85,247,.2);color:var(--purple);}
+.food-meal{color:var(--muted);font-size:11px;}
+.sec-head:focus-visible,.btn:focus-visible,.bnav-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
 </style>
 </head>
 <body>
@@ -300,25 +375,33 @@ textarea.tinput{resize:none;min-height:70px;}
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title gold">⚙ Google Sheets 連携</div>
-    <div class="modal-desc">GASデプロイ後のウェブアプリURLを貼り付けてください。</div>
-    <input class="cf-inp" id="gasUrlInput" placeholder="https://script.google.com/macros/s/..." style="width:100%;">
-    <div class="gas-st" id="gasSt"></div>
+    <div class="modal-desc">合言葉（GAS側に設定したもの）を入力してください。この端末の中だけに保存され、送信のたびに付けます。</div>
+    <label class="cf-lbl" for="secretInput">合言葉</label>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <input class="cf-inp" id="secretInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="未設定" style="flex:1;">
+      <button class="btn" type="button" style="font-size:12px;padding:0 12px;" onclick="toggleSecretVisible(this)" aria-label="合言葉を表示">表示</button>
+    </div>
+    <div class="gas-st" id="gasSt" role="status"></div>
+    <div style="margin-top:12px;">
+      <div class="modal-desc" style="margin-bottom:6px;">送信先（GAS ウェブアプリ）<br><span style="font-size:11px;color:var(--muted);">アプリに内蔵（ここでは変更できません）</span></div>
+      <input class="cf-inp" id="gasUrlInput" readonly style="width:100%;color:var(--muted);font-size:12px;">
+    </div>
     <div style="margin-top:14px;">
-      <div class="modal-desc" style="margin-bottom:6px;">スプレッドシートURL（任意）<br><span style="font-size:10px;color:var(--muted);">保存するとヘッダーの「Sheets」ボタンから直接開けます</span></div>
+      <div class="modal-desc" style="margin-bottom:6px;">スプレッドシートURL（任意）<br><span style="font-size:11px;color:var(--muted);">保存するとヘッダーの「Sheets」ボタンから直接開けます</span></div>
       <input class="cf-inp" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%;">
     </div>
     <!-- デバイス引き継ぎ -->
     <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
-      <div class="modal-desc" style="margin-bottom:8px;">📲 デバイス引き継ぎ<br><span style="font-size:10px;color:var(--muted);">QRコードを新しいデバイスで読み取るとURL設定が自動入力されます</span></div>
+      <div class="modal-desc" style="margin-bottom:8px;">📲 デバイス引き継ぎ<br><span style="font-size:11px;color:var(--muted);">QRコードを新しいデバイスで読み取るとURL設定が自動入力されます</span></div>
       <div id="qrArea" style="display:none;text-align:center;margin:10px 0;">
         <canvas id="qrCanvas" style="border-radius:8px;background:#fff;padding:8px;"></canvas>
-        <div style="font-size:10px;color:var(--muted);margin-top:6px;">新しいデバイスのカメラで読み取る</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">新しいデバイスのカメラで読み取る</div>
       </div>
       <button class="btn" style="width:100%;font-size:12px;" onclick="showTransferQR()">QRコードを表示</button>
     </div>
     <div class="macts">
       <button class="mbtn cancel" onclick="closeModal('gasModal')">キャンセル</button>
-      <button class="mbtn gold" onclick="testAndSaveGas()">接続テスト → 保存</button>
+      <button class="mbtn gold" onclick="testAndSaveGas()">保存 → 接続テスト</button>
     </div>
   </div>
 </div>
@@ -374,8 +457,9 @@ textarea.tinput{resize:none;min-height:70px;}
 <header>
   <div class="logo">TKD<span>LOG</span></div>
   <div class="hacts">
-    <span id="gasInd" style="font-size:10px;color:var(--muted);cursor:pointer;" onclick="openSheetUrl()">Sheets:未設定</span>
-    <button class="hbtn gold" onclick="openModal('gasModal')">⚙</button>
+    <button class="hbtn warn" id="outboxInd" hidden onclick="retryOutbox()" aria-live="polite"></button>
+    <span id="gasInd" style="font-size:11px;color:var(--muted);cursor:pointer;" onclick="openSheetUrl()">Sheets:未設定</span>
+    <button class="hbtn gold" onclick="openModal('gasModal')" aria-label="設定">⚙</button>
     <button class="hbtn green" onclick="exportCSV()">CSV</button>
   </div>
 </header>
@@ -467,7 +551,7 @@ textarea.tinput{resize:none;min-height:70px;}
   <div class="section">
     <div class="sec-head open" onclick="toggleSec(this)">
       <div class="sec-num">01</div>
-      <div class="sec-title">昨日の体調 <span id="yesterdayDateLabel" style="font-size:11px;color:var(--muted);font-weight:400;"></span></div>
+      <div class="sec-title"><span id="condTitle">昨日の体調</span> <span id="yesterdayDateLabel" style="font-size:11px;color:var(--muted);font-weight:400;"></span></div>
       <span class="chev open">▾</span>
     </div>
     <div class="sec-body open">
@@ -504,7 +588,7 @@ textarea.tinput{resize:none;min-height:70px;}
         <button class="btn" onclick="addWater(1000)">+1L</button>
         <button class="btn" onclick="addWater(-250)">-250</button>
         <input type="number" id="waterMl" class="tinput" style="width:80px;display:inline" placeholder="0" readonly>
-        <span style="font-size:0.85em;color:var(--sub)">mL</span>
+        <span style="font-size:0.85em;color:var(--muted)">mL</span>
       </div>
       <span class="flabel">メモ（体調）</span>
       <textarea class="tinput" id="condNote" placeholder="例: 夜眠かった、筋肉痛なし..."></textarea>
@@ -513,17 +597,17 @@ textarea.tinput{resize:none;min-height:70px;}
   <!-- 昨日のトレーニング -->
   <div class="section">
     <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">02</div><div class="sec-title">昨日のトレーニング</div><span class="chev open">▾</span>
+      <div class="sec-num">02</div><div class="sec-title" id="trainTitle">昨日のトレーニング</div><span class="chev open">▾</span>
     </div>
     <div class="sec-body open" id="trainingBody"></div>
   </div>
   <!-- 昨日の振り返り日記 -->
   <div class="section">
     <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">📖</div><div class="sec-title">昨日の振り返り</div><span class="chev open">▾</span>
+      <div class="sec-num">📖</div><div class="sec-title" id="diaryTitle">昨日の振り返り</div><span class="chev open">▾</span>
     </div>
     <div class="sec-body open">
-      <div style="padding:4px 0 8px;color:var(--muted);font-size:11px;">今朝書く昨日の記録。前日付で保存されます。</div>
+      <div id="diaryHint" style="padding:4px 0 8px;color:var(--muted);font-size:11px;">今朝書く昨日の記録。前日付で保存されます。</div>
       <span class="flabel">総括・気づき</span>
       <textarea class="tinput" id="yesterdayDiary" rows="4" placeholder="例: 練習は良かった。疲労感が残っている。食事を食べすぎた。明日は軽めに…"></textarea>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
@@ -574,6 +658,7 @@ textarea.tinput{resize:none;min-height:70px;}
     </div>
   </div>
   <button class="save-btn blue" id="saveMorningBtn" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
+  <div class="save-status" id="saveMorningStatus" role="status"></div>
 </div>
 
 <!-- AIアドバイスカード -->
@@ -586,12 +671,12 @@ textarea.tinput{resize:none;min-height:70px;}
 </div>
 
 <!-- 分析パネル -->
-<div id="analysisPanel" style="display:none;margin:12px 0;padding:12px;background:var(--card);border-radius:10px;border:1px solid var(--border);">
-  <div style="font-size:13px;font-weight:600;color:var(--fg);margin-bottom:8px;">📊 昨日の分析</div>
-  <div id="analysisContent" style="font-size:12px;line-height:1.7;color:var(--fg-sub);white-space:pre-wrap;"></div>
-  <div style="font-size:13px;font-weight:600;color:var(--fg);margin:10px 0 6px;">📅 週間サマリー（過去7日）</div>
-  <div id="weeklyContent" style="font-size:12px;line-height:1.7;color:var(--fg-sub);white-space:pre-wrap;"></div>
-  <div id="adviceContent" style="margin-top:8px;padding:8px;background:var(--bg2,#f5f5f5);border-radius:6px;font-size:12px;line-height:1.7;"></div>
+<div id="analysisPanel" class="ana-panel" style="display:none;">
+  <div class="ana-head" id="analysisTitle">📊 昨日の分析</div>
+  <div id="analysisContent" class="ana-body"></div>
+  <div class="ana-head" style="margin-top:10px;">📅 週間サマリー（過去7日）</div>
+  <div id="weeklyContent" class="ana-body"></div>
+  <div id="adviceContent" class="ana-advice"></div>
 </div>
 
 </main>
@@ -666,7 +751,9 @@ textarea.tinput{resize:none;min-height:70px;}
     </div>
     <span class="flabel">メモ（食事）</span>
     <textarea class="tinput" id="foodNote" placeholder="例: 試合前なので炭水化物多め..."></textarea>
-    <button class="save-btn red" onclick="saveFood()">食事を保存 →</button>
+    <div class="food-loaded" id="foodLoadedNote" style="font-size:11px;color:var(--muted);margin-top:8px;"></div>
+    <button class="save-btn red" id="saveFoodBtn" onclick="saveFood()">食事を保存 →</button>
+    <div class="save-status" id="saveFoodStatus" role="status"></div>
   </div>
 </div>
 </main>
@@ -682,8 +769,8 @@ textarea.tinput{resize:none;min-height:70px;}
       <button class="hfbtn" onclick="filterHist(this,'training')">💪 練習</button>
       <button class="hfbtn" onclick="filterHist(this,'food')">🍽 食事</button>
     </div>
-    <button class="hbtn" onclick="syncAll()" style="font-size:11px;margin-left:auto;">☁ 一括送信</button>
-    <button class="hbtn" onclick="syncFromSheets()" style="font-size:11px;border-color:var(--gold);color:var(--gold);">↓ スプシ読込</button>
+    <button class="hbtn" onclick="syncAll()" style="font-size:11px;margin-left:auto;">☁ 未送信を再送</button>
+    <button class="hbtn" onclick="syncFromSheets(event)" style="font-size:11px;border-color:var(--gold);color:var(--gold);">↓ スプシ読込</button>
   </div>
   <div id="histList"></div>
 </main>
@@ -699,9 +786,8 @@ textarea.tinput{resize:none;min-height:70px;}
   </div>
   <!-- カスタム食材 スプシ同期 -->
   <div style="display:flex;gap:8px;margin-bottom:12px;">
-    <button class="btn" style="flex:1;font-size:11px;border-color:var(--green);color:var(--green);" onclick="backupCustomFoods()">☁ スプシにバックアップ</button>
+    <button class="btn" style="flex:1;font-size:11px;border-color:var(--green);color:var(--green);" onclick="backupCustomFoods(event)">☁ スプシにバックアップ</button>
     <button class="btn" style="flex:1;font-size:11px;border-color:var(--gold);color:var(--gold);" onclick="restoreCustomFoods()">↓ スプシから復元</button>
-  </div>>
   </div>
   <div class="fcats" id="dbCatFilter"></div>
   <!-- 標準DB / カスタム 切り替え -->
@@ -730,7 +816,7 @@ textarea.tinput{resize:none;min-height:70px;}
       <div class="cf-field"><span class="cf-lbl">食物繊維(g)</span><input class="cf-inp" id="ef_fi" type="number" inputmode="decimal"></div>
       <div class="cf-field"><span class="cf-lbl">塩分Na(mg)</span><input class="cf-inp" id="ef_na" type="number" inputmode="decimal"></div>
     </div>
-    <div id="ef_stdNote" style="font-size:10px;color:var(--gold);margin-top:8px;display:none;">
+    <div id="ef_stdNote" style="font-size:11px;color:var(--gold);margin-top:8px;display:none;">
       ⚠ 標準DBの食材です。編集内容はカスタム上書きとして保存されます。
     </div>
     <div class="macts">
@@ -741,8 +827,8 @@ textarea.tinput{resize:none;min-height:70px;}
 </div>
 
 <!-- BOTTOM NAV -->
-<nav class="bnav">
-  <button class="bnav-btn active" onclick="switchTab('body',this)">
+<nav class="bnav" aria-label="メイン">
+  <button class="bnav-btn active" aria-current="page" onclick="switchTab('body',this)">
     <span class="bnav-icon">💪</span>体調・練習
   </button>
   <button class="bnav-btn" onclick="switchTab('food',this)">
@@ -756,7 +842,7 @@ textarea.tinput{resize:none;min-height:70px;}
   </button>
 </nav>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
 // ══════════════════════════════════════════
@@ -962,7 +1048,12 @@ function renderCal(tab){
   gridEl.innerHTML=h;
   if(tab==='body'&&typeof updateEntryModeLabels==='function')updateEntryModeLabels();
 }
-function selDay(tab,s){CAL[tab].sel=s;renderCal(tab);updateBswBadges();if(tab==='body')loadYesterdayDiary();}
+function selDay(tab,s){
+  if(tab==='food'&&!confirmFoodSwitch(s))return;
+  CAL[tab].sel=s;renderCal(tab);updateBswBadges();
+  if(tab==='body')loadBodyForm();
+  if(tab==='food')loadFoodForDate(s);
+}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 
 
@@ -981,10 +1072,7 @@ function updateBswBadges(){
 // ══════════════════════════════════════════
 function selBowel(key,val){
   BOWEL[key]=BOWEL[key]===val?null:val;
-  ['o','x','d'].forEach(v=>{
-    const el=document.getElementById(`${key}_${v}`);
-    if(el)el.className='bowel-btn'+(BOWEL[key]===v?` sel-${v}`:'');
-  });
+  renderBowel();
 }
 function getBowelText(){
   const m={o:'○',x:'×',d:'△'};
@@ -999,6 +1087,7 @@ function toggleSec(h){
   const b=h.nextElementSibling,ch=h.querySelector('.chev');
   const o=b.classList.toggle('open');
   ch.classList.toggle('open',o);h.classList.toggle('open',o);
+  h.setAttribute('aria-expanded',o?'true':'false');
 }
 function addWater(ml){
   const el=document.getElementById('waterMl');
@@ -1162,7 +1251,7 @@ function renderCardioList(){
   const list=document.getElementById('CAR_list'),tot=document.getElementById('CAR_totals');
   if(!list)return;
   list.innerHTML=CARDIO_LIST.map((c,i)=>
-    `<div class="car-row"><span>${c.summary}</span><span class="crx" onclick="removeCardio(${i})">×</span></div>`).join('');
+    `<div class="car-row"><span>${escHtml(c.summary)}</span><span class="crx" role="button" aria-label="この有酸素を削除" onclick="removeCardio(${i})">×</span></div>`).join('');
   if(CARDIO_LIST.length){
     const tk=CARDIO_LIST.reduce((a,c)=>a+c.kcal,0),ts=CARDIO_LIST.reduce((a,c)=>a+c.exSteps,0);
     document.getElementById('CAR_totKcal').textContent=tk;
@@ -1203,7 +1292,7 @@ function renderSetList(key){
   const el=document.getElementById(key+'_setList');if(!el)return;
   const list=SET_LISTS[key]||[];
   el.innerHTML=list.map((s,i)=>
-    `<div class="car-row"><span><b>${s.w}</b>kg × <b>${s.r}</b>回 <span style="color:var(--muted);font-size:10px;">(${i+1}set)</span></span><span class="crx" onclick="removeSet('${key}',${i})">×</span></div>`).join('');
+    `<div class="car-row"><span><b>${escHtml(s.w)}</b>kg × <b>${escHtml(s.r)}</b>回 <span style="color:var(--muted);font-size:11px;">(${i+1}set)</span></span><span class="crx" onclick="removeSet('${key}',${i})">×</span></div>`).join('');
 }
 // 種目のセット情報を保存用にまとめる（レガシー列も維持）
 function buildStrength(key){
@@ -1228,8 +1317,8 @@ function renderStrSelect(){
   const el=document.getElementById('STR_name');if(!el)return;
   const custom=getCustomExercises();
   let o='<option value="">種目を選択...</option>';
-  DEFAULT_EXERCISES.forEach(n=>{o+=`<option value="${n}">${n}</option>`;});
-  if(custom.length){o+='<optgroup label="カスタム">';custom.forEach(n=>{o+=`<option value="${n}">${n}</option>`;});o+='</optgroup>';}
+  DEFAULT_EXERCISES.forEach(n=>{o+=`<option value="${escHtml(n)}">${escHtml(n)}</option>`;});
+  if(custom.length){o+='<optgroup label="カスタム">';custom.forEach(n=>{o+=`<option value="${escHtml(n)}">${escHtml(n)}</option>`;});o+='</optgroup>';}
   o+='<option value="__other__">＋ その他（入力）</option>';
   el.innerHTML=o;
 }
@@ -1286,7 +1375,7 @@ function renderStrSetList(){
   const counts={};
   el.innerHTML=STR_SETS.map((s,i)=>{
     counts[s.name]=(counts[s.name]||0)+1;
-    return `<div class="car-row"><span><b>${s.name}</b> ${s.weight}kg × ${s.reps}回 <span style="color:var(--muted);font-size:10px;">(${counts[s.name]}set)</span></span><span class="crx" onclick="removeStrSet(${i})">×</span></div>`;
+    return `<div class="car-row"><span><b>${escHtml(s.name)}</b> ${escHtml(s.weight)}kg × ${escHtml(s.reps)}回 <span style="color:var(--muted);font-size:11px;">(${counts[s.name]}set)</span></span><span class="crx" role="button" aria-label="このセットを削除" onclick="removeStrSet(${i})">×</span></div>`;
   }).join('');
 }
 // 縦持ちセット配列を構築（GAS送信・新スキーマ用）
@@ -1363,13 +1452,15 @@ function toggleTr(key){
   const h=document.getElementById('trHead'+key);
   t.textContent=TR_ACTIVE[key]?'ON':'OFF';
   t.classList.toggle('on',TR_ACTIVE[key]);
+  t.setAttribute('aria-pressed',TR_ACTIVE[key]?'true':'false');
   b.classList.toggle('show',TR_ACTIVE[key]);
   if(h)h.classList.toggle('open',TR_ACTIVE[key]);
 }
 function switchTab(name,btn){
   ['body','food','history','db'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===name));
-  document.querySelectorAll('.bnav-btn').forEach(b=>b.classList.remove('active'));
-  if(btn)btn.classList.add('active');
+  document.querySelectorAll('.bnav-btn').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});
+  if(btn){btn.classList.add('active');btn.setAttribute('aria-current','page');}
+  window.scrollTo(0,0);
   if(name==='history')renderHistory();
   if(name==='food')renderCal('food');
   if(name==='db')renderDB();
@@ -1379,6 +1470,8 @@ function openModal(id){
   if(id==='gasModal'){
     const u=getGasUrl();
     if(u)document.getElementById('gasUrlInput').value=u;
+    const se=document.getElementById('secretInput');
+    if(se){se.value=getSecret();se.type='password';}
     const su=localStorage.getItem('tkd_sheet_url')||'';
     document.getElementById('sheetUrlInput').value=su;
     document.getElementById('gasSt').textContent='';
@@ -1566,10 +1659,10 @@ function buildFoodCats(){
   const cats=['すべて',...new Set(all.map(f=>f.cat))];
   if(all.some(f=>f.custom))cats.push('⭐カスタム');
   document.getElementById('foodCats').innerHTML=
-    cats.map(c=>`<div class="fcat${c===curCat?' active':''}" onclick="selectCat(this,'${c}')">${c}</div>`).join('');
+    cats.map(c=>`<div class="fcat${c===curCat?' active':''}" data-act="selectCat" data-cat="${escHtml(c)}">${escHtml(c)}</div>`).join('');
 }
 function selectCat(el,cat){
-  document.querySelectorAll('.fcat').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('#foodCats .fcat').forEach(e=>e.classList.remove('active'));
   el.classList.add('active');curCat=cat;
   if(document.getElementById('foodSearch').value)searchFood();
 }
@@ -1631,7 +1724,7 @@ async function searchAPI(q,localResults){
 function renderDrop(results,q,apiDone){
   const dd=document.getElementById('foodDrop');
   if(!results.length&&apiDone){
-    dd.innerHTML='<div class="fopt" style="color:var(--muted);">「'+q+'」は見つかりませんでした<br><small style="font-size:10px;">＋ 手動登録ボタンから追加できます</small></div>';
+    dd.innerHTML='<div class="fopt" style="color:var(--muted);">「'+escHtml(q)+'」は見つかりませんでした<br><small style="font-size:11px;">＋ 手動登録ボタンから追加できます</small></div>';
     dd.classList.add('show');return;
   }
   if(!results.length){
@@ -1642,11 +1735,11 @@ function renderDrop(results,q,apiDone){
   results.forEach(function(f){
     const enc=encodeURIComponent(JSON.stringify(f));
     let badge='';
-    if(f.api) badge='<span style="font-size:9px;background:rgba(59,130,246,.2);color:var(--blue);border-radius:3px;padding:0 4px;margin-right:3px;">🌐</span>';
-    else if(f.custom) badge='<span style="font-size:9px;background:rgba(168,85,247,.2);color:var(--purple);border-radius:3px;padding:0 4px;margin-right:3px;">⭐</span>';
-    html+='<div class="fopt" onclick="pickFoodObj(this.dataset.food)" data-food="'+enc+'">';
-    html+='<span style="color:var(--muted);font-size:10px;">['+f.cat+']</span> '+badge+f.name;
-    html+='<div class="fopt-sub">P:'+f.p+'g F:'+f.f+'g C:'+f.c+'g 繊維:'+(f.fi||0)+'g Na:'+(f.na||0)+'mg / 100g（'+f.kcal+'kcal）</div>';
+    if(f.api) badge='<span class="fopt-badge api">🌐</span>';
+    else if(f.custom) badge='<span class="fopt-badge custom">⭐</span>';
+    html+='<div class="fopt" data-act="pickFood" data-food="'+escHtml(enc)+'">';
+    html+='<span class="fopt-cat">['+escHtml(f.cat)+']</span> '+badge+escHtml(f.name);
+    html+='<div class="fopt-sub">P:'+escHtml(f.p)+'g F:'+escHtml(f.f)+'g C:'+escHtml(f.c)+'g 繊維:'+escHtml(f.fi||0)+'g Na:'+escHtml(f.na||0)+'mg / 100g（'+escHtml(f.kcal)+'kcal）</div>';
     html+='</div>';
   });
   if(!apiDone) html+='<div class="fopt" style="color:var(--muted);font-size:11px;text-align:center;cursor:default;">🌐 オンライン検索中...</div>';
@@ -1684,23 +1777,24 @@ function addGramCustom(){
 }
 function pushFood(food,grams){
   addedFoods.push({food,grams,meal:curMeal,id:Date.now()+Math.random()});
+  FOOD_DIRTY=true;
   document.getElementById('foodSearch').value='';
   document.getElementById('gramArea').style.display='none';
   curFood=null;renderFoodList();
   // 利用回数をカウントアップ
   recordFoodUsage(food.name);
 }
-function removeFood(id){addedFoods=addedFoods.filter(e=>e.id!==id);renderFoodList();}
+function removeFood(id){addedFoods=addedFoods.filter(e=>e.id!==id);FOOD_DIRTY=true;renderFoodList();}
 function renderFoodList(){
   const c=document.getElementById('foodList');
   c.innerHTML=addedFoods.map(e=>{
     const r=e.grams/100;
     return `<div class="food-row">
       <div class="food-row-info">
-        <div class="food-row-name">${e.food.custom?'⭐ ':''}${e.food.name} <span style="color:var(--muted);font-size:10px;">[${e.meal}]</span></div>
+        <div class="food-row-name">${e.food.custom?'⭐ ':''}${escHtml(e.food.name)} <span class="food-meal">[${escHtml(e.meal)}]</span></div>
         <div class="food-row-detail">${e.grams}g → ${Math.round(e.food.kcal*r)}kcal / P:${(e.food.p*r).toFixed(1)} F:${(e.food.f*r).toFixed(1)} C:${(e.food.c*r).toFixed(1)} 繊維:${((e.food.fi||0)*r).toFixed(1)}g Na:${Math.round((e.food.na||0)*r)}mg</div>
       </div>
-      <button class="fdel" onclick="removeFood(${e.id})">✕</button>
+      <button class="fdel" onclick="removeFood(${e.id})" aria-label="${escHtml(e.food.name)}を削除">✕</button>
     </div>`;
   }).join('');
   document.getElementById('recSaveBar').style.display=addedFoods.length?'block':'none';
@@ -1744,50 +1838,51 @@ function saveCustomFood(){
 // ══════════════════════════════════════════
 //  カスタム食材 スプシ同期
 // ══════════════════════════════════════════
+function customFoodsPayload(){
+  return {type:'customfoods',
+    foods:JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]'),
+    recipes:JSON.parse(localStorage.getItem('tkd_recipes')||'[]'),
+    frequentFoods:JSON.parse(localStorage.getItem('tkd_frequent_foods')||'{}')};
+}
+// 変更のたびに呼ばれるので、キューに積んで数秒まとめてから送る（最新の内容だけが送られる）
 function syncCustomFoodsToGAS(){
-  const url=getGasUrl();if(!url)return;
-  const foods=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
-  const recipes=JSON.parse(localStorage.getItem('tkd_recipes')||'[]');
-  const frequentFoods=JSON.parse(localStorage.getItem('tkd_frequent_foods')||'{}');
-  sendGAS({type:'customfoods',foods,recipes,frequentFoods});
+  if(!getGasUrl())return;
+  enqueue('customfoods',customFoodsPayload(),[]);
+  scheduleFlush(3000);
 }
 
-async function backupCustomFoods(){
-  const url=getGasUrl();
-  if(!url){toast('Sheets連携が未設定です','err');return;}
-  const foods=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
-  const recipes=JSON.parse(localStorage.getItem('tkd_recipes')||'[]');
-  const frequentFoods=JSON.parse(localStorage.getItem('tkd_frequent_foods')||'{}');
-  const freqCount=Object.keys(frequentFoods).length;
-  if(foods.length===0&&recipes.length===0&&freqCount===0){toast('バックアップするデータがありません','ok');return;}
-  await sendGAS({type:'customfoods',foods,recipes,frequentFoods});
-  toast(`✓ カスタム食材${foods.length}件・レシピ${recipes.length}件・よく使う食材${freqCount}件をバックアップしました`,'ok');
+async function backupCustomFoods(ev){
+  if(!getGasUrl()){toast('Sheets連携が未設定です','err');return;}
+  const pl=customFoodsPayload();
+  const freqCount=Object.keys(pl.frequentFoods).length;
+  if(pl.foods.length===0&&pl.recipes.length===0&&freqCount===0){toast('バックアップするデータがありません','ok');return;}
+  const btn=ev&&ev.currentTarget;
+  if(btn&&!beginSave(btn))return;
+  const id=enqueue('customfoods',pl,[]);
+  const r=await flushQueue();
+  const ok=!getOutbox().some(it=>it.id===id);
+  if(btn){btn.dataset.busy='';btn.disabled=false;btn.textContent=btn.dataset.label;}
+  if(ok)toast(`✓ カスタム食材${pl.foods.length}件・レシピ${pl.recipes.length}件・よく使う食材${freqCount}件をバックアップしました`,'ok');
+  else toast('⚠ バックアップできませんでした：'+outboxErrorText(r.error)+'（未送信として再送します）','err');
 }
 
 async function restoreCustomFoods(){
-  const url=getGasUrl();
-  if(!url){toast('Sheets連携が未設定です','err');return;}
+  if(!getGasUrl()){toast('Sheets連携が未設定です','err');return;}
   toast('スプシから読み込み中...','ok');
-  try{
-    const payload=encodeURIComponent(JSON.stringify({type:'getcustomfoods'}));
-    const r=await fetch(url+'?payload='+payload);
-    const j=await r.json();
-    if(j.status==='ok'&&j.foods){
-      localStorage.setItem('tkd_custom_foods',JSON.stringify(j.foods));
-      if(j.recipes)localStorage.setItem('tkd_recipes',JSON.stringify(j.recipes));
-      // v6.0: 利用回数データも復元
-      if(j.frequentFoods&&Object.keys(j.frequentFoods).length>0){
-        localStorage.setItem('tkd_frequent_foods',JSON.stringify(j.frequentFoods));
-      }
-      buildFoodCats();renderDB();renderFrequentFoods();
-      const freqCount=Object.keys(j.frequentFoods||{}).length;
-      toast(`✓ カスタム食材${j.foods.length}件・レシピ${(j.recipes||[]).length}件・よく使う食材${freqCount}件を復元しました`,'ok');
-    }else{
-      toast('データが見つかりませんでした','err');
-    }
-  }catch{
-    toast('復元に失敗しました','err');
+  const j=await gasJsonp({action:'getcustomfoods'});
+  if(isUnauthorized(j)){toast('⚠ '+outboxErrorText('unauthorized'),'err');return;}
+  if(!gasOk(j)){toast('⚠ 復元に失敗しました：'+outboxErrorText(j.error),'err');return;}
+  if(!Array.isArray(j.foods)){toast('データが見つかりませんでした','err');return;}
+  const local=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
+  if(!confirm(`スプシの内容（食材${j.foods.length}件・レシピ${(j.recipes||[]).length}件）で、この端末の食材${local.length}件を置き換えます。よろしいですか？`))return;
+  localStorage.setItem('tkd_custom_foods',JSON.stringify(j.foods));
+  if(Array.isArray(j.recipes))localStorage.setItem('tkd_recipes',JSON.stringify(j.recipes));
+  if(j.frequentFoods&&Object.keys(j.frequentFoods).length>0){
+    localStorage.setItem('tkd_frequent_foods',JSON.stringify(j.frequentFoods));
   }
+  buildFoodCats();renderDB();renderFrequentFoods();
+  const freqCount=Object.keys(j.frequentFoods||{}).length;
+  toast(`✓ カスタム食材${j.foods.length}件・レシピ${(j.recipes||[]).length}件・よく使う食材${freqCount}件を復元しました`,'ok');
 }
 
 
@@ -1818,12 +1913,12 @@ function openRecUse(){
   else c.innerHTML=recs.map(r=>`
     <div class="recipe-row">
       <div style="flex:1;min-width:0;">
-        <div class="recipe-name">📋 ${r.name}</div>
+        <div class="recipe-name">📋 ${escHtml(r.name)}</div>
         <div class="recipe-detail">${r.totalKcal}kcal / P:${r.totalP}g 繊維:${r.totalFi}g | ${r.items.length}品</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
-        <button class="recipe-add" onclick="applyRec('${r.id}')">追加</button>
-        <button class="fdel" onclick="delRec('${r.id}')">削除</button>
+        <button class="recipe-add" data-act="applyRec" data-id="${escHtml(r.id)}">追加</button>
+        <button class="fdel" data-act="delRec" data-id="${escHtml(r.id)}">削除</button>
       </div>
     </div>`).join('');
   openModal('recUseModal');
@@ -1831,9 +1926,10 @@ function openRecUse(){
 function applyRec(id){
   const rec=getRec().find(r=>r.id===id);if(!rec)return;
   rec.items.forEach(item=>addedFoods.push({food:item.food,grams:item.grams,meal:item.meal||curMeal,id:Date.now()+Math.random()}));
+  FOOD_DIRTY=true;
   renderFoodList();closeModal('recUseModal');toast(`「${rec.name}」を追加しました`,'ok');
 }
-function delRec(id){saveRec(getRec().filter(r=>r.id!==id));openRecUse();}
+function delRec(id){const r=getRec().find(x=>x.id===id);if(r&&!confirm(`レシピ「${r.name}」を削除しますか？`))return;saveRec(getRec().filter(r=>r.id!==id));openRecUse();}
 
 // ══════════════════════════════════════════
 //  SAVE LOGS  ─ 1日1レコード（upsert方式）
@@ -1915,88 +2011,190 @@ function getYesterdayDate(dateStr){
   const dd=String(dt.getDate()).padStart(2,'0');
   return `${yy}-${mm}-${dd}`;
 }
-// 朝ブロック表示時に昨日の日付ラベルをセット & 既存データを読み込む
-function loadYesterdayDiary(){
-  const date=CAL.body.sel;
-  if(!date)return;
-  const ystDate=getYesterdayDate(date);
-  const [,m,d]=ystDate.split('-');
-  const lbl=document.getElementById('yesterdayDateLabel');
-  if(lbl)lbl.textContent='('+m+'/'+d+'の記録)';
-  const rec=getBodyLog(ystDate)||{};
-  // 体調：調子
-  document.querySelectorAll('#choshiBtns .btn').forEach(b=>{
-    b.classList.toggle('active',b.textContent.trim()===(rec.choshi||'__'));
-  });
-  const condEl=document.getElementById('condNote');
-  if(condEl)condEl.value=rec.condNote||'';
-  // 便通ボタンリセット
-  ['bAsa','bIgo'].forEach(id=>{
-    ['o','x','d'].forEach(v=>{
-      const el=document.getElementById(id+'_'+v);
-      if(el)el.classList.remove('active');
-    });
-  });
-  // 筋トレ：STR_SETSを復元
-  ['STR_w','STR_r'].forEach(key=>{
-    delete SEL[key];
-    const grp=document.getElementById(key+'Btns');
-    if(grp)grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
-  });
-  // 新形式（trainingSets）から復元
-  STR_SETS=(rec.trainingSets||[]).filter(s=>s.category==='筋トレ').map(s=>({name:s.name,weight:s.weight,reps:s.reps}));
-  // 旧形式フォールバック
-  if(!STR_SETS.length){
-    TRAININGS.forEach(t=>{
-      const detail=rec[t.key+'_detail']||'';
-      parseSetDetail(detail).forEach(s=>{STR_SETS.push({name:t.label,weight:s.w,reps:s.r});});
-    });
-  }
-  renderStrSetList();
-  // 振り返り日記
-  const diaryEl=document.getElementById('yesterdayDiary');
-  if(diaryEl)diaryEl.value=rec.diary||'';
-  const tmrEl=document.getElementById('tomorrowNote');
-  if(tmrEl)tmrEl.value=rec.tomorrowNote||'';
-  // 疲労度・満足度
-  ['ystFatigue','ystSatisfaction','ystRpe'].forEach(id=>{
-    const saved=rec[id]||'';
-    const grp=document.getElementById(id);
-    if(!grp)return;
-    grp.querySelectorAll('.btn').forEach(b=>{
-      b.classList.toggle('active',b.textContent.trim()===saved&&saved!=='');
-    });
-  });
-}
-// ── 記録モード ──
-// 'yesterday' = 朝入力（練習・体調・日記は前日分として保存。従来動作）
-// 'today'     = 夜入力（当日分として保存。夜に思い出が新しいうちに書く運用）
-// 17時以降に開いたら夜モードを初期選択。体温・体重・睡眠は常に選択日に保存で変わらない。
+// ── 保存先日付（1か所に集約）──
+// 'yesterday' = 朝入力（体調・練習・日記は前日分として保存。従来動作）
+// 'today'     = 夜入力（選択日そのものに保存）
+// 体温・体重・睡眠は常に選択日に保存。17時以降に開いたら夜モードを初期選択。
 var ENTRY_MODE='yesterday';
-function setEntryMode(m){
+function getEntryTargetDate(sel){
+  sel=sel||CAL.body.sel;
+  if(!sel)return '';
+  return (ENTRY_MODE==='today')?sel:getYesterdayDate(sel);
+}
+function mdLabel(s){const p=s.split('-');return (+p[1])+'/'+(+p[2]);}
+function setEntryMode(m,opts){
   ENTRY_MODE=m;
   const y=document.getElementById('entryModeYst'),t=document.getElementById('entryModeTod');
-  if(y)y.classList.toggle('active',m==='yesterday');
-  if(t)t.classList.toggle('active',m==='today');
+  if(y){y.classList.toggle('active',m==='yesterday');y.setAttribute('aria-pressed',m==='yesterday');}
+  if(t){t.classList.toggle('active',m==='today');t.setAttribute('aria-pressed',m==='today');}
   const b=document.getElementById('saveMorningBtn');
-  if(b)b.textContent=(m==='today')?'🌙 今日の記録を保存 →':'🌅 朝の記録を保存 →';
+  if(b&&b.dataset.busy!=='1'){
+    b.textContent=(m==='today')?'🌙 今日の記録を保存 →':'🌅 朝の記録を保存 →';
+    b.dataset.label=b.textContent;b.classList.remove('done');
+  }
   updateEntryModeLabels();
+  if(!opts||opts.reload!==false)loadEntryTarget(); // モードを切り替えたら保存先の記録を読み直す
 }
 // トグルに実際の保存先日付を表示（深夜0時またぎでも迷わないように）
 function updateEntryModeLabels(){
   const y=document.getElementById('entryModeYst'),t=document.getElementById('entryModeTod');
   const sel=CAL.body.sel;
   if(!sel||!y||!t)return;
-  const md=s=>{const p=s.split('-');return (+p[1])+'/'+(+p[2]);};
-  y.textContent='🌅 昨日の分 ('+md(getYesterdayDate(sel))+')';
-  t.textContent='🌙 今日の分 ('+md(sel)+')';
+  y.textContent='🌅 昨日の分 ('+mdLabel(getYesterdayDate(sel))+')';
+  t.textContent='🌙 今日の分 ('+mdLabel(sel)+')';
+}
+// 見出しの「昨日の〜／今日の〜」をモードで切り替え
+function updateEntryHeadings(target){
+  const today=(ENTRY_MODE==='today');
+  const word=today?'今日':'昨日';
+  const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
+  set('condTitle',word+'の体調');
+  set('trainTitle',word+'のトレーニング');
+  set('diaryTitle',word+'の振り返り');
+  set('diaryHint',today?'夜に書く今日の記録。選択した日付で保存されます。':'今朝書く昨日の記録。前日付で保存されます。');
+  set('yesterdayDateLabel',target?'('+mdLabel(target)+'の記録)':'');
+  set('analysisTitle','📊 '+word+'の分析');
 }
 
-function saveMorning(){
+// ── ボタン群の選択状態を値から復元（該当ボタンが無ければ「その他」＋入力欄）──
+function toTimeInput(v){const m=String(v).match(/^(\d{1,2}):(\d{2})$/);return m?String(m[1]).padStart(2,'0')+':'+m[2]:String(v);}
+function setChoice(key,val){
+  const grp=document.getElementById(key+'Btns')||document.getElementById(key);
+  delete SEL[key];
+  const oe=document.getElementById(key+'Other');
+  if(oe){oe.value='';oe.style.display='none';}
+  if(!grp)return;
+  grp.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));
+  if(val===undefined||val===null||val==='')return;
+  const v=String(val).trim();
+  const hit=[...grp.querySelectorAll('.btn:not(.other)')].find(b=>b.textContent.trim()===v);
+  if(hit){sel(hit,key);return;}
+  const other=grp.querySelector('.btn.other');
+  if(other&&oe){sel(other,key);oe.value=(oe.type==='time')?toTimeInput(v):v;}
+}
+function renderBowel(){
+  ['bAsa','bIgo'].forEach(key=>['o','x','d'].forEach(v=>{
+    const el=document.getElementById(`${key}_${v}`);
+    if(el){el.className='bowel-btn'+(BOWEL[key]===v?` sel-${v}`:'');el.setAttribute('aria-pressed',BOWEL[key]===v);}
+  }));
+}
+function restoreBowel(text){
+  BOWEL.bAsa=null;BOWEL.bIgo=null;
+  if(text){
+    const rm={'○':'o','×':'x','△':'d'};
+    const am=String(text).match(/朝:([○×△])/),im=String(text).match(/以降:([○×△])/);
+    if(am&&rm[am[1]])BOWEL.bAsa=rm[am[1]];
+    if(im&&rm[im[1]])BOWEL.bIgo=rm[im[1]];
+  }
+  renderBowel();
+}
+function setVal(id,v){const el=document.getElementById(id);if(el)el.value=(v===undefined||v===null)?'':v;}
+
+// 選択日の「体温・体重・睡眠」を読み込む
+function loadMorningFields(date){
+  const rec=(date&&getBodyLog(date))||{};
+  setChoice('temp',rec.temp);
+  setVal('mWeight',rec.weight);
+  setChoice('sleepIn',rec.sleepIn);
+  setChoice('sleepOut',rec.sleepOut);
+  updateSleepDuration();
+  loadCardioProfile();
+}
+// 保存先日付の「体調・練習・日記」を読み込む（旧 loadYesterdayDiary）
+function loadEntryTarget(){
+  const sel=CAL.body.sel;
+  if(!sel)return;
+  const target=getEntryTargetDate(sel);
+  updateEntryHeadings(target);
+  const rec=getBodyLog(target)||{};
+  setChoice('choshi',rec.choshi);
+  setVal('condNote',rec.condNote);
+  restoreBowel(rec.bOtsu);
+  setVal('waterMl',rec.water);
+  setVal('yesterdayDiary',rec.diary);
+  setVal('tomorrowNote',rec.tomorrowNote);
+  setChoice('ystFatigue',rec.ystFatigue);
+  setChoice('ystSatisfaction',rec.ystSatisfaction);
+  setChoice('ystRpe',rec.ystRpe);
+  restoreTraining(rec);
+}
+var loadYesterdayDiary=loadEntryTarget; // 旧名の互換
+function loadBodyForm(){loadMorningFields(CAL.body.sel);loadEntryTarget();}
+
+// 練習記録（trainingSets）をフォームへ復元。記録が無ければ空の状態にする
+function restoreTraining(rec){
+  rec=rec||{};
+  const ts=rec.trainingSets||[];
+  STR_SETS=ts.filter(s=>s.category==='筋トレ').map(s=>({name:s.name,weight:s.weight,reps:s.reps}));
+  if(!STR_SETS.length&&!ts.length){ // 旧形式フォールバック
+    TRAININGS.forEach(t=>{parseSetDetail(rec[t.key+'_detail']||'').forEach(s=>{STR_SETS.push({name:t.label,weight:s.w,reps:s.r});});});
+  }
+  CARDIO_LIST=ts.filter(s=>s.category==='有酸素').map(function(s){
+    const kcal=parseFloat(s.kcal)||0;
+    const min=parseFloat(s.minPerRound)||0;
+    const speed=parseFloat(s.speed);
+    const incline=parseFloat(s.incline);
+    let exSteps=0;
+    if(s.name==='ステアクライマー'&&kcal)exSteps=Math.round(kcal/0.185);
+    else if(s.name==='エアロバイク'&&min)exSteps=Math.round(min*50);
+    else if(min>0&&speed>0){const stride=getProfileHeight()*0.45/100;exSteps=Math.round(speed*(min/60)*1000/stride);}
+    const memo=String(s.memo||'');
+    const im=memo.match(/強度:(\S+)/),jm=memo.match(/(\d+)回/);
+    const summary=[s.name,(!isNaN(incline)&&s.incline!=='')?'傾斜'+incline+'%':'',speed>0?speed+'km/h':'',memo,min?min+'分':''].filter(Boolean).join(' ')
+      +(kcal||exSteps?' / '+[kcal?kcal+'kcal':'',exSteps?'除外'+exSteps+'歩':''].filter(Boolean).join(' / '):'');
+    return {summary,kcal,exSteps,name:s.name,min,speed:speed>0?speed:NaN,incline:(s.incline!==''&&!isNaN(incline))?incline:NaN,
+      intensity:im?im[1]:null,jumpReps:jm?jm[1]:null};
+  });
+  TRAININGS.forEach(t=>{SET_LISTS[t.key]=[];});
+  Object.keys(TR_ACTIVE).forEach(k=>delete TR_ACTIVE[k]);
+  const tkd=ts.filter(s=>s.category==='TKD');
+  const otr=ts.filter(s=>s.category==='その他');
+  const tabSet=tkd.find(s=>s.name==='タバタ');
+  const mitSet=tkd.find(s=>s.name==='ミット');
+  const spaSet=tkd.find(s=>s.name==='スパーリング');
+  const tkdOther=tkd.filter(s=>s.name==='TKD他');
+  if(STR_SETS.length)TR_ACTIVE['STR']=true;
+  if(CARDIO_LIST.length)TR_ACTIVE['CAR']=true;
+  if(mitSet||spaSet||tkdOther.length)TR_ACTIVE['TKD']=true;
+  if(tabSet)TR_ACTIVE['TAB']=true;
+  if(otr.length)TR_ACTIVE['OTR']=true;
+  ['STR','TAB','TKD','OTR','CAR'].forEach(k=>delete SEL[k]);
+  Object.keys(SEL).forEach(k=>{if(/^(STR|TAB|MIT|SPA|CAR)_/.test(k))delete SEL[k];});
+  buildTrainingUI(); // すべて OFF の状態で DOM を作り直す
+  Object.keys(TR_ACTIVE).forEach(function(k){
+    if(!TR_ACTIVE[k])return;
+    const t=document.getElementById('tog'+k),b=document.getElementById('trBody'+k),h=document.getElementById('trHead'+k);
+    if(t){t.textContent='ON';t.classList.add('on');t.setAttribute('aria-pressed','true');}
+    if(b)b.classList.add('show');
+    if(h)h.classList.add('open');
+  });
+  renderStrSetList();
+  renderCardioList();
+  // タバタ種目はメモ列（index 8）に入っている。旧データは minPerRound 側の可能性もある
+  if(tabSet)setChoice('TAB_type',tabSet.memo||tabSet.minPerRound);
+  if(mitSet){setChoice('MIT_m',mitSet.minPerRound);setChoice('MIT_r',mitSet.reps);}
+  if(spaSet){setChoice('SPA_m',spaSet.minPerRound);setChoice('SPA_r',spaSet.reps);}
+  if(tkdOther.length)setVal('TKD_other',tkdOther.map(s=>s.memo||'').filter(Boolean).join(' '));
+  if(otr.length)setVal('OTR_text',otr.map(s=>s.memo||'').filter(Boolean).join(' '));
+}
+
+// null / undefined / '' を除いて代入（未入力の項目で既存の記録を消さない）
+function assignDefined(target,src){
+  Object.keys(src).forEach(k=>{const v=src[k];if(v!==null&&v!==undefined&&v!=='')target[k]=v;});
+  return target;
+}
+function setsToObjects(sets){
+  return sets.map(([d,cat,name,setNo,w,r,min,kcal,memo,speed,incline])=>
+    ({date:d,category:cat,name,setNo,weight:w,reps:r,minPerRound:min,kcal,memo,speed:speed===undefined?'':speed,incline:incline===undefined?'':incline}));
+}
+
+async function saveMorning(){
+  const btn=document.getElementById('saveMorningBtn');
+  const statusEl=document.getElementById('saveMorningStatus');
+  if(btn&&btn.dataset.busy==='1')return; // 二重送信防止
   const date=CAL.body.sel;
   if(!date){toast('日付を選択してください','err');return;}
-  // 練習・体調・日記の保存先（夜モード=選択日そのもの、朝モード=前日）
-  const trTarget=(ENTRY_MODE==='today')?date:getYesterdayDate(date);
+  const trTarget=getEntryTargetDate(date); // 練習・体調・日記の保存先
   const temp=getV('temp'),sleepIn=getV('sleepIn'),sleepOut=getV('sleepOut');
   const weight=(document.getElementById('mWeight').value||'').trim();
   const bOtsu=getBowelText(),choshi=getV('choshi'),condNote=document.getElementById('condNote').value.trim();
@@ -2005,8 +2203,10 @@ function saveMorning(){
   const ystFatigue=getV('ystFatigue');
   const ystSatisfaction=getV('ystSatisfaction');
   const ystRpe=getV('ystRpe');
+  const waterVal=parseInt(document.getElementById('waterMl').value)||0;
   const trData={
     bOtsu,choshi,condNote,
+    water:waterVal>0?waterVal:null,
     tabata:TR_ACTIVE['TAB']?getV('TAB_type'):null,
     mitt:TR_ACTIVE['TKD']?(getV('MIT_m')&&getV('MIT_r')?getV('MIT_m')+'×'+getV('MIT_r')+'R':null):null,
     spar:TR_ACTIVE['TKD']?(getV('SPA_m')&&getV('SPA_r')?getV('SPA_m')+'×'+getV('SPA_r')+'R':null):null,
@@ -2014,126 +2214,162 @@ function saveMorning(){
     otherTrn:TR_ACTIVE['OTR']?document.getElementById('OTR_text').value:null,
     cardio:TR_ACTIVE['CAR']?buildCardioSummary():null,
   };
-  const hasAny=temp||weight||sleepIn||sleepOut||bOtsu||choshi||condNote||diary||tomorrowNote||
-    ystFatigue||ystSatisfaction||ystRpe||Object.values(trData).some(v=>v);
-  if(!hasAny){toast('何か入力してください','err');return;}
+  const trSlash=toSlash(trTarget);
+  const sets=buildTrainingSets(trSlash);
+  const hasTrData=Object.values(trData).some(v=>v)||sets.length>0;
+  const hasMorn=!!(temp||weight||sleepIn||sleepOut);
+  const hasYst=!!(bOtsu||choshi||condNote||diary||tomorrowNote||ystFatigue||ystSatisfaction||ystRpe||hasTrData);
+  if(!hasMorn&&!hasYst){toast('何か入力してください','err');return;}
+  if(!beginSave(btn))return;
+  const ids=[];
 
-  // ── 体温・体重・睡眠 → 選択日（今日）に保存 ──
-  if(temp||weight||sleepIn||sleepOut){
+  // ── 体温・体重・睡眠 → 選択日 ──
+  if(hasMorn){
     const rec=getBodyLog(date)||{date,type:'body',synced:false};
-    if(temp)rec.temp=temp;
-    if(weight)rec.weight=weight;
-    if(sleepIn)rec.sleepIn=sleepIn;
-    if(sleepOut)rec.sleepOut=sleepOut;
+    assignDefined(rec,{temp,weight,sleepIn,sleepOut});
     rec.hasMorning=true;
     rec.text=buildBodyText(rec);
     rec.synced=false;
     setBodyLog(date,rec);
-    sendGAS({type:'body',body:rec}).then(ok=>{if(ok){rec.synced=true;setBodyLog(date,rec);}});
-    // 新スキーマ：体調（新）タブへ送信（今日分：体温・睡眠）
-    sendGAS({type:'condition',data:{
-      date:date.replace(/-/g,'/'),
-      temp,sleepIn:sleepIn||'',sleepOut:sleepOut||'',
-    }});
+    // weight は体調シートに列があれば書かれる（無ければ GAS 側で無視される想定）
+    ids.push(enqueue('condition',{type:'condition',data:{
+      date:toSlash(date),temp:temp||'',weight:weight||'',sleepIn:sleepIn||'',sleepOut:sleepOut||'',
+    }},['body_'+date]));
   }
 
-  // ── 練習・体調・日記 → 前日（昨日）に保存 ──
-  const hasYst=bOtsu||choshi||condNote||diary||tomorrowNote||
-    ystFatigue||ystSatisfaction||ystRpe||Object.values(trData).some(v=>v);
+  // ── 練習・体調・日記 → 保存先日付（朝モード=前日／夜モード=選択日）──
   if(hasYst){
-    const ystDate=trTarget;
-    const ystRec=getBodyLog(ystDate)||{date:ystDate,type:'body',synced:false};
-    Object.assign(ystRec,trData);
-    if(diary)ystRec.diary=diary;
-    if(tomorrowNote)ystRec.tomorrowNote=tomorrowNote;
-    if(ystFatigue)ystRec.ystFatigue=ystFatigue;
-    if(ystSatisfaction)ystRec.ystSatisfaction=ystSatisfaction;
-    if(ystRpe)ystRec.ystRpe=ystRpe;
-    if(bOtsu||choshi||condNote||Object.values(trData).some(v=>v))ystRec.hasTraining=true;
-    if(diary||tomorrowNote||ystFatigue||ystSatisfaction)ystRec.hasDiary=true;
-    // 新形式：trainingSets（縦持ち）を保存
-    const ystDateSlash=ystDate.replace(/-/g,'/');
-    const sets=buildTrainingSets(ystDateSlash);
-    if(sets.length)ystRec.trainingSets=sets.map(([d,cat,name,setNo,w,r,min,kcal,memo])=>({date:d,category:cat,name,setNo,weight:w,reps:r,minPerRound:min,kcal,memo}));
+    const ystRec=getBodyLog(trTarget)||{date:trTarget,type:'body',synced:false};
+    assignDefined(ystRec,trData);
+    assignDefined(ystRec,{diary,tomorrowNote,ystFatigue,ystSatisfaction,ystRpe});
+    if(bOtsu||choshi||condNote||hasTrData)ystRec.hasTraining=true;
+    if(diary||tomorrowNote||ystFatigue||ystSatisfaction||ystRpe)ystRec.hasDiary=true;
+    if(sets.length)ystRec.trainingSets=setsToObjects(sets);
     ystRec.text=buildBodyText(ystRec);
     ystRec.synced=false;
-    setBodyLog(ystDate,ystRec);
-    sendGAS({type:'body',body:ystRec}).then(ok=>{if(ok){ystRec.synced=true;setBodyLog(ystDate,ystRec);}});
-    // 新スキーマ：体調（新）タブへ送信（前日分：体調・日記）
-    var waterVal=parseInt(document.getElementById('waterMl').value)||0;
-    sendGAS({type:'condition',data:{
-      date:ystDateSlash,
+    setBodyLog(trTarget,ystRec);
+    ids.push(enqueue('condition',{type:'condition',data:{
+      date:trSlash,
       bowel:bOtsu||'',choshi:choshi||'',condNote,
       fatigue:ystFatigue||'',satisfaction:ystSatisfaction||'',
       rpe:ystRpe||'',
       diary,tomorrowNote,
       water:waterVal>0?waterVal:'',
-    }});
-    // 新スキーマ：トレーニング明細（新）タブへ送信
-    if(sets.length)sendGAS({type:'training',date:ystDateSlash,sets});
+    }},['body_'+trTarget]));
+    if(sets.length)ids.push(enqueue('training',{type:'training',date:trSlash,sets},['body_'+trTarget]));
   }
 
   renderCal('body');updateBswBadges();
-  const ystDate2=trTarget;
-  const [,tm,td]=date.split('-');
-  const [,ym,yd]=ystDate2.split('-');
-  console.log('[saveMorning] モード:'+ENTRY_MODE+' 選択日:'+date+' 体温保存先:'+date+' 練習保存先:'+ystDate2);
-  const hasMorn=temp||weight||sleepIn||sleepOut;
+  console.log('[saveMorning] モード:'+ENTRY_MODE+' 選択日:'+date+' 練習保存先:'+trTarget);
   const icon=(ENTRY_MODE==='today')?'🌙':'🌅';
   const msg=hasMorn&&hasYst
-    ? `${icon} 保存完了 — 体温・体重・睡眠: ${tm}/${td} ／ 練習・日記: ${ym}/${yd}`
+    ? `${icon} 保存完了 — 体温・体重・睡眠: ${mdLabel(date)} ／ 練習・日記: ${mdLabel(trTarget)}`
     : hasMorn
-      ? `${icon} 保存完了 — 体温・体重・睡眠: ${tm}/${td}`
-      : `${icon} 保存完了 — 練習・日記: ${ym}/${yd}`;
-  toast(msg,'ok');
-  // アドバイス生成は朝モードのみ（夜モードは翌朝の保存時に昨日分として生成される）
-  if(ENTRY_MODE!=='today') fetchAdvice();
-  // 分析パネルを更新（リセット前にkcal/steps取得）
-  const _cardioKcal=CARDIO_LIST.reduce((s,c)=>s+(c.kcal||0),0);
-  const _cardioSteps=CARDIO_LIST.reduce((s,c)=>s+(c.exSteps||0),0);
-  const _weight=parseFloat(weight)||58;
-  const _bmr=getProfileBmr();
-  const _ystDate=trTarget;
-  setTimeout(function(){fetchAndRenderAnalysis(_ystDate,_cardioKcal,_cardioSteps,_weight,_bmr);},1500);
-  CARDIO_LIST=[];renderCardioList();resetCardioForm();
-  STR_SETS=[];renderStrSetList();
-  TRAININGS.forEach(t=>{SET_LISTS[t.key]=[];});
+      ? `${icon} 保存完了 — 体温・体重・睡眠: ${mdLabel(date)}`
+      : `${icon} 保存完了 — 練習・日記: ${mdLabel(trTarget)}`;
+  // 分析用の値は送信前に確保
+  const cardioKcal=CARDIO_LIST.reduce((s,c)=>s+(c.kcal||0),0);
+  const cardioSteps=CARDIO_LIST.reduce((s,c)=>s+(c.exSteps||0),0);
+  const knownWeight=parseFloat(weight)||parseFloat((getBodyLog(trTarget)||{}).weight)||0; // 不明なら 0（58kg 仮定はしない）
+  const bmr=getProfileBmr();
+
+  const flushRes=await flushQueue();
+  const ok=endSave(btn,statusEl,ids,flushRes,msg);
+  // 保存した内容でフォームを読み直す（次の保存で練習記録を取りこぼさないように）
+  loadBodyForm();
+  renderHistory();
+  if(ok){
+    // アドバイス生成は朝モードのみ（夜モードは翌朝の保存時に昨日分として生成される）
+    if(ENTRY_MODE!=='today')fetchAdvice();
+    setTimeout(function(){fetchAndRenderAnalysis(trTarget,cardioKcal,cardioSteps,knownWeight,bmr);},500);
+  }
 }
 
 
-// 食事
-function saveFood(){
-  const date=CAL.food.sel;
-  if(!date){toast('日付を選択してください','err');return;}
-  if(!addedFoods.length){toast('食材を追加してください','err');return;}
+// ── 食事：日付ごとに既存の記録を読み込み、追記・編集して丸ごと保存 ──
+let FOOD_DIRTY=false,FOOD_LOADED_DATE='';
+function buildFoodRec(date,items,note,synced){
   let tp=0,tf=0,tc=0,tk=0,tfi=0,tna=0;
-  addedFoods.forEach(e=>{const r=e.grams/100;tp+=e.food.p*r;tf+=e.food.f*r;tc+=e.food.c*r;tk+=e.food.kcal*r;tfi+=(e.food.fi||0)*r;tna+=(e.food.na||0)*r;});
-  const note=document.getElementById('foodNote').value;
+  items.forEach(it=>{tp+=it.p||0;tf+=it.f||0;tc+=it.c||0;tk+=it.kcal||0;tfi+=it.fi||0;tna+=it.na||0;});
   const lines=['【食事記録】'];
   const meals={};
-  addedFoods.forEach(e=>{if(!meals[e.meal])meals[e.meal]=[];meals[e.meal].push(e);});
-  Object.entries(meals).forEach(([m,items])=>{
+  items.forEach(it=>{const m=it.meal||'その他';if(!meals[m])meals[m]=[];meals[m].push(it);});
+  Object.entries(meals).forEach(([m,list])=>{
     lines.push('['+m+']');
-    items.forEach(e=>{const r=e.grams/100;
-      lines.push(`  ${e.food.name} ${e.grams}g → ${Math.round(e.food.kcal*r)}kcal P:${(e.food.p*r).toFixed(1)}g C:${(e.food.c*r).toFixed(1)}g 繊維:${((e.food.fi||0)*r).toFixed(1)}g`);
-    });
+    list.forEach(it=>lines.push(`  ${it.name} ${it.grams}g → ${Math.round(it.kcal||0)}kcal P:${(it.p||0).toFixed(1)}g C:${(it.c||0).toFixed(1)}g 繊維:${(it.fi||0).toFixed(1)}g`));
   });
   lines.push(`合計: ${Math.round(tk)}kcal P:${tp.toFixed(1)}g F:${tf.toFixed(1)}g C:${tc.toFixed(1)}g 繊維:${tfi.toFixed(1)}g Na:${(tna/1000).toFixed(1)}g`);
   if(note)lines.push('メモ: '+note);
-  const rec={date,type:'food',note,totalKcal:tk,totalP:tp,totalF:tf,totalC:tc,totalFi:tfi,totalNa:tna,
-    text:lines.join('\n'),synced:false,pfc:{p:tp,f:tf,c:tc,kcal:tk,fi:tfi,na:tna},
-    items:addedFoods.map(e=>{const r=e.grams/100;return{meal:e.meal,name:e.food.name,grams:e.grams,kcal:e.food.kcal*r,p:e.food.p*r,f:e.food.f*r,c:e.food.c*r,fi:(e.food.fi||0)*r,na:(e.food.na||0)*r};})};
+  return {date,type:'food',note,totalKcal:tk,totalP:tp,totalF:tf,totalC:tc,totalFi:tfi,totalNa:tna,
+    text:lines.join('\n'),synced:!!synced,pfc:{p:tp,f:tf,c:tc,kcal:tk,fi:tfi,na:tna},items};
+}
+function itemsToAdded(items){
+  return (items||[]).map(function(it){
+    const r=it.grams/100; // 100gあたりに逆算
+    const food={name:it.name,kcal:r?it.kcal/r:0,p:r?it.p/r:0,f:r?it.f/r:0,c:r?it.c/r:0,fi:r?(it.fi||0)/r:0,na:r?(it.na||0)/r:0};
+    return {food,grams:it.grams,meal:it.meal,id:Date.now()+Math.random()};
+  });
+}
+function addedToItems(){
+  return addedFoods.map(e=>{const r=e.grams/100;return{meal:e.meal,name:e.food.name,grams:e.grams,kcal:e.food.kcal*r,p:e.food.p*r,f:e.food.f*r,c:e.food.c*r,fi:(e.food.fi||0)*r,na:(e.food.na||0)*r};});
+}
+function setFoodLoadedNote(text){const el=document.getElementById('foodLoadedNote');if(el)el.textContent=text||'';}
+function markFoodDirty(){FOOD_DIRTY=true;}
+// 日付を切り替える前の確認（未保存の入力があるとき）
+function confirmFoodSwitch(newDate){
+  if(!FOOD_DIRTY||newDate===FOOD_LOADED_DATE)return true;
+  return confirm('入力中の食事（未保存）を破棄して、'+mdLabel(newDate)+' の記録を開きますか？');
+}
+function loadFoodForDate(date){
+  const rec=getFoodLog(date);
+  addedFoods=(rec&&rec.items)?itemsToAdded(rec.items):[];
+  const noteEl=document.getElementById('foodNote');if(noteEl)noteEl.value=rec?(rec.note||''):'';
+  FOOD_LOADED_DATE=date;FOOD_DIRTY=false;
+  renderFoodList();
+  if(rec&&rec.items&&rec.items.length)setFoodLoadedNote(mdLabel(date)+' の記録 '+rec.items.length+'品を読み込みました。追加・削除して保存すると、この日の記録が更新されます。');
+  else{setFoodLoadedNote('');fetchServerFood(date);}
+}
+// 端末に記録が無い日は、スプシ側の既存の食事を読み込んでおく（保存で消さないため）
+async function fetchServerFood(date){
+  if(!getGasUrl()||!navigator.onLine)return;
+  const day=await gasJsonp({action:'getday',date:toSlash(date)});
+  if(CAL.food.sel!==date||getFoodLog(date))return;
+  if(!gasOk(day)){
+    setFoodLoadedNote('⚠ スプシの既存の食事を確認できませんでした（'+outboxErrorText(day.error)+'）。保存するとスプシ側のこの日の食事は置き換わります。');
+    return;
+  }
+  day.date=day.date||toSlash(date);
+  const f=dayToFoodRec(day);
+  if(!f)return;
+  addedFoods=[...itemsToAdded(f.items),...addedFoods];
+  renderFoodList();
+  setFoodLoadedNote('スプシにある '+mdLabel(date)+' の食事 '+f.items.length+'品を読み込みました。');
+}
+async function saveFood(){
+  const btn=document.getElementById('saveFoodBtn');
+  const statusEl=document.getElementById('saveFoodStatus');
+  if(btn&&btn.dataset.busy==='1')return;
+  const date=CAL.food.sel;
+  if(!date){toast('日付を選択してください','err');return;}
+  if(!addedFoods.length){toast('食材を追加してください','err');return;}
+  if(!beginSave(btn))return;
+  const note=document.getElementById('foodNote').value;
+  const items=addedToItems();
+  const rec=buildFoodRec(date,items,note,false);
   setFoodLog(date,rec);
+  FOOD_DIRTY=false;FOOD_LOADED_DATE=date;
   renderCal('food');
-  sendGAS({type:'food',food:rec}).then(ok=>{if(ok){rec.synced=true;setFoodLog(date,rec);}});
-  addedFoods=[];renderFoodList();
-  document.getElementById('foodNote').value='';
-  toast('食事を保存しました','ok');
+  const id=enqueue('food',{type:'food',food:{date:toSlash(date),items,note}},['food_'+date]);
+  const r=await flushQueue();
+  endSave(btn,statusEl,[id],r,`食事を保存しました（${mdLabel(date)}・${items.length}品）`);
+  setFoodLoadedNote(mdLabel(date)+' の記録 '+items.length+'品。追加・削除して保存すると、この日の記録が更新されます。');
+  renderHistory();
 }
 
 // ══════════════════════════════════════════
 //  GAS
 // ══════════════════════════════════════════
+// 送信先 GAS ウェブアプリ URL はここが正（config.js の gasUrl は未使用）
 var DEFAULT_GAS_URL='https://script.google.com/macros/s/AKfycby8NrMF4G07spsDjj8hxfLSv8U2vtFGt1_PjQwVp8N2euwiplyazsM25mCaNyBA8Uoe/exec';
 function getGasUrl(){return DEFAULT_GAS_URL;}
 function setGasUrl(u){}
@@ -2151,21 +2387,48 @@ function openSheetUrl(){
   else openModal('gasModal');
 }
 
-// ── GAS読み取り（JSONP方式）──
-function fetchGAS(params){
-  const url=getGasUrl();
-  if(!url)return Promise.resolve(null);
+// ── 合言葉（端末の localStorage にだけ保存。config.js には書かない）──
+function getSecret(){try{return localStorage.getItem('tkd_secret')||'';}catch(e){return '';}}
+function setSecret(v){try{if(v)localStorage.setItem('tkd_secret',v);else localStorage.removeItem('tkd_secret');}catch(e){}}
+
+// ── GAS読み取り（JSONP）──
+// 常に resolve する。失敗時は {ok:false,error:'timeout'|'network'|'nourl'}。
+// 応答が {status:'ok'} 形式（旧API）でも ok:true とみなせるよう呼び出し側で gasOk() を使う。
+let _jsonpSeq=0;
+function gasJsonp(params,opts){
+  opts=opts||{};
+  const base=opts.url||getGasUrl();
+  if(!base)return Promise.resolve({ok:false,error:'nourl'});
+  const timeoutMs=opts.timeout||12000;
   return new Promise(function(resolve){
-    const cbName='_gasCb_'+Date.now();
-    const qs=Object.entries(params).map(([k,v])=>encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    const cbName='_gasCb_'+Date.now()+'_'+(++_jsonpSeq);
+    const q=Object.assign({},params);
+    const sec=getSecret();if(sec)q.secret=sec;
+    const qs=Object.keys(q).filter(k=>q[k]!==undefined&&q[k]!==null)
+      .map(k=>encodeURIComponent(k)+'='+encodeURIComponent(q[k])).join('&');
     const s=document.createElement('script');
-    const tid=setTimeout(function(){delete window[cbName];s.remove();resolve(null);},10000);
-    window[cbName]=function(data){clearTimeout(tid);delete window[cbName];s.remove();resolve(data);};
-    s.onerror=function(){clearTimeout(tid);delete window[cbName];s.remove();resolve(null);};
-    s.src=url+'?'+qs+'&callback='+cbName;
+    let done=false;
+    function finish(data){
+      if(done)return;done=true;
+      clearTimeout(tid);
+      // 遅れて返ってきた応答でエラーにならないよう、少しの間は空関数を残す
+      window[cbName]=function(){};
+      setTimeout(function(){try{delete window[cbName];}catch(e){window[cbName]=undefined;}},60000);
+      s.remove();
+      resolve(data);
+    }
+    const tid=setTimeout(function(){finish({ok:false,error:'timeout'});},timeoutMs);
+    window[cbName]=function(data){finish(data&&typeof data==='object'?data:{ok:false,error:'badresponse'});};
+    s.onerror=function(){finish({ok:false,error:'network'});};
+    s.src=base+(base.indexOf('?')>=0?'&':'?')+qs+(qs?'&':'')+'callback='+cbName;
     document.head.appendChild(s);
   });
 }
+function gasOk(r){return !!(r&&(r.ok===true||r.status==='ok'));}
+function isUnauthorized(r){return !!(r&&r.error==='unauthorized');}
+// 'YYYY-MM-DD' / 'YYYY/MM/DD' → 'YYYY/MM/DD'
+function toSlash(d){return String(d||'').replace(/-/g,'/');}
+function toDash(d){return String(d||'').replace(/\//g,'-');}
 
 function fetchAndRenderAnalysis(ystDate,cardioKcal,cardioSteps,weight,bmr){
   var panel=document.getElementById('analysisPanel');
@@ -2176,13 +2439,16 @@ function fetchAndRenderAnalysis(ystDate,cardioKcal,cardioSteps,weight,bmr){
   document.getElementById('weeklyContent').textContent='';
   document.getElementById('adviceContent').textContent='';
   var dateSlash=ystDate.replace(/-/g,'/');
-  fetchGAS({type:'getanalysis',date:dateSlash,cardioKcal:cardioKcal||0,cardioSteps:cardioSteps||0,weight:weight||58,bmr:bmr||0}).then(function(data){
-    if(!data||data.status!=='ok'){content.textContent='分析データを取得できませんでした';return;}
-    renderAnalysis(data);
+  // 体重が分からない日は weight を送らない（以前は 58kg と仮定していた）
+  var q={type:'getanalysis',date:dateSlash,cardioKcal:cardioKcal||0,cardioSteps:cardioSteps||0,bmr:bmr||0};
+  if(weight>0)q.weight=weight;
+  gasJsonp(q,{timeout:20000}).then(function(data){
+    if(!gasOk(data)){content.textContent='分析データを取得できませんでした'+(isUnauthorized(data)?'（'+outboxErrorText('unauthorized')+'）':'');return;}
+    renderAnalysis(data,weight>0);
   });
 }
 
-function renderAnalysis(data){
+function renderAnalysis(data,weightKnown){
   var d=data.daily||{};
   var w=data.weekly||{};
   var lines=[];
@@ -2201,6 +2467,7 @@ function renderAnalysis(data){
     var sh=(d.sleep.total/60).toFixed(1);
     lines.push('睡眠: '+sh+'h（深:'+d.sleep.deep+'分 REM:'+d.sleep.rem+'分）');
   }
+  if(weightKnown===false)lines.push('※体重不明のため、消費量は参考値です');
   document.getElementById('analysisContent').textContent=lines.join('\n')||'データなし';
 
   var wlines=[];
@@ -2223,69 +2490,275 @@ function renderAnalysis(data){
   document.getElementById('adviceContent').textContent=advices.join('\n')||'';
 }
 
-// ── GAS送信（GETパラメータ方式でCORS回避）──
-// GASのdoGetで ?payload=JSON を受け取りスプシに書き込む
-// no-corsなのでレスポンスは読めないが送信は届く
-function sendGAS(data){
+// ══════════════════════════════════════════
+//  GAS送信：POST → getday で読み戻して確認 → 未送信キュー
+// ══════════════════════════════════════════
+// POST は no-cors（GAS の返事は読めない）なので、保存できたかは読み戻しで判定する。
+// 失敗・圏外・unauthorized はキュー（localStorage: tkd_outbox）に残り、online 復帰と起動時に再送。
+const OUTBOX_KEY='tkd_outbox';
+const VERIFY_FAIL_LIMIT=5; // 読み戻しで内容が合わないことがこの回数続いたら自動再送を止めて「要確認」に
+function getOutbox(){try{return JSON.parse(localStorage.getItem(OUTBOX_KEY)||'[]');}catch(e){return [];}}
+function saveOutbox(a){localStorage.setItem(OUTBOX_KEY,JSON.stringify(a));updateOutboxInd();}
+function nonEmptyFields(o){
+  const r={};Object.keys(o||{}).forEach(k=>{const v=o[k];if(v!==null&&v!==undefined&&v!=='')r[k]=v;});return r;
+}
+// kind: condition / training / food / customfoods
+function enqueue(kind,payload,localKeys){
+  const box=getOutbox();
+  const date=kind==='customfoods'?null:(kind==='condition'?payload.data.date:(kind==='food'?payload.food.date:payload.date));
+  const same=box.find(it=>it.kind===kind&&it.date===date);
+  if(same){
+    if(kind==='condition'){
+      // 体調は「空でない項目だけ上書き」の部分更新なので、未送信分とマージする
+      same.payload={type:'condition',data:Object.assign({},same.payload.data,nonEmptyFields(payload.data))};
+    }else{
+      same.payload=payload; // 練習・食事・カスタム食材は丸ごと置き換え型なので新しい方だけ送る
+    }
+    same.localKeys=[...new Set([...(same.localKeys||[]),...(localKeys||[])])];
+    same.verifyFails=0;same.stuck=false;same.lastError='';same.updatedAt=Date.now();
+    saveOutbox(box);return same.id;
+  }
+  const id='ob_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  box.push({id,kind,date,payload,localKeys:localKeys||[],createdAt:Date.now(),tries:0,verifyFails:0,lastError:'',stuck:false});
+  saveOutbox(box);
+  return id;
+}
+function postGAS(payload){
   const url=getGasUrl();
   if(!url)return Promise.resolve(false);
-  // POST(no-cors): URLサイズ上限なし。レスポンスは読めないがGASには確実に届く
+  const body=Object.assign({},payload);
+  const sec=getSecret();if(sec)body.secret=sec;
+  const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  const tid=setTimeout(function(){if(ctrl)ctrl.abort();},20000);
   return fetch(url,{
-    method:'POST',
-    mode:'no-cors',
-    headers:{'Content-Type':'text/plain'},  // preflight回避のためtext/plain
-    body:JSON.stringify(data)
-  }).then(function(){return true;}).catch(function(){
-    // フォールバック: 旧Image GET方式（小さいpayloadなら届く）
-    return new Promise(function(resolve){
-      try{
-        const payload=encodeURIComponent(JSON.stringify(data));
-        const img=new Image();
-        img.onload=img.onerror=function(){resolve(true);};
-        img.src=url+'?payload='+payload;
-        setTimeout(function(){resolve(true);},5000);
-      }catch(e){resolve(false);}
+    method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'text/plain'}, // preflight 回避
+    body:JSON.stringify(body),
+    signal:ctrl?ctrl.signal:undefined
+  }).then(function(){clearTimeout(tid);return true;})
+    .catch(function(){clearTimeout(tid);return false;});
+}
+// 体調シートの列名（GAS が日本語見出しで返した場合のため）
+const COND_JP={temp:'体温',bowel:'便通',choshi:'調子',condNote:'メモ',fatigue:'疲労度',sleepIn:'入眠',sleepOut:'起床',
+  water:'水分(mL)',satisfaction:'練習満足度',diary:'振り返り',tomorrowNote:'今日の意識',rpe:'RPE',weight:'体重'};
+function pickCond(c,k){
+  if(!c)return undefined;
+  if(c[k]!==undefined&&c[k]!==null)return c[k];
+  if(c[COND_JP[k]]!==undefined&&c[COND_JP[k]]!==null)return c[COND_JP[k]];
+  return undefined;
+}
+function normText(v){return String(v).replace(/\r\n/g,'\n').replace(/^'/,'').trim();}
+function asArray(v,key){
+  if(Array.isArray(v))return v;
+  if(v&&Array.isArray(v[key]))return v[key];
+  return null;
+}
+// getday の応答が、送った内容を反映しているか
+function verifyDay(item,day){
+  if(item.kind==='condition'){
+    const c=day.condition;
+    if(!c||typeof c!=='object'||!Object.keys(c).length)return false;
+    const sent=item.payload.data;let mism=0;
+    // 応答が契約どおりのキー（英字 or 日本語見出し）を持っているなら、送った項目が無い＝未保存とみなす。
+    // どちらの形式でもない応答のときだけ、返ってこない項目は判定に使わない（緩い判定）
+    const strict=Object.keys(COND_JP).some(k=>(k in c)||(COND_JP[k] in c));
+    const TEXT=['condNote','diary','tomorrowNote','choshi','bowel','fatigue','satisfaction'];
+    TEXT.concat(['temp','rpe','water']).forEach(k=>{
+      if(sent[k]===undefined||sent[k]==='')return;
+      const got=pickCond(c,k);
+      if(got===undefined||got===''){if(strict)mism++;return;}
+      if(TEXT.includes(k)){if(normText(got)!==normText(sent[k]))mism++;}
+      else if(Math.abs(parseFloat(got)-parseFloat(sent[k]))>1e-6)mism++;
     });
+    return mism===0;
+  }
+  if(item.kind==='training'){
+    const arr=asArray(day.training,'sets');
+    if(arr)return arr.length===item.payload.sets.length;
+    return !!(day.training&&Object.keys(day.training).length);
+  }
+  if(item.kind==='food'){
+    const arr=asArray(day.food,'items');
+    if(arr)return arr.length===item.payload.food.items.length;
+    return !!(day.food&&Object.keys(day.food).length);
+  }
+  return false;
+}
+async function verifyItem(item){
+  if(item.kind==='customfoods'){
+    const r=await gasJsonp({action:'getcustomfoods'});
+    if(isUnauthorized(r))return {ok:false,error:'unauthorized'};
+    if(!gasOk(r))return {ok:false,error:r.error||'readback'};
+    const n=(item.payload.foods||[]).length;
+    const ok=Array.isArray(r.foods)&&r.foods.length===n;
+    return {ok,error:ok?'':'mismatch',reachable:true};
+  }
+  const r=await gasJsonp({action:'getday',date:item.date});
+  if(isUnauthorized(r))return {ok:false,error:'unauthorized'};
+  if(!gasOk(r))return {ok:false,error:r.error||'readback'};
+  const ok=verifyDay(item,r);
+  return {ok,error:ok?'':'mismatch',reachable:true};
+}
+function markSynced(keys){
+  const box=getOutbox();
+  (keys||[]).forEach(k=>{
+    if(box.some(it=>(it.localKeys||[]).includes(k)))return; // まだ同じ記録の未送信分がある
+    try{const rec=JSON.parse(localStorage.getItem(k)||'null');if(rec){rec.synced=true;localStorage.setItem(k,JSON.stringify(rec));}}catch(e){}
   });
+}
+let _flushPromise=null,_flushTimer=null,_lastFlushError='';
+function scheduleFlush(ms){clearTimeout(_flushTimer);_flushTimer=setTimeout(function(){flushQueue();},ms||0);}
+function flushQueue(opts){
+  if(_flushPromise)return _flushPromise.then(()=>flushQueue(opts)); // 実行中なら終わってからもう一度
+  _flushPromise=_flushQueue(opts||{}).finally(function(){_flushPromise=null;});
+  return _flushPromise;
+}
+async function _flushQueue(opts){
+  const res={sent:0,failed:0,error:''};
+  if(!getOutbox().length){updateOutboxInd();return res;}
+  if(!navigator.onLine){res.error='offline';_lastFlushError='offline';updateOutboxInd();return res;}
+  const ids=getOutbox().map(it=>it.id);
+  for(const id of ids){
+    const item=getOutbox().find(it=>it.id===id);
+    if(!item)continue;
+    if(item.stuck&&!opts.includeStuck)continue;
+    const posted=await postGAS(item.payload);
+    let v;
+    if(!posted)v={ok:false,error:'network'};
+    else v=await verifyItem(item);
+    // 送信中に同じ日の新しい内容でキューが更新されていたら、その分は次回に送る
+    const box=getOutbox();
+    const cur=box.find(it=>it.id===id);
+    if(!cur)continue;
+    const changed=JSON.stringify(cur.payload)!==JSON.stringify(item.payload);
+    cur.tries=(cur.tries||0)+1;cur.lastTry=Date.now();
+    if(v.ok&&!changed){
+      saveOutbox(box.filter(it=>it.id!==id));
+      markSynced(cur.localKeys);
+      res.sent++;
+      continue;
+    }
+    if(v.ok&&changed){saveOutbox(box);continue;}
+    cur.lastError=v.error;
+    if(v.reachable){cur.verifyFails=(cur.verifyFails||0)+1;if(cur.verifyFails>=VERIFY_FAIL_LIMIT)cur.stuck=true;}
+    saveOutbox(box);
+    res.failed++;res.error=v.error;
+    if(v.error==='unauthorized'||v.error==='network'||v.error==='timeout'||v.error==='nourl')break; // 残りも同じ理由で失敗するので打ち切る
+  }
+  _lastFlushError=res.error;
+  updateOutboxInd();
+  const hist=document.getElementById('tab-history');
+  if(hist&&hist.classList.contains('active'))renderHistory();
+  return res;
+}
+function outboxErrorText(err){
+  if(err==='unauthorized')return '合言葉が違うか未設定です（⚙から設定）';
+  if(err==='offline'||err==='network')return '圏外または通信エラー';
+  if(err==='timeout')return '応答がありません（時間切れ）';
+  if(err==='mismatch')return 'スプシの内容と一致しません';
+  if(err==='nourl')return '送信先が未設定です';
+  return '送信できませんでした'+(err?'（'+err+'）':'');
+}
+function updateOutboxInd(){
+  const el=document.getElementById('outboxInd');if(!el)return;
+  const box=getOutbox();
+  if(!box.length){el.hidden=true;el.textContent='';return;}
+  const stuck=box.filter(it=>it.stuck).length;
+  el.hidden=false;
+  el.textContent='未送信 '+box.length+(stuck?'（要確認'+stuck+'）':'');
+  el.title=outboxErrorText(_lastFlushError||(box[0]&&box[0].lastError))+' — タップで再送';
+  el.setAttribute('aria-label','未送信の記録 '+box.length+'件。タップで再送');
+}
+async function retryOutbox(){
+  if(!getOutbox().length){toast('未送信の記録はありません','ok');return;}
+  toast('再送中...','ok');
+  const r=await flushQueue({includeStuck:true});
+  const left=getOutbox().length;
+  if(!left)toast('✓ すべて送信しました（'+r.sent+'件）','ok');
+  else toast('⚠ '+left+'件が未送信：'+outboxErrorText(r.error||(getOutbox()[0]||{}).lastError),'err');
+}
+// 保存ボタンの状態管理（送信中は押せない／成功で✓／失敗は「再送」付きで残す）
+function beginSave(btn){
+  if(!btn||btn.dataset.busy==='1')return false;
+  btn.dataset.busy='1';
+  if(!btn.dataset.label)btn.dataset.label=btn.textContent;
+  btn.disabled=true;btn.classList.remove('done');
+  btn.textContent='保存中…';
+  return true;
+}
+function setSaveStatus(statusEl,cls,text,onRetry){
+  if(!statusEl)return null;
+  statusEl.innerHTML='';
+  statusEl.className='save-status'+(cls?' '+cls:'');
+  if(!cls)return null;
+  const span=document.createElement('span');span.textContent=text;statusEl.appendChild(span);
+  if(onRetry){
+    const b=document.createElement('button');b.type='button';b.textContent='再送';
+    b.onclick=function(){onRetry(b,span);};statusEl.appendChild(b);
+  }
+  return span;
+}
+function endSave(btn,statusEl,ids,flushRes,okMsg){
+  const left=getOutbox().filter(it=>ids.includes(it.id));
+  btn.dataset.busy='';btn.disabled=false;
+  setSaveStatus(statusEl,'');
+  if(!left.length){
+    btn.textContent='✓ 保存しました';btn.classList.add('done');
+    setTimeout(function(){if(btn.dataset.busy!=='1'){btn.textContent=btn.dataset.label;btn.classList.remove('done');}},2000);
+    if(okMsg)toast(okMsg,'ok');
+    return true;
+  }
+  btn.textContent=btn.dataset.label;
+  const why=outboxErrorText((flushRes&&flushRes.error)||left[0].lastError);
+  setSaveStatus(statusEl,'show','⚠ 端末には保存済み・スプシへは未送信：'+why+'。電波が戻ると自動で再送します。',async function(b,span){
+    b.disabled=true;b.textContent='再送中…';
+    const r=await flushQueue({includeStuck:true});
+    const still=getOutbox().filter(it=>ids.includes(it.id));
+    if(!still.length){
+      setSaveStatus(statusEl,'show ok','✓ 送信できました');
+      setTimeout(function(){setSaveStatus(statusEl,'');},3000);
+    }else{b.disabled=false;b.textContent='再送';span.textContent='⚠ まだ未送信：'+outboxErrorText(r.error||still[0].lastError);}
+  });
+  toast('⚠ 端末に保存しました（スプシは未送信）','err');
+  return false;
+}
+// 送信口：キューに積んで送る。戻り値は「この分が送信確認できたか」
+function sendGAS(payload,localKeys){
+  const kind=payload&&payload.type;
+  if(!['condition','training','food','customfoods'].includes(kind)){console.warn('[sendGAS] 未対応の type:',kind);return Promise.resolve(false);}
+  const id=enqueue(kind,payload,localKeys);
+  return flushQueue().then(()=>!getOutbox().some(it=>it.id===id));
 }
 
 async function syncAll(){
-  const url=getGasUrl();
-  if(!url){toast('Sheets連携が未設定です','err');return;}
-  const allKeys=Object.keys(localStorage).filter(k=>k.startsWith('body_')||k.startsWith('food_'));
-  if(allKeys.length===0){toast('送信する記録がありません','ok');return;}
-  toast('送信中...','ok');
-  let sent=0;
-  for(const k of allKeys){
-    const rec=JSON.parse(localStorage.getItem(k)||'null');
-    if(!rec)continue;
-    const type=k.startsWith('body_')?'body':'food';
-    const payload=type==='body'?{type,body:rec}:{type,food:rec};
-    await sendGAS(payload);
-    rec.synced=true;
-    localStorage.setItem(k,JSON.stringify(rec));
-    sent++;
-  }
+  if(!getGasUrl()){toast('Sheets連携が未設定です','err');return;}
+  await retryOutbox();
   renderHistory();
-  toast('✓ '+sent+'件をスプシに送信しました','ok');
 }
 
-function testAndSaveGas(){
-  const urlEl=document.getElementById('gasUrlInput');
-  const sheetEl=document.getElementById('sheetUrlInput');
+function toggleSecretVisible(btn){
+  const el=document.getElementById('secretInput');if(!el)return;
+  const show=el.type==='password';
+  el.type=show?'text':'password';
+  btn.textContent=show?'隠す':'表示';
+}
+async function testAndSaveGas(){
   const st=document.getElementById('gasSt');
-  const url=(urlEl?urlEl.value:'').trim();
+  const secEl=document.getElementById('secretInput');
+  const sheetEl=document.getElementById('sheetUrlInput');
+  const secret=(secEl?secEl.value:'').trim();
   const sheetUrl=(sheetEl?sheetEl.value:'').trim();
-  if(!url){st.textContent='URLを入力してください';st.className='gas-st err';return;}
-  if(!url.startsWith('https://script.google.com/macros/s/')){
-    st.textContent='GASのURLではありません';st.className='gas-st err';return;
-  }
-  setGasUrl(url);
+  setSecret(secret);
   if(sheetUrl)localStorage.setItem('tkd_sheet_url',sheetUrl);
   updateGasInd();
-  st.textContent='✓ URL保存しました';
+  st.textContent='保存しました。接続を確認中…';st.className='gas-st';
+  const r=await gasJsonp({action:'ping'},{timeout:10000});
+  if(isUnauthorized(r)){st.textContent='⚠ 合言葉が一致しません（保存はしました）';st.className='gas-st err';return;}
+  if(!gasOk(r)){st.textContent='⚠ 接続できません：'+outboxErrorText(r.error)+'（保存はしました）';st.className='gas-st err';return;}
+  st.textContent='✓ 接続OK'+(r.version?'（v'+String(r.version)+'）':'')+(secret?'':'　※合言葉が未設定です');
   st.className='gas-st ok';
-  setTimeout(function(){closeModal('gasModal');},1000);
+  if(getOutbox().length)flushQueue({includeStuck:true});
+  setTimeout(function(){closeModal('gasModal');},1200);
 }
 
 // ══════════════════════════════════════════
@@ -2304,6 +2777,7 @@ function renderHistory(){
   const allDates=[...new Set([...bodyKeys.map(k=>k.slice(5)),...foodKeys.map(k=>k.slice(5))])].sort().reverse();
   if(!allDates.length){c.innerHTML='<div class="empty">記録はまだありません</div>';return;}
 
+  const outboxKeys=new Set(getOutbox().flatMap(it=>it.localKeys||[]));
   let html='';
   for(const date of allDates){
     const body=getBodyLog(date);
@@ -2313,24 +2787,25 @@ function renderHistory(){
     if(histFilter==='food'&&!food)continue;
     if(histFilter==='body'&&!body)continue;
 
-    html+=`<div class="log-card" style="border-left:3px solid var(--border);">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:44px;">
-        <div class="log-date">${date}</div>
-        <div style="display:flex;gap:4px;">
-          ${body?.hasMorning?'<span style="font-size:10px;background:rgba(59,130,246,.15);color:var(--blue);border-radius:4px;padding:1px 6px;">🌅 朝</span>':''}
-          ${body?.hasTraining?'<span style="font-size:10px;background:rgba(232,25,44,.12);color:var(--red);border-radius:4px;padding:1px 6px;">💪 練習</span>':''}
-          ${food?'<span style="font-size:10px;background:rgba(34,197,94,.12);color:var(--green);border-radius:4px;padding:1px 6px;">🍽 食事</span>':''}
-          ${(body?.synced&&(!food||food.synced))?'<span style="font-size:10px;color:var(--green);">☁✓</span>':''}
+    const pending=outboxKeys.has('body_'+date)||outboxKeys.has('food_'+date);
+    const synced=!pending&&(!body||body.synced)&&(!food||food.synced);
+    html+=`<div class="log-card">
+      <div class="log-head">
+        <div class="log-date">${escHtml(date)}</div>
+        <div class="log-badges">
+          ${body?.hasMorning?'<span class="badge morning">🌅 朝</span>':''}
+          ${body?.hasTraining?'<span class="badge training">💪 練習</span>':''}
+          ${food?'<span class="badge food">🍽 食事</span>':''}
+          ${pending?'<span class="badge pending">⏳ 未送信</span>':(synced?'<span class="badge synced">☁✓</span>':'')}
         </div>
       </div>
-      <button class="log-del" onclick="delLog('${date}')">✕</button>`;
-    if(body)html+=`<div class="log-text" style="margin-bottom:${food?'10px':'0'};">${escHtml(body.text)}</div>`;
+      <button class="log-del" data-act="delLog" data-date="${escHtml(date)}" aria-label="${escHtml(date)}の記録を削除">✕</button>`;
+    if(body)html+=`<div class="log-text${food?' gap':''}">${escHtml(body.text)}</div>`;
     if(food)html+=`<div class="log-text">${escHtml(food.text)}</div>`;
-    // 編集ボタン
-    html+='<div style="display:flex;gap:6px;margin-top:8px;">';
-    if(food)html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(59,130,246,.12);border:1px solid var(--blue);border-radius:6px;color:var(--blue);cursor:pointer;" onclick="editFoodLog('${date}')">🍽 食事を編集</button>`;
-    if(body&&body.hasMorning)html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(168,85,247,.12);border:1px solid var(--purple);border-radius:6px;color:var(--purple);cursor:pointer;" onclick="editBodyLog('${date}')">📝 体調を編集</button>`;
-    if(body&&body.hasTraining)html+=`<button style="font-size:11px;padding:4px 10px;background:rgba(34,197,94,.12);border:1px solid var(--green);border-radius:6px;color:var(--green);cursor:pointer;" onclick="editTrainingLog('${date}')">💪 練習を編集</button>`;
+    html+='<div class="log-acts">';
+    if(food)html+=`<button class="log-act food" data-act="editFoodLog" data-date="${escHtml(date)}">🍽 食事を編集</button>`;
+    if(body&&body.hasMorning)html+=`<button class="log-act body" data-act="editBodyLog" data-date="${escHtml(date)}">📝 体調を編集</button>`;
+    if(body&&body.hasTraining)html+=`<button class="log-act train" data-act="editTrainingLog" data-date="${escHtml(date)}">💪 練習を編集</button>`;
     html+='</div>';
     html+='</div>';
   }
@@ -2338,125 +2813,50 @@ function renderHistory(){
   c.innerHTML=html;
 }
 function delLog(date){
+  const body=getBodyLog(date),food=getFoodLog(date);
+  const parts=[body?'体調・練習':'',food?'食事':''].filter(Boolean).join('と');
+  if(!confirm(`${date} の${parts||'記録'}を、この端末から削除します。\n（スプレッドシート側のデータは消えません）\n\nよろしいですか？`))return;
   localStorage.removeItem('body_'+date);
   localStorage.removeItem('food_'+date);
   renderHistory();renderCal('body');renderCal('food');updateBswBadges();
+  if(CAL.body.sel)loadBodyForm();
+  if(CAL.food.sel===date&&!FOOD_DIRTY)loadFoodForDate(date);
+  toast(date+' の記録を削除しました','ok');
 }
 
 function editFoodLog(date){
   const rec=getFoodLog(date);
   if(!rec||!rec.items||!rec.items.length){toast('編集できる食事データがありません','err');return;}
-  // items を addedFoods に復元
-  addedFoods=rec.items.map(function(it){
-    // food オブジェクトを復元（100gあたりに逆算）
-    var r=it.grams/100;
-    var food={name:it.name,kcal:r?it.kcal/r:0,p:r?it.p/r:0,f:r?it.f/r:0,c:r?it.c/r:0,fi:r?(it.fi||0)/r:0,na:r?(it.na||0)/r:0};
-    return{food:food,grams:it.grams,meal:it.meal,id:Date.now()+Math.random()};
-  });
-  // カレンダーの選択日を合わせる
+  if(!confirmFoodSwitch(date))return;
   CAL.food.sel=date;
-  // メモ復元
-  var noteEl=document.getElementById('foodNote');
-  if(noteEl)noteEl.value=rec.note||'';
-  // 食事タブに切り替え
+  const [y,m]=date.split('-').map(Number);CAL.food.year=y;CAL.food.month=m-1;
   switchTab('food',document.querySelectorAll('.bnav-btn')[1]);
-  renderFoodList();
-  renderCal('food');
+  loadFoodForDate(date);
   toast('食事を編集中: '+date,'ok');
 }
 
+// 記録タブからの編集：夜モード（保存先＝選択日）に切り替え、その日の内容をすべて読み込む
+function openBodyDateForEdit(date){
+  CAL.body.sel=date;
+  const [y,m]=date.split('-').map(Number);CAL.body.year=y;CAL.body.month=m-1;
+  setEntryMode('today',{reload:false});
+  switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
+  renderCal('body');
+  loadBodyForm();
+  updateBswBadges();
+}
 function editTrainingLog(date){
   const rec=getBodyLog(date);
   if(!rec||!rec.hasTraining){toast('編集できるトレーニングデータがありません','err');return;}
-  // トレーニングは翌朝に「昨日の練習」として入力するため、カレンダーを翌日に合わせる
-  CAL.body.sel=getNextDate(date);
-  // 筋トレ復元
-  STR_SETS=(rec.trainingSets||[]).filter(s=>s.category==='筋トレ').map(s=>({name:s.name,weight:s.weight,reps:s.reps}));
-  // 有酸素復元
-  CARDIO_LIST=(rec.trainingSets||[]).filter(s=>s.category==='有酸素').map(function(s){
-    const kcal=s.kcal||0;
-    const min=s.minPerRound||0;
-    let exSteps=0;
-    if(s.name==='ステアクライマー'&&kcal)exSteps=Math.round(kcal/0.185);
-    else if(s.name==='エアロバイク'&&min)exSteps=Math.round(min*50);
-    else if(min>0){const ht=getProfileHeight();const stride=ht*0.45/100;const spd=s.speed||0;if(spd>0)exSteps=Math.round(spd*(min/60)*1000/stride);}
-    return{summary:s.name+(min?' '+min+'分':'')+(kcal?' '+kcal+'kcal':''),kcal,exSteps,name:s.name,min,speed:s.speed||0,incline:s.incline||0};
-  });
-  // TR_ACTIVE復元
-  Object.keys(TR_ACTIVE).forEach(k=>delete TR_ACTIVE[k]);
-  if(STR_SETS.length)TR_ACTIVE['STR']=true;
-  if(CARDIO_LIST.length)TR_ACTIVE['CAR']=true;
-  const tkd=(rec.trainingSets||[]).filter(s=>s.category==='TKD');
-  const otr=(rec.trainingSets||[]).filter(s=>s.category==='その他');
-  if(tkd.length)TR_ACTIVE['TKD']=true;
-  if(tkd.find(s=>s.name==='タバタ'))TR_ACTIVE['TAB']=true;
-  if(otr.length)TR_ACTIVE['OTR']=true;
-  buildTrainingUI();
-  // buildTrainingUI はすべてOFFでDOMを生成するため、TR_ACTIVEに従って表示状態を適用
-  Object.keys(TR_ACTIVE).forEach(function(k){
-    if(!TR_ACTIVE[k])return;
-    const t=document.getElementById('tog'+k);
-    const b=document.getElementById('trBody'+k);
-    const h=document.getElementById('trHead'+k);
-    if(t){t.textContent='ON';t.classList.add('on');}
-    if(b)b.classList.add('show');
-    if(h)h.classList.add('open');
-  });
-  renderStrSetList();
-  renderCardioList();
-  // タバタ種目ボタン復元
-  const tabSet=tkd.find(s=>s.name==='タバタ');
-  if(tabSet&&tabSet.minPerRound){
-    document.querySelectorAll('#TAB_typeBtns .btn').forEach(function(b){if(b.textContent===tabSet.minPerRound)sel(b,'TAB_type');});
-  }
-  // その他テキスト復元
-  if(otr.length){
-    const otrEl=document.getElementById('OTR_text');
-    if(otrEl)otrEl.value=otr.map(function(s){return s.memo||'';}).filter(Boolean).join(' ');
-  }
-  // MIT/SPA ラウンド・分数ボタン復元（buildTrainingUI後にDOMが存在する）
-  const mitSet=tkd.find(s=>s.name==='ミット');
-  if(mitSet){
-    document.querySelectorAll('#MIT_mBtns .btn').forEach(function(b){if(b.textContent===mitSet.minPerRound)sel(b,'MIT_m');});
-    document.querySelectorAll('#MIT_rBtns .btn').forEach(function(b){if(b.textContent===String(mitSet.reps))sel(b,'MIT_r');});
-  }
-  const spaSet=tkd.find(s=>s.name==='スパーリング');
-  if(spaSet){
-    document.querySelectorAll('#SPA_mBtns .btn').forEach(function(b){if(b.textContent===spaSet.minPerRound)sel(b,'SPA_m');});
-    document.querySelectorAll('#SPA_rBtns .btn').forEach(function(b){if(b.textContent===String(spaSet.reps))sel(b,'SPA_r');});
-  }
-  switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
-  renderCal('body');
+  openBodyDateForEdit(date);
   setTimeout(function(){const el=document.getElementById('trainingBody');if(el)el.scrollIntoView({behavior:'smooth'});},300);
-  toast('トレーニングを編集中: '+date,'ok');
+  toast('練習を編集中（保存先 '+mdLabel(date)+'）','ok');
 }
 function editBodyLog(date){
-  var rec=getBodyLog(date);
-  if(!rec){toast('編集できる体調データがありません','err');return;}
-  // カレンダーの選択日を合わせる
-  CAL.body.sel=date;
-  // フィールドを復元
-  if(rec.temp){var btns=document.querySelectorAll('#tempBtns .btn');btns.forEach(function(b){if(b.textContent===rec.temp)sel(b,'temp');});}
-  if(rec.weight){var we=document.getElementById('weightInput');if(we)we.value=rec.weight;}
-  if(rec.sleepIn){var btns=document.querySelectorAll('#sleepInBtns .btn');btns.forEach(function(b){if(b.textContent===rec.sleepIn)sel(b,'sleepIn');});}
-  if(rec.sleepOut){var btns=document.querySelectorAll('#sleepOutBtns .btn');btns.forEach(function(b){if(b.textContent===rec.sleepOut)sel(b,'sleepOut');});}
-  if(rec.choshi){var btns=document.querySelectorAll('#choshiBtns .btn');btns.forEach(function(b){if(b.textContent===rec.choshi)sel(b,'choshi');});}
-  if(rec.ystFatigue){var btns=document.querySelectorAll('#ystFatigueBtns .btn');btns.forEach(function(b){if(b.textContent===rec.ystFatigue)sel(b,'ystFatigue');});}
-  if(rec.ystSatisfaction){var btns=document.querySelectorAll('#ystSatisfactionBtns .btn');btns.forEach(function(b){if(b.textContent===rec.ystSatisfaction)sel(b,'ystSatisfaction');});}
-  var condEl=document.getElementById('condNote');if(condEl&&rec.condNote)condEl.value=rec.condNote;
-  var diaryEl=document.getElementById('yesterdayDiary');if(diaryEl&&rec.diary)diaryEl.value=rec.diary;
-  var tmrEl=document.getElementById('tomorrowNote');if(tmrEl&&rec.tomorrowNote)tmrEl.value=rec.tomorrowNote;
-  // 便通復元
-  if(rec.bOtsu){
-    const rm={'○':'o','×':'x','△':'d'};
-    const am=rec.bOtsu.match(/朝:([○×△])/),im=rec.bOtsu.match(/以降:([○×△])/);
-    if(am&&rm[am[1]])selBowel('bAsa',rm[am[1]]);
-    if(im&&rm[im[1]])selBowel('bIgo',rm[im[1]]);
-  }
-  // 体調タブに切り替え
-  switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
-  renderCal('body');
-  toast('体調を編集中: '+date,'ok');
+  if(!getBodyLog(date)){toast('編集できる体調データがありません','err');return;}
+  openBodyDateForEdit(date);
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast('体調を編集中（保存先 '+mdLabel(date)+'）','ok');
 }
 
 // ══════════════════════════════════════════
@@ -2496,6 +2896,7 @@ function exportCSV(){
 //  DB MANAGER
 // ══════════════════════════════════════════
 let dbTabMode='all'; // 'all' | 'custom'
+let _dbListCache=[];
 let dbCatFilter='すべて';
 
 function switchDBTab(mode,btn){
@@ -2516,7 +2917,7 @@ function renderDB(){
   const cats=['すべて',...new Set(allFoods.map(f=>f.cat))];
   const catEl=document.getElementById('dbCatFilter');
   if(catEl){
-    catEl.innerHTML=cats.map(c=>`<div class="fcat${c===dbCatFilter?' active':''}" onclick="setDBCat('${c}')">${c}</div>`).join('');
+    catEl.innerHTML=cats.map(c=>`<div class="fcat${c===dbCatFilter?' active':''}" data-act="setDBCat" data-cat="${escHtml(c)}">${escHtml(c)}</div>`).join('');
   }
 
   let list=dbTabMode==='custom'?customs:[...FOOD_DB,...customs];
@@ -2526,19 +2927,20 @@ function renderDB(){
   const el=document.getElementById('dbList');
   if(!list.length){el.innerHTML='<div class="empty">該当する食材がありません</div>';return;}
 
-  el.innerHTML=list.map(f=>`
-    <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:7px;${f.custom?'border-left:3px solid var(--purple);':''}">
-      <div style="display:flex;align-items:flex-start;gap:8px;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:700;margin-bottom:3px;">${f.custom?'⭐ ':''}${f.name} <span style="font-size:10px;color:var(--muted);font-weight:400;">[${f.cat}]</span></div>
-          <div style="font-size:10px;color:var(--muted);line-height:1.8;">
-            ${f.kcal}kcal / P:${f.p}g F:${f.f}g C:${f.c}g<br>
-            繊維:${f.fi||0}g　Na:${f.na||0}mg　<span style="font-size:9px;color:#3a3a55;">（100gあたり）</span>
+  _dbListCache=list;
+  el.innerHTML=list.map((f,i)=>`
+    <div class="db-card${f.custom?' custom':''}">
+      <div class="db-row">
+        <div class="db-info">
+          <div class="db-name">${f.custom?'⭐ ':''}${escHtml(f.name)} <span class="db-cat">[${escHtml(f.cat)}]</span></div>
+          <div class="db-meta">
+            ${escHtml(f.kcal)}kcal / P:${escHtml(f.p)}g F:${escHtml(f.f)}g C:${escHtml(f.c)}g<br>
+            繊維:${escHtml(f.fi||0)}g　Na:${escHtml(f.na||0)}mg　<span class="db-per">（100gあたり）</span>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
-          <button style="min-height:32px;padding:0 11px;background:rgba(168,85,247,.12);border:1px solid var(--purple);border-radius:6px;color:var(--purple);font-size:11px;cursor:pointer;" onclick="openEditFood(${JSON.stringify(f).replace(/"/g,'&quot;')})">編集</button>
-          ${f.custom?`<button style="min-height:32px;padding:0 11px;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:11px;cursor:pointer;" onclick="deleteFood('${f.id}')">削除</button>`:''}
+        <div class="db-acts">
+          <button class="db-btn edit" data-act="editFood" data-idx="${i}">編集</button>
+          ${f.custom?`<button class="db-btn del" data-act="deleteFood" data-id="${escHtml(f.id)}">削除</button>`:''}
         </div>
       </div>
     </div>`).join('');
@@ -2591,6 +2993,7 @@ function saveEditFood(){
   }
   localStorage.setItem('tkd_custom_foods',JSON.stringify(customs));
   buildFoodCats();renderDB();closeModal('editFoodModal');
+  syncCustomFoodsToGAS();
   toast(`「${name}」を更新しました`,'ok');
 }
 
@@ -2601,6 +3004,7 @@ function deleteFood(id){
   if(!confirm(`「${target.name}」を削除しますか？`))return;
   localStorage.setItem('tkd_custom_foods',JSON.stringify(customs.filter(f=>f.id!==id)));
   buildFoodCats();renderDB();
+  syncCustomFoodsToGAS();
   toast(`「${target.name}」を削除しました`,'ok');
 }
 
@@ -2679,46 +3083,124 @@ function drawQR(text){
 //  スプシ双方向同期
 // ══════════════════════════════════════════
 
-async function syncFromSheets(){
-  const url=getGasUrl();
-  if(!url){toast('Sheets連携が未設定です','err');return;}
-  toast('スプシからデータ読み込み中...','ok');
-  try{
-    const payload=encodeURIComponent(JSON.stringify({type:'getlogs'}));
-    const r=await fetch(url+'?payload='+payload);
-    const j=await r.json();
-    if(j.status!=='ok'){toast('読み込み失敗','err');return;}
-    let imported=0;
-    // 体調・練習データ
-    (j.bodyLogs||[]).forEach(rec=>{
-      if(!rec.date)return;
-      const existing=getBodyLog(rec.date)||{};
-      // ローカルにない or スプシの方が新しければ上書き
-      if(!existing.date){
-        setBodyLog(rec.date,{...rec,synced:true});
-        imported++;
-      }
-    });
-    // 食事データ
-    (j.foodLogs||[]).forEach(rec=>{
-      if(!rec.date)return;
-      const existing=getFoodLog(rec.date)||{};
-      if(!existing.date){
-        setFoodLog(rec.date,{...rec,synced:true});
-        imported++;
-      }
-    });
-    renderHistory();renderCal('body');renderCal('food');
-    toast(imported?`✓ ${imported}件のデータを読み込みました`:'新しいデータはありませんでした','ok');
-  }catch(e){
-    toast('読み込みに失敗しました','err');
+// getday の応答 → この端末の記録形式へ変換（スプシ読込・食事の既存読込で使う）
+function normTime(v){
+  if(v===null||v===undefined||v==='')return '';
+  const s=String(v);
+  const m=s.match(/^(\d{1,2}):(\d{2})/);
+  if(m)return (+m[1])+':'+m[2];
+  const d=new Date(s);
+  if(!isNaN(d.getTime()))return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+  return s;
+}
+function strOrEmpty(v){return (v===null||v===undefined)?'':String(v);}
+const TR_JP={category:'種別',name:'種目',setNo:'セット番号',weight:'重量(kg)',reps:'回数',minPerRound:'時間(分)',kcal:'消費kcal',memo:'メモ',speed:'速度(km/h)',incline:'傾斜(%)'};
+function normTrainingSet(s,date){
+  if(Array.isArray(s)){
+    return {date:toSlash(s[0]||date),category:strOrEmpty(s[1]),name:strOrEmpty(s[2]),setNo:s[3]||'',weight:strOrEmpty(s[4]),reps:strOrEmpty(s[5]),
+      minPerRound:strOrEmpty(s[6]),kcal:s[7]||'',memo:strOrEmpty(s[8]),speed:s[9]||'',incline:s[10]||''};
   }
+  const g=k=>(s[k]!==undefined&&s[k]!==null)?s[k]:s[TR_JP[k]];
+  return {date:toSlash(date),category:strOrEmpty(g('category')),name:strOrEmpty(g('name')),setNo:g('setNo')||'',weight:strOrEmpty(g('weight')),
+    reps:strOrEmpty(g('reps')),minPerRound:strOrEmpty(g('minPerRound')),kcal:g('kcal')||'',memo:strOrEmpty(g('memo')),speed:g('speed')||'',incline:g('incline')||''};
+}
+function normFoodItem(it){
+  const g=(k,jp)=>(it[k]!==undefined&&it[k]!==null)?it[k]:it[jp];
+  let na=parseFloat(g('na','Na(mg)'));
+  if(isNaN(na)){const naG=parseFloat(it.naG!==undefined?it.naG:it['Na(g)']);na=isNaN(naG)?0:naG*1000;}
+  return {meal:strOrEmpty(g('meal','食事タイミング')),name:strOrEmpty(g('name','食材名')),grams:parseFloat(g('grams','グラム(g)'))||0,
+    kcal:parseFloat(g('kcal','カロリー(kcal)'))||0,p:parseFloat(g('p','P(g)'))||0,f:parseFloat(g('f','F(g)'))||0,
+    c:parseFloat(g('c','C(g)'))||0,fi:parseFloat(g('fi','繊維(g)'))||0,na};
+}
+function dayToBodyRec(day){
+  const date=toDash(day.date);
+  const c=day.condition||{};
+  const auto=day.auto||{};
+  const g=k=>{const v=pickCond(c,k);return (v===undefined||v===null)?'':String(v);};
+  const sets=(asArray(day.training,'sets')||[]).map(s=>normTrainingSet(s,date));
+  const rec={date,type:'body',synced:true,fromSheet:true,
+    temp:g('temp'),weight:g('weight')||strOrEmpty(auto.weight),sleepIn:normTime(pickCond(c,'sleepIn')),sleepOut:normTime(pickCond(c,'sleepOut')),
+    bOtsu:g('bowel'),choshi:g('choshi'),condNote:g('condNote'),diary:g('diary'),tomorrowNote:g('tomorrowNote'),
+    ystFatigue:g('fatigue'),ystSatisfaction:g('satisfaction'),ystRpe:g('rpe'),water:g('water')};
+  Object.keys(rec).forEach(k=>{if(rec[k]==='')delete rec[k];});
+  if(sets.length)rec.trainingSets=sets;
+  rec.hasMorning=!!(rec.temp||rec.weight||rec.sleepIn||rec.sleepOut);
+  rec.hasTraining=!!(sets.length||rec.bOtsu||rec.choshi||rec.condNote);
+  rec.hasDiary=!!(rec.diary||rec.tomorrowNote||rec.ystFatigue||rec.ystSatisfaction||rec.ystRpe);
+  if(!rec.hasMorning&&!rec.hasTraining&&!rec.hasDiary)return null;
+  rec.text=buildBodyText(rec);
+  return rec;
+}
+function dayToFoodRec(day){
+  const items=(asArray(day.food,'items')||[]).map(normFoodItem).filter(it=>it.name);
+  if(!items.length)return null;
+  return buildFoodRec(toDash(day.date),items,(day.food&&!Array.isArray(day.food)&&day.food.note)||'',true);
+}
+
+// スプシ読込：trends で記録のある日を調べ、この端末に無い日だけ getday で取り込む
+async function syncFromSheets(ev){
+  if(!getGasUrl()){toast('Sheets連携が未設定です','err');return;}
+  const btn=ev&&ev.currentTarget;
+  if(btn&&!beginSave(btn))return;
+  const done=()=>{if(btn){btn.dataset.busy='';btn.disabled=false;btn.textContent=btn.dataset.label;}};
+  toast('スプシからデータ読み込み中...','ok');
+  const t=await gasJsonp({action:'trends',days:28},{timeout:20000});
+  if(!gasOk(t)||!Array.isArray(t.rows)){done();toast('⚠ 読み込み失敗：'+outboxErrorText(t.error||'badresponse'),'err');return;}
+  const want=t.rows.filter(r=>r&&r.date&&['weight','sleepMin','rpe','condition','kcalIn'].some(k=>r[k]!==null&&r[k]!==undefined&&r[k]!==''))
+    .map(r=>toDash(r.date)).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&(!getBodyLog(d)||!getFoodLog(d)));
+  let imported=0,failed=0;
+  for(const d of want){
+    const day=await gasJsonp({action:'getday',date:toSlash(d)});
+    if(!gasOk(day)){failed++;if(isUnauthorized(day)||day.error==='network')break;continue;}
+    day.date=day.date||toSlash(d);
+    if(!getBodyLog(d)){const b=dayToBodyRec(day);if(b){setBodyLog(d,b);imported++;}}
+    if(!getFoodLog(d)){const f=dayToFoodRec(day);if(f){setFoodLog(d,f);imported++;}}
+  }
+  done();
+  renderHistory();renderCal('body');renderCal('food');
+  if(failed)toast(`⚠ ${imported}件読み込み・${failed}日分は失敗しました`,'err');
+  else toast(imported?`✓ ${imported}件のデータを読み込みました`:'新しいデータはありませんでした','ok');
 }
 
 // ══════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function escHtml(s){
+  return String(s===undefined||s===null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+// onclick への文字列埋め込みをやめ、data-act 属性＋イベント委譲で処理する（' を含む食品名でも壊れない）
+function initDelegation(){
+  document.addEventListener('click',function(e){
+    const el=e.target.closest('[data-act]');
+    if(!el)return;
+    const d=el.dataset;
+    switch(d.act){
+      case 'pickFood':pickFoodObj(d.food);break;
+      case 'selectCat':selectCat(el,d.cat);break;
+      case 'setDBCat':setDBCat(d.cat);break;
+      case 'editFood':{const f=_dbListCache[+d.idx];if(f)openEditFood(f);break;}
+      case 'deleteFood':deleteFood(d.id);break;
+      case 'applyRec':applyRec(d.id);break;
+      case 'delRec':delRec(d.id);break;
+      case 'delLog':delLog(d.date);break;
+      case 'editFoodLog':editFoodLog(d.date);break;
+      case 'editBodyLog':editBodyLog(d.date);break;
+      case 'editTrainingLog':editTrainingLog(d.date);break;
+    }
+  });
+}
+function initA11y(){
+  document.querySelectorAll('.sec-head').forEach(function(h){
+    h.setAttribute('role','button');h.setAttribute('tabindex','0');
+    h.setAttribute('aria-expanded',h.classList.contains('open')?'true':'false');
+    h.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleSec(h);}});
+  });
+  document.querySelectorAll('.mtab').forEach(function(t){
+    t.setAttribute('role','button');t.setAttribute('tabindex','0');
+    t.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();t.click();}});
+  });
+}
 let _tt;
 function toast(msg,type=''){
   const t=document.getElementById('toast');t.textContent=msg;
@@ -2730,37 +3212,21 @@ function toast(msg,type=''){
 function getAdviceGasUrl(){return localStorage.getItem('tkd_advice_gas_url')||'';}
 function setAdviceGasUrl(u){localStorage.setItem('tkd_advice_gas_url',u);}
 
-function fetchAdvice(){
-  var url=getAdviceGasUrl();
+async function fetchAdvice(){
+  const url=getAdviceGasUrl()||getGasUrl();
   if(!url){console.log('[advice] adviceGasUrl未設定');return;}
-  var card=document.getElementById('adviceCard');
-  var body=document.getElementById('adviceCardBody');
-  var loading=document.getElementById('adviceLoading');
+  const card=document.getElementById('adviceCard');
+  const body=document.getElementById('adviceCardBody');
+  const loading=document.getElementById('adviceLoading');
   card.style.display='block';
   body.textContent='';
+  loading.textContent='⏳ AIがデータを分析中...（15〜30秒）';
   loading.style.display='block';
-  var cbName='_adviceCb_'+Date.now();
-  var timeout=setTimeout(function(){
-    loading.textContent='⚠ タイムアウト（60秒）';
-    delete window[cbName];
-  },60000);
-  window[cbName]=function(res){
-    clearTimeout(timeout);
-    loading.style.display='none';
-    delete window[cbName];
-    if(res&&res.ok){
-      body.textContent=res.advice||'（アドバイスなし）';
-    }else{
-      body.textContent='⚠ エラー: '+(res&&res.error||'不明');
-    }
-  };
-  var s=document.createElement('script');
-  s.src=url+'?action=advice&callback='+cbName;
-  s.onerror=function(){
-    clearTimeout(timeout);loading.style.display='none';
-    body.textContent='⚠ 通信エラー';delete window[cbName];
-  };
-  document.body.appendChild(s);
+  const res=await gasJsonp({action:'advice'},{url,timeout:60000});
+  loading.style.display='none';
+  if(gasOk(res))body.textContent=res.advice||'（アドバイスなし）';
+  else if(res.error==='timeout')body.textContent='⚠ タイムアウト（60秒）';
+  else body.textContent='⚠ '+(isUnauthorized(res)?outboxErrorText('unauthorized'):'エラー: '+(res.error||'不明'));
 }
 
 // ══════════════════════════════════════════
@@ -2775,9 +3241,7 @@ function fetchAdvice(){
 // config.jsの設定を自動適用（localStorageより優先）
 (function applyConfig(){
   if(typeof TKD_CONFIG === 'undefined') return;
-  if(TKD_CONFIG.gasUrl && TKD_CONFIG.gasUrl.startsWith('https://script.google.com/macros/s/')){
-    setGasUrl(TKD_CONFIG.gasUrl);
-  }
+  // TKD_CONFIG.gasUrl は未使用（送信先は DEFAULT_GAS_URL が正）
   if(TKD_CONFIG.sheetUrl && TKD_CONFIG.sheetUrl.startsWith('https://')){
     localStorage.setItem('tkd_sheet_url', TKD_CONFIG.sheetUrl);
   }
@@ -2809,10 +3273,20 @@ buildTrainingUI();
 buildFoodCats();
 initCal('body');
 initCal('food');
+loadBodyForm();
+loadFoodForDate(CAL.food.sel);
 renderHistory();
 renderDB();
 updateGasInd();
 updateBswBadges();
+initA11y();
+initDelegation();
+document.getElementById('foodNote').addEventListener('input',markFoodDirty);
+// 未送信キュー：起動時と電波復帰時に自動再送
+updateOutboxInd();
+window.addEventListener('online',function(){flushQueue();});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&getOutbox().length)flushQueue();});
+setTimeout(function(){if(getOutbox().length)flushQueue();},1500);
 
 // ══════════════════════════════════════════
 //  よく使う食材 (利用回数管理)
@@ -2843,7 +3317,7 @@ function renderFrequentFoods(){
     const food=getAllFoods().find(f=>f.name===name);
     if(!food)return '';
     const enc=encodeURIComponent(JSON.stringify(food));
-    return `<div class="freq-chip" onclick="pickFoodObj('${enc}')">${name}<span class="freq-cnt">${cnt}</span></div>`;
+    return `<div class="freq-chip" data-act="pickFood" data-food="${escHtml(enc)}">${escHtml(name)}<span class="freq-cnt">${cnt}</span></div>`;
   }).filter(Boolean).join('');
 }
 
@@ -2862,10 +3336,8 @@ function renderFrequentFoods(){
     return;
   }
   try{
-    const payload=encodeURIComponent(JSON.stringify({type:'getcustomfoods'}));
-    const r=await fetch(url+'?payload='+payload);
-    const j=await r.json();
-    if(j.status==='ok'){
+    const j=await gasJsonp({action:'getcustomfoods'});
+    if(gasOk(j)){
       // ── カスタム食材 ──
       if(j.foods&&j.foods.length>0){
         const local=JSON.parse(localStorage.getItem('tkd_custom_foods')||'[]');
