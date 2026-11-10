@@ -366,6 +366,97 @@ textarea.tinput{resize:none;min-height:70px;}
 .fopt-badge.custom{background:rgba(168,85,247,.2);color:var(--purple);}
 .food-meal{color:var(--muted);font-size:11px;}
 .sec-head:focus-visible,.btn:focus-visible,.bnav-btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px;}
+
+/* ══ P3: 今日タブ（朝/夜の出し分け・自動値カード・固定保存バー）══ */
+.modebar{display:flex;gap:8px;align-items:stretch;margin-bottom:10px;}
+.date-pill{flex:0 0 auto;min-height:44px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:var(--panel);
+  color:var(--text);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;gap:4px;}
+.date-pill .chev{font-size:11px;}
+.mode-seg{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;background:var(--panel);border:1px solid var(--border);border-radius:10px;}
+.mode-btn{min-height:38px;border:none;border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;line-height:1.15;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.mode-btn small{font-size:11px;font-weight:400;opacity:.85;}
+.mode-btn.active{background:rgba(59,130,246,.16);color:var(--blue);}
+#entryModeTod.active{background:rgba(168,85,247,.16);color:var(--purple);}
+.cal-collapse{display:none;}
+.cal-collapse.open{display:block;}
+.habit{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--muted);}
+.streak{font-weight:700;color:var(--text);}
+.miss-banner{display:none;align-items:center;gap:8px;width:100%;padding:9px 11px;border:1px solid var(--gold);border-radius:8px;
+  background:rgba(245,158,11,.08);color:var(--gold);font-size:12px;}
+.miss-banner.show{display:flex;}
+.miss-banner span{flex:1;}
+.miss-banner button{min-height:36px;padding:0 12px;border:1px solid var(--gold);border-radius:6px;background:none;color:var(--gold);
+  font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.advice-top{margin-bottom:10px;padding:12px 14px;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:10px;}
+.advice-top[hidden]{display:none;}
+.advice-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.advice-head b{font-size:13px;color:var(--gold);flex:1;}
+.advice-head small{font-size:11px;color:var(--muted);}
+.advice-body{font-size:13px;line-height:1.75;color:var(--text);white-space:pre-wrap;}
+.advice-body.clamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.link-btn{background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;padding:6px 0;min-height:32px;font-family:'Noto Sans JP',sans-serif;}
+.auto-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
+.auto-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.auto-head b{font-size:13px;flex:1;}
+.auto-head small{font-size:11px;color:var(--muted);}
+.auto-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.auto-tile{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:8px 6px;min-height:62px;text-align:center;}
+.auto-tile .at-lbl{font-size:11px;color:var(--muted);}
+.auto-tile .at-val{font-size:17px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;}
+.auto-tile .at-val small{font-size:11px;font-weight:400;color:var(--muted);margin-left:1px;}
+.auto-tile .at-sub{font-size:11px;color:var(--muted);white-space:pre-line;line-height:1.35;}
+.auto-tile.miss .at-val{color:var(--muted);font-weight:400;font-size:14px;}
+.at-manual{margin-top:4px;min-height:30px;padding:0 8px;border:1px solid var(--blue);border-radius:6px;background:none;color:var(--blue);
+  font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.auto-msg{font-size:12px;color:var(--muted);padding:6px 0;}
+.auto-msg.err{color:var(--red-text);}
+.manual-box{display:none;margin-top:10px;}
+.manual-box.open{display:block;}
+.quick-tr{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+.quick-tr .btn{padding:0 6px;font-size:13px;}
+.tr-done{font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px;}
+.tr-done button{margin-left:auto;}
+.target-note{font-size:11px;color:var(--muted);font-weight:400;letter-spacing:0;font-family:'Noto Sans JP',sans-serif;}
+/* 朝/夜で中身を出し分け（すべて表示 = 編集時） */
+body[data-mode="morning"]:not(.show-all) [data-show="night"]:not(.force),
+body[data-mode="night"]:not(.show-all) [data-show="morning"]:not(.force){display:none !important;}
+#tab-body .section .sec-title{font-family:'Noto Sans JP',sans-serif;font-size:14px;letter-spacing:1px;font-weight:700;}
+.savebar{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));z-index:90;
+  background:linear-gradient(to top,var(--dark) 70%,rgba(9,9,15,0));padding:10px 12px 8px;}
+.savebar-in{max-width:480px;margin:0 auto;}
+.savebar .save-btn{margin-top:0;}
+.savebar .save-status{margin:0 0 6px;}
+#tab-body main{padding-bottom:calc(var(--nav-h) + 96px + env(safe-area-inset-bottom));}
+body[data-tab="body"] .toast{bottom:calc(var(--nav-h) + 84px + env(safe-area-inset-bottom));}
+.after-save{margin:0 0 10px;}
+.after-save[hidden]{display:none;}
+
+/* ══ P3: 推移グラフ（インラインSVG）══ */
+.seg2{display:inline-flex;gap:4px;padding:3px;background:var(--panel);border:1px solid var(--border);border-radius:10px;}
+.seg2 button{min-height:36px;min-width:64px;border:none;border-radius:7px;background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.seg2 button.active{background:var(--panel2);color:var(--text);}
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 12px 8px;margin-bottom:8px;}
+.chart-head{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;}
+.chart-head b{font-size:13px;flex:1;}
+.chart-head .ch-val{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;}
+.chart-head .ch-val small{font-size:11px;color:var(--muted);font-weight:400;margin-left:2px;}
+.chart-legend{display:flex;gap:10px;font-size:11px;color:var(--muted);margin-bottom:2px;}
+.chart-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px;}
+.chart-svg{display:block;width:100%;height:auto;overflow:visible;}
+.chart-svg text{font-size:10px;fill:var(--muted);font-family:'Noto Sans JP',sans-serif;}
+.chart-read{font-size:11px;color:var(--muted);min-height:16px;margin-top:2px;font-variant-numeric:tabular-nums;}
+.chart-empty{font-size:12px;color:var(--muted);padding:14px 0;text-align:center;}
+.mini-charts{display:grid;grid-template-columns:1fr;gap:0;}
+/* 食事タブ：取込状況 */
+.intake-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
+.intake-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.intake-cell{background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px;}
+.intake-cell .ic-lbl{font-size:11px;color:var(--muted);}
+.intake-cell .ic-val{font-size:18px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;}
+.intake-cell .ic-val small{font-size:11px;color:var(--muted);font-weight:400;margin-left:2px;}
+.intake-cell .ic-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.back-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 </style>
 </head>
 <body>
@@ -389,6 +480,10 @@ textarea.tinput{resize:none;min-height:70px;}
     <div style="margin-top:14px;">
       <div class="modal-desc" style="margin-bottom:6px;">スプレッドシートURL（任意）<br><span style="font-size:11px;color:var(--muted);">保存するとヘッダーの「Sheets」ボタンから直接開けます</span></div>
       <input class="cf-inp" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%;">
+    </div>
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
+      <div class="modal-desc" style="margin-bottom:8px;">🗃 食材DB<br><span style="font-size:11px;color:var(--muted);">カスタム食材の追加・編集・スプシへのバックアップ</span></div>
+      <button class="btn" style="width:100%;font-size:12px;" onclick="closeModal('gasModal');switchTab('db')">食材DBを開く</button>
     </div>
     <!-- デバイス引き継ぎ -->
     <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">
@@ -464,227 +559,285 @@ textarea.tinput{resize:none;min-height:70px;}
   </div>
 </header>
 
-<!-- ══ TAB: 体調・練習 ══ -->
+<!-- ══ TAB: 今日（朝／夜で中身が変わる）══ -->
 <div class="tab-pane active" id="tab-body">
 <main>
 
-<!-- カレンダー -->
+<!-- 最上部：日付ピル（タップでカレンダー）＋朝/夜モード（＝練習・体調・日記の保存先） -->
+<div class="modebar">
+  <button class="date-pill" id="datePill" type="button" onclick="toggleBodyCal()" aria-expanded="false" aria-controls="bodyCal"><span id="datePillText"></span><span class="chev">▾</span></button>
+  <div class="mode-seg" role="group" aria-label="記録モード（保存先）">
+    <button class="mode-btn" id="entryModeYst" type="button" onclick="setEntryMode('yesterday')">🌅 朝</button>
+    <button class="mode-btn" id="entryModeTod" type="button" onclick="setEntryMode('today')">🌙 夜</button>
+  </div>
+</div>
+
+<!-- カレンダー（折りたたみ） -->
+<div class="cal-collapse" id="bodyCal">
 <div class="cal-wrap">
   <div class="cal-nav">
-    <button class="cal-nav-btn" onclick="changeMonth('body',-1)">‹</button>
+    <button class="cal-nav-btn" onclick="changeMonth('body',-1)" aria-label="前の月">‹</button>
     <div class="cal-title" id="calTitleBody"></div>
-    <button class="cal-nav-btn" onclick="changeMonth('body',1)">›</button>
+    <button class="cal-nav-btn" onclick="changeMonth('body',1)" aria-label="次の月">›</button>
   </div>
   <div class="cal-grid" id="calGridBody"></div>
   <div class="cal-sel-label" id="calLabelBody"></div>
 </div>
-
-<!-- ブロック切り替え -->
-<!-- 朝の記録ブロック（体温/睡眠 + 昨日の練習・体調・振り返り） -->
-<div id="blockMorning">
-  <!-- 体温 -->
-  <div class="section">
-    <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">🌡</div><div class="sec-title">今日の体温</div><span class="chev open">▾</span>
-    </div>
-    <div class="sec-body open">
-      <div class="bgrp" id="tempBtns">
-        <button class="btn" onclick="sel(this,'temp')">36.4</button>
-        <button class="btn" onclick="sel(this,'temp')">36.5</button>
-        <button class="btn" onclick="sel(this,'temp')">36.6</button>
-        <button class="btn" onclick="sel(this,'temp')">36.7</button>
-        <button class="btn other" onclick="sel(this,'temp')">その他</button>
-      </div>
-      <input type="number" step="0.1" inputmode="decimal" class="tinput" id="tempOther" placeholder="例: 36.9" style="display:none;">
-      <div class="car-prof" style="margin-top:12px;margin-bottom:0;">
-        <div><span class="slabel">体重(kg) <span style="color:var(--muted);">※当日朝</span></span>
-          <input type="number" inputmode="decimal" step="0.1" class="tinput" id="mWeight" placeholder="kg" style="margin-top:0;" oninput="onProfileInput()"></div>
-        <div><span class="slabel">身長(cm) <span style="color:var(--muted);">※一度だけ</span></span>
-          <input type="number" inputmode="decimal" class="tinput" id="mHeight" placeholder="cm" style="margin-top:0;" oninput="onProfileInput()"></div>
-        <div><span class="slabel">基礎代謝(kcal) <span style="color:var(--muted);">※タニタ値</span></span>
-          <input type="number" inputmode="numeric" class="tinput" id="mBmr" placeholder="例: 1350" style="margin-top:0;" oninput="onProfileInput()"></div>
-      </div>
-    </div>
-  </div>
-  <!-- 睡眠 -->
-  <div class="section">
-    <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">🌙</div><div class="sec-title">昨夜の睡眠</div><span class="chev open">▾</span>
-    </div>
-    <div class="sec-body open">
-      <div class="sleep-grid">
-        <div>
-          <span class="flabel">入眠</span>
-          <div class="bgrp bgrp-v" id="sleepInBtns">
-            <button class="btn" onclick="sel(this,'sleepIn')">22:00</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">22:30</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">23:00</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">23:30</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">0:00</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">0:30</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">1:00</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">1:30</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">2:00</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">2:30</button>
-            <button class="btn" onclick="sel(this,'sleepIn')">3:00</button>
-            <button class="btn other" onclick="sel(this,'sleepIn')">その他</button>
-          </div>
-          <input type="time" class="tinput" id="sleepInOther" style="display:none;margin-top:7px;" oninput="updateSleepDuration()">
-        </div>
-        <div>
-          <span class="flabel">起床</span>
-          <div class="bgrp bgrp-v" id="sleepOutBtns">
-            <button class="btn" onclick="sel(this,'sleepOut')">6:00</button>
-            <button class="btn" onclick="sel(this,'sleepOut')">6:30</button>
-            <button class="btn" onclick="sel(this,'sleepOut')">7:00</button>
-            <button class="btn" onclick="sel(this,'sleepOut')">7:30</button>
-            <button class="btn" onclick="sel(this,'sleepOut')">8:00</button>
-            <button class="btn other" onclick="sel(this,'sleepOut')">その他</button>
-          </div>
-          <input type="time" class="tinput" id="sleepOutOther" style="display:none;margin-top:7px;" oninput="updateSleepDuration()">
-        </div>
-      </div>
-      <div id="sleepDuration" class="sleep-dur" style="display:none;"></div>
-    </div>
-  </div>
-  <!-- 昨日の体調 -->
-  <div class="section">
-    <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">01</div>
-      <div class="sec-title"><span id="condTitle">昨日の体調</span> <span id="yesterdayDateLabel" style="font-size:11px;color:var(--muted);font-weight:400;"></span></div>
-      <span class="chev open">▾</span>
-    </div>
-    <div class="sec-body open">
-      <span class="flabel">便通</span>
-      <div class="bowel-wrap">
-        <div class="bowel-row">
-          <div class="bowel-lbl">朝</div>
-          <div class="bowel-btns">
-            <button class="bowel-btn" id="bAsa_o" onclick="selBowel('bAsa','o')">○</button>
-            <button class="bowel-btn" id="bAsa_x" onclick="selBowel('bAsa','x')">×</button>
-            <button class="bowel-btn" id="bAsa_d" onclick="selBowel('bAsa','d')">△</button>
-          </div>
-        </div>
-        <div class="bowel-row">
-          <div class="bowel-lbl">以降</div>
-          <div class="bowel-btns">
-            <button class="bowel-btn" id="bIgo_o" onclick="selBowel('bIgo','o')">○</button>
-            <button class="bowel-btn" id="bIgo_x" onclick="selBowel('bIgo','x')">×</button>
-            <button class="bowel-btn" id="bIgo_d" onclick="selBowel('bIgo','d')">△</button>
-          </div>
-        </div>
-      </div>
-      <span class="flabel">調子</span>
-      <div class="bgrp" id="choshiBtns">
-        <button class="btn" onclick="sel(this,'choshi')">◎</button>
-        <button class="btn" onclick="sel(this,'choshi')">○</button>
-        <button class="btn" onclick="sel(this,'choshi')">△</button>
-        <button class="btn" onclick="sel(this,'choshi')">×</button>
-      </div>
-      <span class="flabel">水分（mL）</span>
-      <div class="btn-row">
-        <button class="btn" onclick="addWater(500)">+500</button>
-        <button class="btn" onclick="addWater(250)">+250</button>
-        <button class="btn" onclick="addWater(1000)">+1L</button>
-        <button class="btn" onclick="addWater(-250)">-250</button>
-        <input type="number" id="waterMl" class="tinput" style="width:80px;display:inline" placeholder="0" readonly>
-        <span style="font-size:0.85em;color:var(--muted)">mL</span>
-      </div>
-      <span class="flabel">メモ（体調）</span>
-      <textarea class="tinput" id="condNote" placeholder="例: 夜眠かった、筋肉痛なし..."></textarea>
-    </div>
-  </div>
-  <!-- 昨日のトレーニング -->
-  <div class="section">
-    <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">02</div><div class="sec-title" id="trainTitle">昨日のトレーニング</div><span class="chev open">▾</span>
-    </div>
-    <div class="sec-body open" id="trainingBody"></div>
-  </div>
-  <!-- 昨日の振り返り日記 -->
-  <div class="section">
-    <div class="sec-head open" onclick="toggleSec(this)">
-      <div class="sec-num">📖</div><div class="sec-title" id="diaryTitle">昨日の振り返り</div><span class="chev open">▾</span>
-    </div>
-    <div class="sec-body open">
-      <div id="diaryHint" style="padding:4px 0 8px;color:var(--muted);font-size:11px;">今朝書く昨日の記録。前日付で保存されます。</div>
-      <span class="flabel">総括・気づき</span>
-      <textarea class="tinput" id="yesterdayDiary" rows="4" placeholder="例: 練習は良かった。疲労感が残っている。食事を食べすぎた。明日は軽めに…"></textarea>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-        <div style="flex:1;min-width:130px;">
-          <span class="flabel">疲労度</span>
-          <div class="btn-row" id="ystFatigue">
-            <button class="btn" onclick="sel(this,'ystFatigue')">😴 かなり疲れた</button>
-            <button class="btn" onclick="sel(this,'ystFatigue')">😐 普通</button>
-            <button class="btn" onclick="sel(this,'ystFatigue')">😊 元気</button>
-          </div>
-        </div>
-        <div style="flex:1;min-width:130px;">
-          <span class="flabel">練習満足度</span>
-          <div class="btn-row" id="ystSatisfaction">
-            <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐⭐⭐ 最高</button>
-            <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐⭐ 良い</button>
-            <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐ もう少し</button>
-            <button class="btn" onclick="sel(this,'ystSatisfaction')">— 練習なし</button>
-          </div>
-        </div>
-      </div>
-      <div style="margin-top:10px;">
-        <span class="flabel">練習のきつさ RPE（1=楽 〜 10=限界）</span>
-        <div class="btn-row" id="ystRpe" style="flex-wrap:wrap;">
-          <button class="btn" onclick="sel(this,'ystRpe')">1</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">2</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">3</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">4</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">5</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">6</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">7</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">8</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">9</button>
-          <button class="btn" onclick="sel(this,'ystRpe')">10</button>
-        </div>
-      </div>
-      <div style="margin-top:10px;">
-        <span class="flabel">今日意識すること</span>
-        <textarea class="tinput" id="tomorrowNote" rows="2" placeholder="例: スパーリングに集中する。体重を意識して食事を調整。"></textarea>
-      </div>
-    </div>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 4px;">
-    <span class="flabel" style="margin:0;">練習・体調・日記の保存先</span>
-    <div class="btn-row" style="margin:0;">
-      <button class="btn" id="entryModeYst" onclick="setEntryMode('yesterday')">🌅 昨日の分</button>
-      <button class="btn" id="entryModeTod" onclick="setEntryMode('today')">🌙 今日の分</button>
-    </div>
-  </div>
-  <button class="save-btn blue" id="saveMorningBtn" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
-  <div class="save-status" id="saveMorningStatus" role="status"></div>
 </div>
 
-<!-- AIアドバイスカード -->
-<div id="adviceCard" style="display:none;margin:12px 0;padding:14px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;border:1px solid rgba(255,215,0,.2);">
-  <div style="font-size:13px;font-weight:600;color:#ffd700;margin-bottom:8px;">🤖 今日のアドバイス</div>
-  <div id="adviceCardBody" style="font-size:12px;line-height:1.8;color:#e0e0e0;white-space:pre-wrap;"></div>
-  <div id="adviceLoading" style="display:none;text-align:center;padding:20px;color:#aaa;font-size:12px;">
-    ⏳ AIがデータを分析中...（15〜30秒）
+<!-- 習慣化：連続記録日数／昨日分の未入力 -->
+<div class="habit">
+  <span id="streakText"></span>
+  <div class="miss-banner" id="missBanner" role="status"><span id="missText"></span><button type="button" onclick="openMissingYesterday()">入力する</button></div>
+</div>
+
+<!-- 最新のAIアドバイス（常時表示。取れなければ非表示） -->
+<div class="advice-top" id="adviceCard" hidden>
+  <div class="advice-head"><b>🤖 AIアドバイス</b><small id="adviceDate"></small></div>
+  <div class="advice-body clamp" id="adviceCardBody"></div>
+  <div id="adviceLoading" class="auto-msg" style="display:none;">⏳ AIがデータを分析中...（15〜30秒）</div>
+  <div style="display:flex;gap:12px;">
+    <button class="link-btn" id="adviceMore" type="button" onclick="toggleAdviceClamp()">全文を見る</button>
+    <button class="link-btn" id="adviceRefresh" type="button" onclick="fetchAdvice({manual:true})">↻ 作り直す</button>
   </div>
 </div>
 
-<!-- 分析パネル -->
-<div id="analysisPanel" class="ana-panel" style="display:none;">
-  <div class="ana-head" id="analysisTitle">📊 昨日の分析</div>
-  <div id="analysisContent" class="ana-body"></div>
-  <div class="ana-head" style="margin-top:10px;">📅 週間サマリー（過去7日）</div>
-  <div id="weeklyContent" class="ana-body"></div>
-  <div id="adviceContent" class="ana-advice"></div>
+<!-- 保存後：7日ミニグラフ -->
+<div class="after-save" id="afterSave" hidden>
+  <div class="chart-head" style="margin:4px 2px 6px;"><b>📈 この7日</b><button class="link-btn" type="button" onclick="switchTab('trends')">推移を見る →</button></div>
+  <div class="mini-charts" id="miniCharts"></div>
+</div>
+
+<!-- 自動で入る値（タニタ・Oura・カロミル）。表示専用 -->
+<div class="auto-card" id="autoCard" aria-live="polite">
+  <div class="auto-head"><b>⚡ 自動で入った値</b><small id="autoDate"></small><button class="link-btn" type="button" onclick="loadAutoValues(true)" aria-label="自動値を読み直す">↻</button></div>
+  <div id="autoMsg" class="auto-msg">読み込み中…</div>
+  <div class="auto-grid" id="autoGrid"></div>
+  <!-- 体重・基礎代謝の手入力（自動値が欠けたときだけ開く） -->
+  <div class="manual-box" id="manualBody">
+    <div class="car-prof" style="margin-bottom:0;">
+      <div><span class="slabel">体重(kg) ※当日朝</span>
+        <input type="number" inputmode="decimal" step="0.1" class="tinput" id="mWeight" placeholder="kg" style="margin-top:0;" oninput="onProfileInput()"></div>
+      <div><span class="slabel">基礎代謝(kcal)</span>
+        <input type="number" inputmode="numeric" class="tinput" id="mBmr" placeholder="例: 1350" style="margin-top:0;" oninput="onProfileInput()"></div>
+      <div><span class="slabel">身長(cm) ※一度だけ</span>
+        <input type="number" inputmode="decimal" class="tinput" id="mHeight" placeholder="cm" style="margin-top:0;" oninput="onProfileInput()"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 朝 ── -->
+<div class="section" data-show="morning">
+  <div class="sec-head open" onclick="toggleSec(this)">
+    <div class="sec-num">🌡</div><div class="sec-title">体温</div><span class="chev open">▾</span>
+  </div>
+  <div class="sec-body open">
+    <div class="bgrp" id="tempBtns">
+      <button class="btn" onclick="sel(this,'temp')">36.4</button>
+      <button class="btn" onclick="sel(this,'temp')">36.5</button>
+      <button class="btn" onclick="sel(this,'temp')">36.6</button>
+      <button class="btn" onclick="sel(this,'temp')">36.7</button>
+      <button class="btn other" onclick="sel(this,'temp')">その他</button>
+    </div>
+    <input type="number" step="0.1" inputmode="decimal" class="tinput" id="tempOther" placeholder="例: 36.9" style="display:none;">
+  </div>
+</div>
+
+<!-- 睡眠の手入力（自動値が欠けたときだけ表示） -->
+<div class="section" id="sleepSection" data-show="morning" style="display:none;">
+  <div class="sec-head open" onclick="toggleSec(this)">
+    <div class="sec-num">🌙</div><div class="sec-title">昨夜の睡眠（手入力）</div><span class="chev open">▾</span>
+  </div>
+  <div class="sec-body open">
+    <div class="sleep-grid">
+      <div>
+        <span class="flabel">入眠</span>
+        <div class="bgrp bgrp-v" id="sleepInBtns">
+          <button class="btn" onclick="sel(this,'sleepIn')">22:00</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">22:30</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">23:00</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">23:30</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">0:00</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">0:30</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">1:00</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">1:30</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">2:00</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">2:30</button>
+          <button class="btn" onclick="sel(this,'sleepIn')">3:00</button>
+          <button class="btn other" onclick="sel(this,'sleepIn')">その他</button>
+        </div>
+        <input type="time" class="tinput" id="sleepInOther" style="display:none;margin-top:7px;" oninput="updateSleepDuration()">
+      </div>
+      <div>
+        <span class="flabel">起床</span>
+        <div class="bgrp bgrp-v" id="sleepOutBtns">
+          <button class="btn" onclick="sel(this,'sleepOut')">6:00</button>
+          <button class="btn" onclick="sel(this,'sleepOut')">6:30</button>
+          <button class="btn" onclick="sel(this,'sleepOut')">7:00</button>
+          <button class="btn" onclick="sel(this,'sleepOut')">7:30</button>
+          <button class="btn" onclick="sel(this,'sleepOut')">8:00</button>
+          <button class="btn other" onclick="sel(this,'sleepOut')">その他</button>
+        </div>
+        <input type="time" class="tinput" id="sleepOutOther" style="display:none;margin-top:7px;" oninput="updateSleepDuration()">
+      </div>
+    </div>
+    <div id="sleepDuration" class="sleep-dur" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- 今朝の調子・便通（保存先＝モードの日付） -->
+<div class="section" data-show="morning">
+  <div class="sec-head open" onclick="toggleSec(this)">
+    <div class="sec-num">01</div>
+    <div class="sec-title"><span id="condTitle">今朝の調子</span> <span id="yesterdayDateLabel" class="target-note"></span></div>
+    <span class="chev open">▾</span>
+  </div>
+  <div class="sec-body open">
+    <span class="flabel">調子</span>
+    <div class="bgrp" id="choshiBtns">
+      <button class="btn" onclick="sel(this,'choshi')">◎</button>
+      <button class="btn" onclick="sel(this,'choshi')">○</button>
+      <button class="btn" onclick="sel(this,'choshi')">△</button>
+      <button class="btn" onclick="sel(this,'choshi')">×</button>
+    </div>
+    <span class="flabel">便通</span>
+    <div class="bowel-wrap">
+      <div class="bowel-row">
+        <div class="bowel-lbl">朝</div>
+        <div class="bowel-btns">
+          <button class="bowel-btn" id="bAsa_o" onclick="selBowel('bAsa','o')">○</button>
+          <button class="bowel-btn" id="bAsa_x" onclick="selBowel('bAsa','x')">×</button>
+          <button class="bowel-btn" id="bAsa_d" onclick="selBowel('bAsa','d')">△</button>
+        </div>
+      </div>
+      <div class="bowel-row">
+        <div class="bowel-lbl">以降</div>
+        <div class="bowel-btns">
+          <button class="bowel-btn" id="bIgo_o" onclick="selBowel('bIgo','o')">○</button>
+          <button class="bowel-btn" id="bIgo_x" onclick="selBowel('bIgo','x')">×</button>
+          <button class="bowel-btn" id="bIgo_d" onclick="selBowel('bIgo','d')">△</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 朝：練習が未記録なら 1タップで済ませる -->
+<div class="section" id="quickTrSection" data-show="morning">
+  <div class="sec-head open" onclick="toggleSec(this)">
+    <div class="sec-num">02</div><div class="sec-title">練習 <span id="quickTrDate" class="target-note"></span></div><span class="chev open">▾</span>
+  </div>
+  <div class="sec-body open">
+    <div class="quick-tr" id="quickTrBtns">
+      <button class="btn" id="qtNone" type="button" onclick="quickNoTraining()">練習なし</button>
+      <button class="btn" id="qtSame" type="button" onclick="copyLastTraining()">前回と同じ</button>
+      <button class="btn" id="qtDetail" type="button" onclick="openTrainingDetail()">詳しく</button>
+    </div>
+    <div class="tr-done" id="quickTrDone" style="display:none;"><span id="quickTrDoneText"></span><button class="btn" type="button" style="min-height:36px;font-size:12px;" onclick="openTrainingDetail()">編集</button></div>
+    <div id="quickTrNote" class="car-hint"></div>
+  </div>
+</div>
+
+<!-- ── 夜（朝は「詳しく」で開く）── -->
+<div class="section" id="trainSection" data-show="night">
+  <div class="sec-head open" onclick="toggleSec(this)">
+    <div class="sec-num">💪</div><div class="sec-title" id="trainTitle">今日のトレーニング</div><span class="chev open">▾</span>
+  </div>
+  <div class="sec-body open">
+    <button class="link-btn" type="button" onclick="copyLastTraining()" style="margin:-6px 0 4px;">↺ 前回と同じ内容を入れる</button>
+    <div id="trainingBody"></div>
+    <span class="flabel">練習のきつさ RPE（1=楽 〜 10=限界）</span>
+    <div class="btn-row" id="ystRpe">
+      <button class="btn" onclick="sel(this,'ystRpe')">1</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">2</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">3</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">4</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">5</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">6</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">7</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">8</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">9</button>
+      <button class="btn" onclick="sel(this,'ystRpe')">10</button>
+    </div>
+  </div>
+</div>
+
+<div class="section" data-show="night">
+  <div class="sec-head open" onclick="toggleSec(this)">
+    <div class="sec-num">📖</div><div class="sec-title" id="diaryTitle">今日の振り返り</div><span class="chev open">▾</span>
+  </div>
+  <div class="sec-body open">
+    <div id="diaryHint" style="padding:0 0 8px;color:var(--muted);font-size:11px;"></div>
+    <span class="flabel">日記（総括・気づき）</span>
+    <textarea class="tinput" id="yesterdayDiary" rows="4" placeholder="例: 練習は良かった。疲労感が残っている。明日は軽めに…"></textarea>
+    <span class="flabel">明日への一言</span>
+    <textarea class="tinput" id="tomorrowNote" rows="2" placeholder="例: スパーリングに集中する。"></textarea>
+    <span class="flabel">水分（mL）</span>
+    <div class="btn-row">
+      <button class="btn" onclick="addWater(500)">+500</button>
+      <button class="btn" onclick="addWater(250)">+250</button>
+      <button class="btn" onclick="addWater(1000)">+1L</button>
+      <button class="btn" onclick="addWater(-250)">-250</button>
+      <input type="number" id="waterMl" class="tinput" style="width:80px;display:inline;margin-top:0;" placeholder="0" readonly>
+      <span style="font-size:12px;color:var(--muted)">mL</span>
+    </div>
+  </div>
+</div>
+
+<!-- 詳しく（疲労・満足度・メモ・減量期向けの数値） -->
+<div class="section" id="detailSection">
+  <div class="sec-head" onclick="toggleSec(this)">
+    <div class="sec-num">⋯</div><div class="sec-title">詳しく <span class="target-note">疲労・満足度・メモ・収支</span></div><span class="chev">▾</span>
+  </div>
+  <div class="sec-body">
+    <span class="flabel">疲労度</span>
+    <div class="btn-row" id="ystFatigue">
+      <button class="btn" onclick="sel(this,'ystFatigue')">😴 かなり疲れた</button>
+      <button class="btn" onclick="sel(this,'ystFatigue')">😐 普通</button>
+      <button class="btn" onclick="sel(this,'ystFatigue')">😊 元気</button>
+    </div>
+    <span class="flabel">練習満足度</span>
+    <div class="btn-row" id="ystSatisfaction">
+      <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐⭐⭐ 最高</button>
+      <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐⭐ 良い</button>
+      <button class="btn" onclick="sel(this,'ystSatisfaction')">⭐ もう少し</button>
+      <button class="btn" onclick="sel(this,'ystSatisfaction')">— 練習なし</button>
+    </div>
+    <span class="flabel">メモ（体調）</span>
+    <textarea class="tinput" id="condNote" placeholder="例: 夜眠かった、筋肉痛なし..."></textarea>
+    <span class="flabel">表示</span>
+    <button class="btn" id="showAllBtn" type="button" onclick="toggleShowAll()" aria-pressed="false">朝・夜の項目をすべて表示</button>
+    <!-- 減量期向け：エネルギー収支・週間サマリー（保存後に表示） -->
+    <div id="analysisPanel" class="ana-panel" style="display:none;">
+      <div class="ana-head" id="analysisTitle">📊 昨日の分析</div>
+      <div id="analysisContent" class="ana-body"></div>
+      <div class="ana-head" style="margin-top:10px;">📅 週間サマリー（過去7日）</div>
+      <div id="weeklyContent" class="ana-body"></div>
+      <div id="adviceContent" class="ana-advice"></div>
+    </div>
+  </div>
 </div>
 
 </main>
+<!-- 保存ボタン（画面下・ナビの上に固定） -->
+<div class="savebar">
+  <div class="savebar-in">
+    <div class="save-status" id="saveMorningStatus" role="status"></div>
+    <button class="save-btn blue" id="saveMorningBtn" onclick="saveMorning()">🌅 朝の記録を保存 →</button>
+  </div>
+</div>
 </div>
 
 <!-- ══ TAB: 食事 ══ -->
 <div class="tab-pane" id="tab-food">
 <main>
+<!-- カロミル→Gemini の自動取込状況（昨日・今日） -->
+<div class="intake-card" aria-live="polite">
+  <div class="auto-head"><b>📥 食事の自動取込</b><small>カロミル → スプシ</small><button class="link-btn" type="button" onclick="renderIntakeStatus(true)" aria-label="取込状況を読み直す">↻</button></div>
+  <div id="intakeMsg" class="auto-msg">読み込み中…</div>
+  <div class="intake-grid" id="intakeGrid"></div>
+</div>
+<div class="flabel" style="margin:4px 2px 8px;">手入力（取込に無いものだけ）</div>
 <div class="cal-wrap">
   <div class="cal-nav">
     <button class="cal-nav-btn" onclick="changeMonth('food',-1)">‹</button>
@@ -759,6 +912,21 @@ textarea.tinput{resize:none;min-height:70px;}
 </main>
 </div>
 
+<!-- ══ TAB: 推移 ══ -->
+<div class="tab-pane" id="tab-trends">
+<main>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+    <div class="seg2" role="group" aria-label="期間">
+      <button type="button" id="trd7" class="active" onclick="setTrendDays(7)">7日</button>
+      <button type="button" id="trd28" onclick="setTrendDays(28)">28日</button>
+    </div>
+    <button class="link-btn" type="button" style="margin-left:auto;" onclick="loadTrends(true)">↻ 読み直す</button>
+  </div>
+  <div id="trendMsg" class="auto-msg"></div>
+  <div id="trendCharts"></div>
+</main>
+</div>
+
 <!-- ══ TAB: 記録 ══ -->
 <div class="tab-pane" id="tab-history">
 <main>
@@ -779,6 +947,7 @@ textarea.tinput{resize:none;min-height:70px;}
 <!-- ══ TAB: 食材DB ══ -->
 <div class="tab-pane" id="tab-db">
 <main>
+  <div class="back-row"><button class="btn" type="button" onclick="switchTab('food')">← 食事へ戻る</button><b style="font-size:14px;">🗃 食材DB</b></div>
   <!-- 検索・フィルター -->
   <div style="display:flex;gap:8px;margin-bottom:10px;">
     <input type="search" class="tinput" id="dbSearch" placeholder="🔍 食材名を検索..." oninput="renderDB()" style="flex:1;margin-top:0;">
@@ -828,17 +997,17 @@ textarea.tinput{resize:none;min-height:70px;}
 
 <!-- BOTTOM NAV -->
 <nav class="bnav" aria-label="メイン">
-  <button class="bnav-btn active" aria-current="page" onclick="switchTab('body',this)">
-    <span class="bnav-icon">💪</span>体調・練習
+  <button class="bnav-btn active" aria-current="page" data-tab="body" onclick="switchTab('body',this)">
+    <span class="bnav-icon">☀</span>今日
   </button>
-  <button class="bnav-btn" onclick="switchTab('food',this)">
-    <span class="bnav-icon">🍽</span>食事・栄養
+  <button class="bnav-btn" data-tab="trends" onclick="switchTab('trends',this)">
+    <span class="bnav-icon">📈</span>推移
   </button>
-  <button class="bnav-btn" onclick="switchTab('history',this)">
+  <button class="bnav-btn" data-tab="history" onclick="switchTab('history',this)">
     <span class="bnav-icon">📅</span>記録
   </button>
-  <button class="bnav-btn" onclick="switchTab('db',this)">
-    <span class="bnav-icon">🗃</span>食材DB
+  <button class="bnav-btn" data-tab="food" onclick="switchTab('food',this)">
+    <span class="bnav-icon">🍽</span>食事
   </button>
 </nav>
 
@@ -1051,7 +1220,7 @@ function renderCal(tab){
 function selDay(tab,s){
   if(tab==='food'&&!confirmFoodSwitch(s))return;
   CAL[tab].sel=s;renderCal(tab);updateBswBadges();
-  if(tab==='body')loadBodyForm();
+  if(tab==='body'){loadBodyForm();toggleBodyCal(false);loadAutoValues();}
   if(tab==='food')loadFoodForDate(s);
 }
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
@@ -1456,14 +1625,19 @@ function toggleTr(key){
   b.classList.toggle('show',TR_ACTIVE[key]);
   if(h)h.classList.toggle('open',TR_ACTIVE[key]);
 }
+// ナビ：今日／推移／記録／食事（食材DBは⚙から開く。ナビには出さない）
 function switchTab(name,btn){
-  ['body','food','history','db'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===name));
+  ['body','trends','history','food','db'].forEach(t=>document.getElementById('tab-'+t).classList.toggle('active',t===name));
+  if(!btn)btn=document.querySelector('.bnav-btn[data-tab="'+(name==='db'?'food':name)+'"]');
   document.querySelectorAll('.bnav-btn').forEach(b=>{b.classList.remove('active');b.removeAttribute('aria-current');});
   if(btn){btn.classList.add('active');btn.setAttribute('aria-current','page');}
+  document.body.dataset.tab=name;
   window.scrollTo(0,0);
   if(name==='history')renderHistory();
-  if(name==='food')renderCal('food');
+  if(name==='food'){renderCal('food');renderIntakeStatus();}
   if(name==='db')renderDB();
+  if(name==='trends')loadTrends();
+  if(name==='body'){renderHabit();renderAdviceTop();}
 }
 function openModal(id){
   document.getElementById(id).classList.add('show');
@@ -2032,6 +2206,7 @@ function setEntryMode(m,opts){
     b.textContent=(m==='today')?'🌙 今日の記録を保存 →':'🌅 朝の記録を保存 →';
     b.dataset.label=b.textContent;b.classList.remove('done');
   }
+  document.body.dataset.mode=(m==='today')?'night':'morning';
   updateEntryModeLabels();
   if(!opts||opts.reload!==false)loadEntryTarget(); // モードを切り替えたら保存先の記録を読み直す
 }
@@ -2040,19 +2215,33 @@ function updateEntryModeLabels(){
   const y=document.getElementById('entryModeYst'),t=document.getElementById('entryModeTod');
   const sel=CAL.body.sel;
   if(!sel||!y||!t)return;
-  y.textContent='🌅 昨日の分 ('+mdLabel(getYesterdayDate(sel))+')';
-  t.textContent='🌙 今日の分 ('+mdLabel(sel)+')';
+  // モード＝保存先。朝は体調・練習・日記を前日分、夜は選択日分として保存（getEntryTargetDate と同じ規則）
+  y.innerHTML='🌅 朝<small>→ '+mdLabel(getYesterdayDate(sel))+'分</small>';
+  t.innerHTML='🌙 夜<small>→ '+mdLabel(sel)+'分</small>';
+  y.setAttribute('aria-label','朝モード：体調・練習・日記を '+mdLabel(getYesterdayDate(sel))+' 分として保存');
+  t.setAttribute('aria-label','夜モード：体調・練習・日記を '+mdLabel(sel)+' 分として保存');
+  const dp=document.getElementById('datePillText');
+  if(dp){const isToday=sel===fmt(new Date());dp.textContent=(isToday?'今日 ':'')+mdLabel(sel)+'('+DOW[new Date(sel+'T00:00:00').getDay()]+')';}
+}
+// 日付ピル：カレンダーの開閉（画面上部を空けるため既定は閉）
+function toggleBodyCal(force){
+  const c=document.getElementById('bodyCal'),p=document.getElementById('datePill');
+  if(!c)return;
+  const o=(typeof force==='boolean')?force:!c.classList.contains('open');
+  c.classList.toggle('open',o);
+  if(p)p.setAttribute('aria-expanded',o?'true':'false');
 }
 // 見出しの「昨日の〜／今日の〜」をモードで切り替え
 function updateEntryHeadings(target){
   const today=(ENTRY_MODE==='today');
   const word=today?'今日':'昨日';
   const set=(id,txt)=>{const el=document.getElementById(id);if(el)el.textContent=txt;};
-  set('condTitle',word+'の体調');
-  set('trainTitle',word+'のトレーニング');
+  set('condTitle',today?'今日の体調':'今朝の調子');
+  set('trainTitle',word+'のトレーニング'+(target?'（'+mdLabel(target)+'分）':''));
   set('diaryTitle',word+'の振り返り');
   set('diaryHint',today?'夜に書く今日の記録。選択した日付で保存されます。':'今朝書く昨日の記録。前日付で保存されます。');
-  set('yesterdayDateLabel',target?'('+mdLabel(target)+'の記録)':'');
+  set('yesterdayDateLabel',target?'→ '+mdLabel(target)+'分として保存':'');
+  set('quickTrDate',target?'（'+mdLabel(target)+'分）':'');
   set('analysisTitle','📊 '+word+'の分析');
 }
 
@@ -2117,6 +2306,8 @@ function loadEntryTarget(){
   setChoice('ystSatisfaction',rec.ystSatisfaction);
   setChoice('ystRpe',rec.ystRpe);
   restoreTraining(rec);
+  QUICK_TR='';
+  renderQuickTr();
 }
 var loadYesterdayDiary=loadEntryTarget; // 旧名の互換
 function loadBodyForm(){loadMorningFields(CAL.body.sel);loadEntryTarget();}
@@ -2270,7 +2461,7 @@ async function saveMorning(){
   // 分析用の値は送信前に確保
   const cardioKcal=CARDIO_LIST.reduce((s,c)=>s+(c.kcal||0),0);
   const cardioSteps=CARDIO_LIST.reduce((s,c)=>s+(c.exSteps||0),0);
-  const knownWeight=parseFloat(weight)||parseFloat((getBodyLog(trTarget)||{}).weight)||0; // 不明なら 0（58kg 仮定はしない）
+  const knownWeight=parseFloat(weight)||autoNum(date,'weight')||parseFloat((getBodyLog(trTarget)||{}).weight)||0; // 不明なら 0（58kg 仮定はしない）
   const bmr=getProfileBmr();
 
   const flushRes=await flushQueue();
@@ -2278,9 +2469,14 @@ async function saveMorning(){
   // 保存した内容でフォームを読み直す（次の保存で練習記録を取りこぼさないように）
   loadBodyForm();
   renderHistory();
+  renderHabit();
+  // 保存後：7日ミニグラフ（端末に保存できていれば送信の成否にかかわらず出す）
+  showAfterSave();
   if(ok){
     // アドバイス生成は朝モードのみ（夜モードは翌朝の保存時に昨日分として生成される）
-    if(ENTRY_MODE!=='today')fetchAdvice();
+    if(ENTRY_MODE!=='today')fetchAdvice({manual:true});
+    window.scrollTo({top:0,behavior:'smooth'}); // 上部のアドバイスと7日グラフを見せる
+    // 減量期向けの収支・週間サマリーは「詳しく」の中に出す
     setTimeout(function(){fetchAndRenderAnalysis(trTarget,cardioKcal,cardioSteps,knownWeight,bmr);},500);
   }
 }
@@ -2830,7 +3026,7 @@ function editFoodLog(date){
   if(!confirmFoodSwitch(date))return;
   CAL.food.sel=date;
   const [y,m]=date.split('-').map(Number);CAL.food.year=y;CAL.food.month=m-1;
-  switchTab('food',document.querySelectorAll('.bnav-btn')[1]);
+  switchTab('food');
   loadFoodForDate(date);
   toast('食事を編集中: '+date,'ok');
 }
@@ -2840,7 +3036,7 @@ function openBodyDateForEdit(date){
   CAL.body.sel=date;
   const [y,m]=date.split('-').map(Number);CAL.body.year=y;CAL.body.month=m-1;
   setEntryMode('today',{reload:false});
-  switchTab('body',document.querySelectorAll('.bnav-btn')[0]);
+  switchTab('body');
   renderCal('body');
   loadBodyForm();
   updateBswBadges();
@@ -2855,6 +3051,8 @@ function editTrainingLog(date){
 function editBodyLog(date){
   if(!getBodyLog(date)){toast('編集できる体調データがありません','err');return;}
   openBodyDateForEdit(date);
+  // 夜モード（保存先＝その日）で開くため、体温・睡眠など朝の項目も出す
+  if(!document.body.classList.contains('show-all'))toggleShowAll();
   window.scrollTo({top:0,behavior:'smooth'});
   toast('体調を編集中（保存先 '+mdLabel(date)+'）','ok');
 }
@@ -3212,21 +3410,435 @@ function toast(msg,type=''){
 function getAdviceGasUrl(){return localStorage.getItem('tkd_advice_gas_url')||'';}
 function setAdviceGasUrl(u){localStorage.setItem('tkd_advice_gas_url',u);}
 
-async function fetchAdvice(){
+// ── AIアドバイス：最新の1件を端末に保持し、「今日」タブ上部に常時表示 ──
+// action=advice は呼ぶたびに Gemini で生成する（無料枠を消費）ため、起動時には呼ばない。
+// 生成は「朝の保存後」と「↻ 作り直す」だけ。表示は端末に残した最新の1件（tkd_last_advice）。
+const ADVICE_KEY='tkd_last_advice';
+function getLastAdvice(){try{return JSON.parse(localStorage.getItem(ADVICE_KEY)||'null');}catch(e){return null;}}
+function renderAdviceTop(errText){
+  const card=document.getElementById('adviceCard');if(!card)return;
+  const body=document.getElementById('adviceCardBody'),dt=document.getElementById('adviceDate');
+  const more=document.getElementById('adviceMore'),refresh=document.getElementById('adviceRefresh');
   const url=getAdviceGasUrl()||getGasUrl();
-  if(!url){console.log('[advice] adviceGasUrl未設定');return;}
+  if(!url){
+    card.hidden=false;body.textContent='アドバイスURL未設定';dt.textContent='';
+    more.style.display='none';refresh.style.display='none';return;
+  }
+  refresh.style.display='';
+  const a=getLastAdvice();
+  if(!a||!a.text){
+    if(errText){card.hidden=false;body.textContent=errText;dt.textContent='';more.style.display='none';}
+    else card.hidden=true; // 取れていなければ出さない
+    return;
+  }
+  card.hidden=false;
+  body.textContent=a.text+(errText?'\n\n'+errText:'');
+  const at=a.at?new Date(a.at):null;
+  dt.textContent=(a.date?mdLabel(toDash(a.date))+'分':'')+(at?' · '+(at.getMonth()+1)+'/'+at.getDate()+' '+at.getHours()+':'+String(at.getMinutes()).padStart(2,'0')+' 作成':'');
+  more.style.display=(a.text.length>90||a.text.split('\n').length>4)?'':'none';
+}
+function toggleAdviceClamp(){
+  const b=document.getElementById('adviceCardBody'),m=document.getElementById('adviceMore');
+  const c=b.classList.toggle('clamp');m.textContent=c?'全文を見る':'たたむ';
+}
+let _adviceBusy=false;
+async function fetchAdvice(opts){
+  opts=opts||{};
+  const url=getAdviceGasUrl()||getGasUrl();
+  if(!url){console.log('[advice] adviceGasUrl未設定');renderAdviceTop();return;}
+  if(_adviceBusy)return;
+  _adviceBusy=true;
   const card=document.getElementById('adviceCard');
-  const body=document.getElementById('adviceCardBody');
   const loading=document.getElementById('adviceLoading');
-  card.style.display='block';
-  body.textContent='';
-  loading.textContent='⏳ AIがデータを分析中...（15〜30秒）';
+  const refresh=document.getElementById('adviceRefresh');
+  card.hidden=false;
   loading.style.display='block';
+  if(refresh)refresh.disabled=true;
+  if(!getLastAdvice())document.getElementById('adviceCardBody').textContent='';
   const res=await gasJsonp({action:'advice'},{url,timeout:60000});
   loading.style.display='none';
-  if(gasOk(res))body.textContent=res.advice||'（アドバイスなし）';
-  else if(res.error==='timeout')body.textContent='⚠ タイムアウト（60秒）';
-  else body.textContent='⚠ '+(isUnauthorized(res)?outboxErrorText('unauthorized'):'エラー: '+(res.error||'不明'));
+  if(refresh)refresh.disabled=false;
+  _adviceBusy=false;
+  if(gasOk(res)&&res.advice){
+    try{localStorage.setItem(ADVICE_KEY,JSON.stringify({text:String(res.advice),date:res.date||'',at:Date.now()}));}catch(e){}
+    renderAdviceTop();
+    return;
+  }
+  let err;
+  if(gasOk(res))err='（アドバイスなし）';
+  else if(res.error==='timeout')err='⚠ アドバイスを作れませんでした（60秒で時間切れ）';
+  else err='⚠ アドバイスを作れませんでした：'+(isUnauthorized(res)?outboxErrorText('unauthorized'):(res.error||'不明'));
+  renderAdviceTop(opts.manual?err:'');
+}
+
+// ── 自動値（getday の auto / food）：日付ごとにメモリへ保持 ──
+const DAY_CACHE={}; // date(YYYY-MM-DD) → {status:'loading'|'ok'|'err', day, error, at, p}
+function getDayCached(date,force){
+  const c=DAY_CACHE[date];
+  if(c&&!force){
+    if(c.status==='loading')return c.p;
+    if(c.status==='ok'&&Date.now()-c.at<5*60*1000)return Promise.resolve(c);
+  }
+  const ent={status:'loading',at:Date.now()};
+  ent.p=gasJsonp({action:'getday',date:toSlash(date)},{timeout:15000}).then(function(r){
+    if(gasOk(r)){ent.status='ok';ent.day=r;}
+    else{ent.status='err';ent.error=r.error||'badresponse';}
+    ent.at=Date.now();
+    return ent;
+  });
+  DAY_CACHE[date]=ent;
+  return ent.p;
+}
+function autoNum(date,k){
+  const c=DAY_CACHE[date];
+  const v=c&&c.status==='ok'&&c.day.auto?c.day.auto[k]:null;
+  const n=parseFloat(v);
+  return (v===null||v===undefined||v===''||isNaN(n))?null:n;
+}
+function fmtMin(m){if(m===null||m===undefined||isNaN(m))return '—';m=Math.round(m);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0');}
+function foodSummary(day){
+  const items=(asArray(day&&day.food,'items')||[]).map(normFoodItem).filter(it=>it.name);
+  const kcal=items.reduce((s,it)=>s+(it.kcal||0),0);
+  const meals=[...new Set(items.map(it=>it.meal).filter(Boolean))];
+  return {n:items.length,kcal:Math.round(kcal),meals};
+}
+let _autoSeq=0;
+async function loadAutoValues(force){
+  const sel=CAL.body.sel;if(!sel)return;
+  const yst=getYesterdayDate(sel);
+  const seq=++_autoSeq;
+  const msg=document.getElementById('autoMsg');
+  const dt=document.getElementById('autoDate');
+  if(dt)dt.textContent=mdLabel(sel)+' 時点';
+  if(!getGasUrl()){renderAuto(sel,null,null,'nourl');return;}
+  if(msg){msg.className='auto-msg';msg.textContent='読み込み中…';msg.style.display='';}
+  const [a,b]=await Promise.all([getDayCached(sel,force),getDayCached(yst,force)]);
+  if(seq!==_autoSeq||CAL.body.sel!==sel)return; // 途中で日付が変わった
+  renderAuto(sel,a.status==='ok'?a.day:null,b.status==='ok'?b.day:null,a.status==='ok'?'':a.error);
+}
+function tileHtml(lbl,val,unit,sub,manual,manualLabel){
+  const miss=(val===null||val===undefined||val==='');
+  if(!miss&&manual&&manualLabel)return tileHtml(lbl,val,unit,sub,'','').replace(/<\/div>$/,'<button class="at-manual" type="button" onclick="'+manual+'">'+escHtml(manualLabel)+'</button></div>');
+  return '<div class="auto-tile'+(miss?' miss':'')+'"><div class="at-lbl">'+escHtml(lbl)+'</div>'
+    +'<div class="at-val">'+(miss?'—':escHtml(val)+(unit?'<small>'+escHtml(unit)+'</small>':''))+'</div>'
+    +(sub?'<div class="at-sub">'+escHtml(sub)+'</div>':'')
+    +(miss&&manual?'<button class="at-manual" type="button" onclick="'+manual+'">手入力</button>':'')+'</div>';
+}
+function renderAuto(sel,day,yday,error){
+  const msg=document.getElementById('autoMsg'),grid=document.getElementById('autoGrid');
+  if(!grid)return;
+  const a=(day&&day.auto)||{},ya=(yday&&yday.auto)||{};
+  const num=v=>{const n=parseFloat(v);return (v===null||v===undefined||v===''||isNaN(n))?null:n;};
+  const w=num(a.weight),bf=num(a.bodyFat),bmr=num(a.bmr);
+  const sl=num(a.sleepMin),deep=num(a.deepMin);
+  const sIn=a.sleepIn?normTime(a.sleepIn):'',sOut=a.sleepOut?normTime(a.sleepOut):'';
+  let steps=num(a.steps),stepsLbl='歩数（今日）';
+  if(num(ya.steps)!==null){steps=num(ya.steps);stepsLbl='歩数（昨日）';} // 1日分そろった前日を優先
+  const rhr=num(a.restingHr),hrv=num(a.hrv);
+  const fT=foodSummary(day),fY=foodSummary(yday);
+  if(error){msg.className='auto-msg err';msg.textContent='⚠ 自動値を取得できませんでした（'+outboxErrorText(error)+'）。必要なら手入力してください。';msg.style.display='';}
+  else msg.style.display='none';
+  // 体重・基礎代謝が自動で入っていれば計算用プロフィールに反映（入力欄は空のまま＝送らない）
+  if(w!==null||bmr!==null){
+    try{const p=JSON.parse(localStorage.getItem('tkd_profile')||'{}');if(w!==null)p.wt=w;if(bmr!==null)p.bmr=bmr;localStorage.setItem('tkd_profile',JSON.stringify(p));}catch(e){}
+  }
+  const bodySub=[bf!==null?'体脂肪 '+bf+'%':'',bmr!==null?'代謝 '+Math.round(bmr):''].filter(Boolean).join('\n');
+  const needBody=(w===null||bmr===null);
+  let h='';
+  h+=tileHtml('体重',w!==null?w.toFixed(1):null,'kg',bodySub,needBody?'openManualBody()':'',(w!==null&&bmr===null)?'代謝を手入力':'');
+  h+=tileHtml('睡眠',sl!==null?fmtMin(sl):null,'',(sIn&&sOut)?sIn+'→'+sOut:'',(!sIn||!sOut)?'openManualSleep()':'',(sl!==null&&(!sIn||!sOut))?'入眠・起床を手入力':'');
+  h+=tileHtml('深い睡眠',deep!==null?Math.round(deep):null,'分','','');
+  h+=tileHtml(stepsLbl,steps!==null?Math.round(steps).toLocaleString():null,'','','');
+  h+=tileHtml('心拍 / HRV',(rhr!==null||hrv!==null)?(rhr!==null?Math.round(rhr):'—')+' / '+(hrv!==null?Math.round(hrv):'—'):null,'','安静時 / ms','');
+  h+=tileHtml('食事取込',day?(fT.n?fT.n+'品':'未取込'):null,'',yday?'昨日 '+(fY.n?fY.n+'品':'なし'):'','');
+  grid.innerHTML=h;
+  // 睡眠の入力欄は自動値（入眠/起床）が無いときだけ。端末に手入力の記録があれば出す
+  const sleepSec=document.getElementById('sleepSection');
+  const hasManualSleep=!!(getV('sleepIn')||getV('sleepOut'));
+  if(sleepSec&&(hasManualSleep||MANUAL_OPEN.sleep))sleepSec.style.display='';
+  else if(sleepSec)sleepSec.style.display=(sIn&&sOut)?'none':sleepSec.style.display;
+  const mb=document.getElementById('manualBody');
+  const hasManualW=!!((document.getElementById('mWeight')||{}).value);
+  if(mb)mb.classList.toggle('open',hasManualW||MANUAL_OPEN.body);
+}
+const MANUAL_OPEN={body:false,sleep:false};
+function openManualBody(){
+  MANUAL_OPEN.body=true;
+  const mb=document.getElementById('manualBody');if(mb)mb.classList.add('open');
+  const w=document.getElementById('mWeight');if(w)w.focus();
+}
+function openManualSleep(){
+  MANUAL_OPEN.sleep=true;
+  const s=document.getElementById('sleepSection');if(!s)return;
+  s.style.display='';
+  s.classList.add('force'); // 夜モードでも開けるように
+  s.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── 練習：朝は「練習なし／前回と同じ／詳しく」の1タップ ──
+var QUICK_TR=''; // '' | 'none' | 'same' | 'detail'
+function hasTrainingInForm(){
+  return STR_SETS.length>0||CARDIO_LIST.length>0||Object.keys(TR_ACTIVE).some(k=>TR_ACTIVE[k]);
+}
+function renderQuickTr(){
+  const sel=CAL.body.sel;if(!sel)return;
+  const target=getEntryTargetDate(sel);
+  const rec=getBodyLog(target)||{};
+  const btns=document.getElementById('quickTrBtns'),done=document.getElementById('quickTrDone'),doneTxt=document.getElementById('quickTrDoneText');
+  const note=document.getElementById('quickTrNote');
+  const recorded=(rec.trainingSets&&rec.trainingSets.length)||rec.ystSatisfaction==='— 練習なし';
+  ['qtNone','qtSame','qtDetail'].forEach(id=>{const b=document.getElementById(id);if(b){const on=(id==='qtNone'&&QUICK_TR==='none')||(id==='qtSame'&&QUICK_TR==='same')||(id==='qtDetail'&&QUICK_TR==='detail');b.classList.toggle('active',on);b.setAttribute('aria-pressed',on);}});
+  if(recorded&&!QUICK_TR){
+    if(btns)btns.style.display='none';
+    if(done)done.style.display='flex';
+    if(doneTxt)doneTxt.textContent='✓ '+mdLabel(target)+'の練習は記録済み（'+(rec.ystSatisfaction==='— 練習なし'&&!(rec.trainingSets||[]).length?'練習なし':trainingLabel(rec.trainingSets))+'）';
+    if(note)note.textContent='';
+  }else{
+    if(btns)btns.style.display='';
+    if(done)done.style.display='none';
+  }
+  const ts=document.getElementById('trainSection');
+  if(ts)ts.classList.toggle('force',QUICK_TR==='same'||QUICK_TR==='detail');
+}
+function trainingLabel(sets){
+  sets=sets||[];
+  const cats={};sets.forEach(s=>{const c=s.category||'その他';cats[c]=(cats[c]||0)+1;});
+  return Object.keys(cats).map(c=>c==='筋トレ'?'筋トレ'+cats[c]+'セット':c).join('・')||'なし';
+}
+function quickNoTraining(){
+  if(QUICK_TR==='none'){ // もう一度押したら取り消し
+    QUICK_TR='';setChoice('ystSatisfaction',(getBodyLog(getEntryTargetDate())||{}).ystSatisfaction);
+    document.getElementById('quickTrNote').textContent='';renderQuickTr();return;
+  }
+  QUICK_TR='none';
+  restoreTraining({});
+  setChoice('ystSatisfaction','— 練習なし');
+  document.getElementById('quickTrNote').textContent='「練習なし」として '+mdLabel(getEntryTargetDate())+' 分に保存します。';
+  renderQuickTr();
+}
+// 直近の練習記録（保存先より前の日）を探す
+function findLastTraining(before){
+  const dates=[...getBodyLogDates()].filter(d=>d<before).sort().reverse();
+  for(const d of dates){const r=getBodyLog(d);if(r&&r.trainingSets&&r.trainingSets.length)return {date:d,sets:r.trainingSets};}
+  return null;
+}
+function copyLastTraining(){
+  const target=getEntryTargetDate();
+  const last=findLastTraining(target);
+  const note=document.getElementById('quickTrNote');
+  if(!last){toast('前回の練習記録がこの端末にありません（記録タブの「スプシ読込」で取り込めます）','err');return;}
+  QUICK_TR='same';
+  restoreTraining({trainingSets:last.sets.map(s=>Object.assign({},s,{date:toSlash(target)}))});
+  if(getV('ystSatisfaction')==='— 練習なし')setChoice('ystSatisfaction',null);
+  if(note)note.textContent=mdLabel(last.date)+' の練習（'+trainingLabel(last.sets)+'）を入れました。直して保存すると '+mdLabel(target)+' 分になります。';
+  renderQuickTr();
+}
+function openTrainingDetail(){
+  QUICK_TR='detail';
+  if(getV('ystSatisfaction')==='— 練習なし'&&!hasTrainingInForm())setChoice('ystSatisfaction',null);
+  renderQuickTr();
+  const ts=document.getElementById('trainSection');
+  if(ts)setTimeout(function(){ts.scrollIntoView({behavior:'smooth',block:'start'});},50);
+}
+function toggleShowAll(){
+  const on=document.body.classList.toggle('show-all');
+  const b=document.getElementById('showAllBtn');
+  if(b){b.classList.toggle('active',on);b.setAttribute('aria-pressed',on);}
+  if(on){const s=document.getElementById('sleepSection');if(s)s.style.display='';}
+}
+
+// ── 習慣化：連続記録日数／昨日分の未入力（端末の記録から算出）──
+function hasAnyBody(d){const r=getBodyLog(d);return !!(r&&(r.hasMorning||r.hasTraining||r.hasDiary));}
+// 今日まだなら昨日から数える。昨日分は翌朝に入れる運用なので、昨日も未入力なら一昨日から数えて「保留中」とする
+function calcStreak(){
+  let d=fmt(new Date()),pending=false;
+  if(!hasAnyBody(d))d=getYesterdayDate(d);
+  if(!hasAnyBody(d)){d=getYesterdayDate(d);pending=true;}
+  let n=0;
+  while(hasAnyBody(d)&&n<3650){n++;d=getYesterdayDate(d);}
+  return {n,pending:pending&&n>0};
+}
+function renderHabit(){
+  const st=document.getElementById('streakText');
+  if(st){const s=calcStreak();st.innerHTML=s.n?'🔥 <span class="streak">'+s.n+'日</span> 連続で記録中'+(s.pending?'（昨日分を入れると継続）':''):'記録を続けると連続日数が出ます';}
+  const y=getYesterdayDate(fmt(new Date()));
+  const r=getBodyLog(y);
+  const missing=!(r&&(r.hasTraining||r.hasDiary));
+  const bn=document.getElementById('missBanner');
+  if(bn){bn.classList.toggle('show',missing);document.getElementById('missText').textContent='昨日（'+mdLabel(y)+'）の体調・練習が未入力です';}
+}
+function openMissingYesterday(){
+  const today=fmt(new Date());
+  if(CAL.body.sel!==today){CAL.body.sel=today;const t=new Date();CAL.body.year=t.getFullYear();CAL.body.month=t.getMonth();renderCal('body');loadBodyForm();loadAutoValues();}
+  if(ENTRY_MODE!=='yesterday')setEntryMode('yesterday');
+  const el=document.getElementById('condTitle');
+  if(el)el.closest('.section').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── 推移：trends をインラインSVGで（外部ライブラリなし。null は線を切る）──
+const TREND={days:7,cache:{}};
+const CHOSHI_NUM={'◎':4,'○':3,'△':2,'×':1};
+function setTrendDays(n){
+  TREND.days=n;
+  document.getElementById('trd7').classList.toggle('active',n===7);
+  document.getElementById('trd28').classList.toggle('active',n===28);
+  loadTrends();
+}
+async function fetchTrends(days,force){
+  const c=TREND.cache[days];
+  if(c&&!force&&Date.now()-c.at<5*60*1000)return c.r;
+  const r=await gasJsonp({action:'trends',days:days},{timeout:20000});
+  if(gasOk(r)&&Array.isArray(r.rows))TREND.cache[days]={r,at:Date.now()};
+  return r;
+}
+async function loadTrends(force){
+  const msg=document.getElementById('trendMsg'),box=document.getElementById('trendCharts');
+  if(!box)return;
+  const days=TREND.days;
+  if(!getGasUrl()){msg.textContent='送信先が未設定です';return;}
+  msg.className='auto-msg';msg.textContent='読み込み中…';
+  const r=await fetchTrends(days,force);
+  if(TREND.days!==days)return;
+  if(!gasOk(r)||!Array.isArray(r.rows)){msg.className='auto-msg err';msg.textContent='⚠ 推移を取得できませんでした（'+outboxErrorText(r.error||'badresponse')+'）';return;}
+  msg.textContent='';
+  box.innerHTML=trendChartsHtml(r.rows,false);
+}
+function trendSpecs(){
+  return [
+    {key:'weight',title:'体重',unit:'kg',type:'line',color:'var(--gold)',dec:1},
+    {key:'sleepMin',title:'睡眠時間',unit:'',type:'bar',color:'var(--blue)',fmt:fmtMin,overlay:'deepMin',
+      legend:[['睡眠','var(--blue)',.35],['深い睡眠','var(--blue)',1]]},
+    {key:'rpe',title:'練習のきつさ RPE',unit:'',type:'bar',color:'var(--red)',min:0,max:10,dec:0},
+    {key:'condition',title:'調子',unit:'',type:'line',color:'var(--green)',min:1,max:4,map:v=>CHOSHI_NUM[String(v).trim()]||null,
+      fmt:v=>({4:'◎',3:'○',2:'△',1:'×'})[v]||'—',yLabels:{4:'◎',1:'×'}},
+    {key:'kcalIn',title:'摂取カロリー',unit:'kcal',type:'bar',color:'var(--green)',min:0,dec:0,fmt:v=>Math.round(v).toLocaleString()+'kcal'},
+  ];
+}
+function trendChartsHtml(rows,mini){
+  let specs=trendSpecs();
+  if(mini)specs=specs.filter(s=>['weight','sleepMin','rpe'].includes(s.key));
+  return specs.map(s=>chartCardHtml(rows,s,mini)).join('');
+}
+function chartVal(s,row,key){
+  const v=row?row[key||s.key]:null;
+  if(v===null||v===undefined||v==='')return null;
+  if(s.map&&(!key||key===s.key))return s.map(v);
+  const n=parseFloat(v);return isNaN(n)?null:n;
+}
+function fmtChartVal(s,v){
+  if(v===null)return '—';
+  if(s.fmt)return s.fmt(v);
+  return (s.dec!==undefined?Number(v).toFixed(s.dec):String(v))+(s.unit?s.unit:'');
+}
+function chartCardHtml(rows,s,mini){
+  rows=(rows||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const vals=rows.map(r=>chartVal(s,r));
+  let lastI=-1;for(let i=vals.length-1;i>=0;i--){if(vals[i]!==null){lastI=i;break;}}
+  const head='<div class="chart-head"><b>'+escHtml(s.title)+'</b>'
+    +(lastI>=0?'<span class="ch-val">'+escHtml(fmtChartVal(s,vals[lastI]))+'<small>'+escHtml(mdLabel(toDash(rows[lastI].date)))+'</small></span>':'')+'</div>';
+  const legend=s.legend?'<div class="chart-legend">'+s.legend.map(l=>'<span><i style="background:'+l[1]+';opacity:'+l[2]+'"></i>'+escHtml(l[0])+'</span>').join('')+'</div>':'';
+  if(lastI<0)return '<div class="chart-card">'+head+'<div class="chart-empty">データなし</div></div>';
+  return '<div class="chart-card" data-chart="'+escHtml(s.key)+'">'+head+legend+chartSvg(rows,vals,s,mini)
+    +'<div class="chart-read" aria-live="polite">'+(mini?'':'グラフをタップで値を表示')+'</div></div>';
+}
+function chartSvg(rows,vals,s,mini){
+  const W=340,H=mini?64:96,L=30,R=6,T=6,B=16;
+  const n=rows.length,pw=W-L-R,ph=H-T-B;
+  const ov=s.overlay?rows.map(r=>chartVal(s,r,s.overlay)):null;
+  const present=vals.filter(v=>v!==null);
+  let mn=(s.min!==undefined)?s.min:Math.min.apply(null,present);
+  let mx=(s.max!==undefined)?s.max:Math.max.apply(null,present);
+  if(s.type==='bar'&&s.min===undefined)mn=0;
+  if(mx===mn){mx+=1;if(s.min===undefined&&s.type!=='bar')mn-=1;}
+  if(s.type==='line'&&s.min===undefined){const pad=(mx-mn)*.15;mn-=pad;mx+=pad;}
+  const step=pw/n;
+  const x=i=>L+step*(i+.5);
+  const y=v=>T+ph-(v-mn)/(mx-mn)*ph;
+  let g='';
+  // 軸：基線と上端の目盛り（最小限）
+  g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+(T+ph)+'" y2="'+(T+ph)+'" stroke="var(--border)" stroke-width="1"/>';
+  g+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+T+'" y2="'+T+'" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 3"/>';
+  const yl=s.yLabels||{};
+  const topLbl=yl[s.max]!==undefined?yl[s.max]:(s.fmt?s.fmt(mx):(s.dec===0?Math.round(mx):mx.toFixed(1)));
+  const botLbl=yl[s.min]!==undefined?yl[s.min]:(s.type==='bar'&&s.min===undefined?'0':(s.fmt?s.fmt(mn):(s.dec===0?Math.round(mn):mn.toFixed(1))));
+  g+='<text x="'+(L-4)+'" y="'+(T+4)+'" text-anchor="end">'+escHtml(topLbl)+'</text>';
+  g+='<text x="'+(L-4)+'" y="'+(T+ph)+'" text-anchor="end">'+escHtml(botLbl)+'</text>';
+  // 日付ラベル：最初・中央・最後
+  const idx=[0,Math.floor((n-1)/2),n-1].filter((v,i,a)=>a.indexOf(v)===i);
+  idx.forEach(i=>{g+='<text x="'+x(i)+'" y="'+(H-3)+'" text-anchor="middle">'+escHtml(mdLabel(toDash(rows[i].date)))+'</text>';});
+  if(s.type==='bar'){
+    const bw=Math.max(2,Math.min(18,step*.62));
+    vals.forEach((v,i)=>{
+      if(v===null)return;
+      const yy=y(v),hh=Math.max(1,T+ph-yy);
+      g+='<rect x="'+(x(i)-bw/2)+'" y="'+yy+'" width="'+bw+'" height="'+hh+'" rx="2" fill="'+s.color+'"'+(ov?' fill-opacity=".35"':'')+'/>';
+      if(ov&&ov[i]!==null){const oy=y(Math.min(ov[i],v)),oh=Math.max(1,T+ph-oy);g+='<rect x="'+(x(i)-bw/2)+'" y="'+oy+'" width="'+bw+'" height="'+oh+'" rx="2" fill="'+s.color+'"/>';}
+    });
+  }else{
+    // null で線を切る：連続区間ごとに path を作る
+    let seg=[];const segs=[];
+    vals.forEach((v,i)=>{if(v===null){if(seg.length)segs.push(seg);seg=[];}else seg.push(i);});
+    if(seg.length)segs.push(seg);
+    segs.forEach(sg=>{
+      if(sg.length>1)g+='<path d="'+sg.map((i,k)=>(k?'L':'M')+x(i).toFixed(1)+' '+y(vals[i]).toFixed(1)).join(' ')+'" fill="none" stroke="'+s.color+'" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+      const showDots=n<=10||sg.length===1;
+      if(showDots)sg.forEach(i=>{g+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(vals[i]).toFixed(1)+'" r="'+(mini?3:4)+'" fill="'+s.color+'" stroke="var(--panel)" stroke-width="2"/>';});
+    });
+  }
+  // タップ用の当たり判定（列ごと）
+  let hit='';
+  if(!mini)rows.forEach((r,i)=>{hit+='<rect class="ch-hit" data-i="'+i+'" x="'+(L+step*i)+'" y="0" width="'+step+'" height="'+H+'" fill="transparent"/>';});
+  const label=s.title+'の推移 '+mdLabel(toDash(rows[0].date))+'〜'+mdLabel(toDash(rows[n-1].date));
+  return '<svg class="chart-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+escHtml(label)+'">'+g
+    +'<line class="ch-guide" x1="0" x2="0" y1="'+T+'" y2="'+(T+ph)+'" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 2" visibility="hidden"/>'+hit+'</svg>';
+}
+// グラフのタップ → その日の値を下に表示
+function initChartTap(){
+  const box=document.getElementById('trendCharts');if(!box)return;
+  function on(e){
+    const hit=e.target.closest&&e.target.closest('.ch-hit');if(!hit)return;
+    const card=hit.closest('.chart-card');const key=card&&card.dataset.chart;
+    const c=TREND.cache[TREND.days];if(!c||!key)return;
+    const rows=c.r.rows.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const s=trendSpecs().find(x=>x.key===key);const i=+hit.dataset.i;const row=rows[i];if(!s||!row)return;
+    let t=mdLabel(toDash(row.date))+'　'+s.title+' '+fmtChartVal(s,chartVal(s,row));
+    if(s.overlay)t+='（深い睡眠 '+fmtMin(chartVal(s,row,s.overlay))+'）';
+    card.querySelector('.chart-read').textContent=t;
+    const gl=card.querySelector('.ch-guide');
+    if(gl){const xx=+hit.getAttribute('x')+(+hit.getAttribute('width'))/2;gl.setAttribute('x1',xx);gl.setAttribute('x2',xx);gl.setAttribute('visibility','visible');}
+  }
+  box.addEventListener('click',on);
+  box.addEventListener('pointermove',function(e){if(e.pointerType==='mouse')on(e);});
+}
+// 保存後：7日ミニグラフ
+async function showAfterSave(){
+  const wrap=document.getElementById('afterSave'),box=document.getElementById('miniCharts');
+  if(!wrap||!box||!getGasUrl())return;
+  wrap.hidden=false;
+  box.innerHTML='<div class="auto-msg">読み込み中…</div>';
+  const r=await fetchTrends(7,true);
+  if(!gasOk(r)||!Array.isArray(r.rows)){box.innerHTML='<div class="auto-msg err">⚠ グラフを取得できませんでした（'+escHtml(outboxErrorText(r.error||'badresponse'))+'）</div>';return;}
+  box.innerHTML=trendChartsHtml(r.rows,true);
+}
+
+// ── 食事タブ：昨日・今日の自動取込状況 ──
+async function renderIntakeStatus(force){
+  const msg=document.getElementById('intakeMsg'),grid=document.getElementById('intakeGrid');
+  if(!grid)return;
+  if(!getGasUrl()){msg.textContent='送信先が未設定です';return;}
+  const today=fmt(new Date()),yst=getYesterdayDate(today);
+  msg.className='auto-msg';msg.textContent='読み込み中…';msg.style.display='';
+  const [t,y]=await Promise.all([getDayCached(today,force),getDayCached(yst,force)]);
+  const cell=(lbl,d,c)=>{
+    if(c.status!=='ok')return '<div class="intake-cell"><div class="ic-lbl">'+lbl+'（'+mdLabel(d)+'）</div><div class="ic-val" style="font-size:13px;color:var(--red-text);">取得失敗</div></div>';
+    const f=foodSummary(c.day);
+    return '<div class="intake-cell"><div class="ic-lbl">'+lbl+'（'+mdLabel(d)+'）</div>'
+      +(f.n?'<div class="ic-val">'+f.n+'<small>品</small> '+f.kcal.toLocaleString()+'<small>kcal</small></div><div class="ic-sub">'+escHtml(f.meals.join('・')||'—')+'</div>'
+        :'<div class="ic-val" style="font-size:14px;color:var(--muted);font-weight:400;">未取込</div>')+'</div>';
+  };
+  grid.innerHTML=cell('昨日',yst,y)+cell('今日',today,t);
+  if(t.status!=='ok'&&y.status!=='ok'){msg.className='auto-msg err';msg.textContent='⚠ 取込状況を取得できませんでした（'+outboxErrorText(t.error)+'）';}
+  else msg.style.display='none';
 }
 
 // ══════════════════════════════════════════
@@ -3281,6 +3893,11 @@ updateGasInd();
 updateBswBadges();
 initA11y();
 initDelegation();
+initChartTap();
+document.body.dataset.tab='body';
+renderHabit();
+renderAdviceTop();
+loadAutoValues();
 document.getElementById('foodNote').addEventListener('input',markFoodDirty);
 // 未送信キュー：起動時と電波復帰時に自動再送
 updateOutboxInd();
