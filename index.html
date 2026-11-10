@@ -591,7 +591,7 @@ body[data-tab="body"] .toast{bottom:calc(var(--nav-h) + 84px + env(safe-area-ins
   <div class="miss-banner" id="missBanner" role="status"><span id="missText"></span><button type="button" onclick="openMissingYesterday()">入力する</button></div>
 </div>
 
-<!-- 最新のAIアドバイス（常時表示。取れなければ非表示） -->
+<!-- 最新のAIアドバイス（常時表示。未保存なら「まだアドバイスはありません」＋↻） -->
 <div class="advice-top" id="adviceCard" hidden>
   <div class="advice-head"><b>🤖 AIアドバイス</b><small id="adviceDate"></small></div>
   <div class="advice-body clamp" id="adviceCardBody"></div>
@@ -3427,8 +3427,8 @@ function renderAdviceTop(errText){
   refresh.style.display='';
   const a=getLastAdvice();
   if(!a||!a.text){
-    if(errText){card.hidden=false;body.textContent=errText;dt.textContent='';more.style.display='none';}
-    else card.hidden=true; // 取れていなければ出さない
+    // 端末に保存済みが無くてもカードは出す（↻ 作り直す を押せるように）
+    card.hidden=false;body.textContent=errText||'まだアドバイスはありません';dt.textContent='';more.style.display='none';
     return;
   }
   card.hidden=false;
@@ -3684,11 +3684,16 @@ function setTrendDays(n){
   document.getElementById('trd28').classList.toggle('active',n===28);
   loadTrends();
 }
+// 直近の trends 結果を端末に保存し、タブを開いたら即描画→裏で取り直して差し替える（stale-while-revalidate）
+const TREND_LS='tkd_trends_cache_v1';
+function readTrendLS(){try{return JSON.parse(localStorage.getItem(TREND_LS)||'{}')||{};}catch(e){return {};}}
+function saveTrendLS(days,rows){try{const o=readTrendLS();o[days]={rows,at:Date.now()};localStorage.setItem(TREND_LS,JSON.stringify(o));}catch(e){}}
+function trendStamp(at){const d=new Date(at);return (d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
 async function fetchTrends(days,force){
   const c=TREND.cache[days];
   if(c&&!force&&Date.now()-c.at<5*60*1000)return c.r;
   const r=await gasJsonp({action:'trends',days:days},{timeout:20000});
-  if(gasOk(r)&&Array.isArray(r.rows))TREND.cache[days]={r,at:Date.now()};
+  if(gasOk(r)&&Array.isArray(r.rows)){TREND.cache[days]={r,at:Date.now()};saveTrendLS(days,r.rows);}
   return r;
 }
 async function loadTrends(force){
@@ -3696,12 +3701,24 @@ async function loadTrends(force){
   if(!box)return;
   const days=TREND.days;
   if(!getGasUrl()){msg.textContent='送信先が未設定です';return;}
-  msg.className='auto-msg';msg.textContent='読み込み中…';
+  const local=readTrendLS()[days];
+  const shown=!!(local&&Array.isArray(local.rows)&&local.rows.length);
+  if(shown){
+    box.innerHTML=trendChartsHtml(local.rows,false);
+    msg.className='auto-msg';msg.textContent='↻ 更新中…';
+  }else{
+    box.innerHTML='';msg.className='auto-msg';msg.textContent='読み込み中…';
+  }
   const r=await fetchTrends(days,force);
   if(TREND.days!==days)return;
-  if(!gasOk(r)||!Array.isArray(r.rows)){msg.className='auto-msg err';msg.textContent='⚠ 推移を取得できませんでした（'+outboxErrorText(r.error||'badresponse')+'）';return;}
+  if(!gasOk(r)||!Array.isArray(r.rows)){
+    msg.className='auto-msg err';
+    msg.textContent=shown?'⚠ 更新できませんでした（'+outboxErrorText(r.error||'badresponse')+'）· '+trendStamp(local.at)+' 時点の表示'
+      :'⚠ 推移を取得できませんでした（'+outboxErrorText(r.error||'badresponse')+'）';
+    return;
+  }
   msg.textContent='';
-  box.innerHTML=trendChartsHtml(r.rows,false);
+  if(!shown||JSON.stringify(r.rows)!==JSON.stringify(local.rows))box.innerHTML=trendChartsHtml(r.rows,false);
 }
 function trendSpecs(){
   return [
